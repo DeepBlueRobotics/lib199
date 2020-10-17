@@ -1,0 +1,191 @@
+#VRML_SIM R2020b utf8
+WorldInfo {
+  coordinateSystem "NUE"
+}
+Viewpoint {
+  orientation 0.09054560033857591 0.9847680202874968 0.14843665476684384 4.580208439807257
+  position -1.7808308549453629 0.8699985082727659 -0.015773943782930767
+}
+TexturedBackground {
+}
+TexturedBackgroundLight {
+}
+RectangleArena {
+  translation 0 0.01 0
+  floorSize 20 20
+  floorTileSize 20 20
+}
+Robot {
+  translation -2.341445531176765e-12 0.0692960463591776 1.4603751684990586e-08
+  rotation 0.9999999977138501 6.761877971786651e-05 -2.791184368359738e-08 1.569651221124495e-08
+  children [
+    Solid {
+      children [
+        Gyro {
+        }
+        HingeJoint {
+          jointParameters HingeJointParameters {
+            position 3.332184113131792e-11
+            axis 0 0 1
+            anchor -0.167 0 -0.232
+          }
+          device [
+            PositionSensor {
+              name "Back Left Encoder"
+            }
+            RotationalMotor {
+              name "Back Left"
+              maxVelocity 100
+            }
+          ]
+          endPoint Solid {
+            translation -0.167 0 -0.232
+            rotation 1 6.663351670175702e-11 6.663327194363295e-11 1.5708
+            children [
+              Shape {
+                appearance PBRAppearance {
+                  metalness 0.5
+                }
+                geometry DEF Wheel Cylinder {
+                  height 0.0125
+                  radius 0.0635
+                }
+              }
+            ]
+            name "BL"
+            boundingObject USE Wheel
+            physics Physics {
+            }
+            linearVelocity 2.1631261385765046e-17 -1.0527439941106258e-05 -5.740681441635168e-11
+            angularVelocity -9.038344506014e-10 1.305217607670113e-15 -1.4588623573388004e-15
+          }
+        }
+        HingeJoint {
+          jointParameters HingeJointParameters {
+            position 3.3328985993161354e-11
+            axis 0 0 1
+            anchor 0.167 0 -0.232
+          }
+          device [
+            PositionSensor {
+              name "Front Left Encoder"
+            }
+            RotationalMotor {
+              name "Front Left"
+              maxVelocity 100
+            }
+          ]
+          endPoint Solid {
+            translation 0.167 0 -0.232
+            rotation 1 6.664772779939954e-11 6.664748298907528e-11 1.5708
+            children [
+              Shape {
+                appearance PBRAppearance {
+                  metalness 0.5
+                }
+                geometry USE Wheel
+              }
+            ]
+            name "FL"
+            boundingObject USE Wheel
+            physics Physics {
+            }
+            linearVelocity 3.3031008212935787e-17 -1.0527439945421798e-05 -5.7408353757249146e-11
+            angularVelocity -9.038634204464475e-10 1.3052181366120537e-15 -1.7281467295605935e-15
+          }
+        }
+        HingeJoint {
+          jointParameters HingeJointParameters {
+            position -1.9880764725810936e-14
+            axis 0 0 1
+            anchor -0.167 0 0.232
+          }
+          device [
+            PositionSensor {
+              name "Back Right Encoder"
+            }
+            RotationalMotor {
+              name "Back Right"
+              maxVelocity 100
+            }
+          ]
+          endPoint Solid {
+            translation -0.167 0 0.232
+            rotation 1 1.6636062279477512e-11 1.6636001171920884e-11 1.5708
+            children [
+              Shape {
+                appearance PBRAppearance {
+                  metalness 0.5
+                }
+                geometry USE Wheel
+              }
+            ]
+            name "BR"
+            boundingObject USE Wheel
+            physics Physics {
+            }
+            linearVelocity 1.6297748300572428e-16 -1.0527020648895924e-05 -5.740718581174959e-11
+            angularVelocity -9.038674102417856e-10 1.3052177108244775e-15 -1.3946365989631125e-15
+          }
+        }
+        HingeJoint {
+          jointParameters HingeJointParameters {
+            position -1.9640895964673523e-14
+            axis 0 0 1
+            anchor 0.167 0 0.232
+          }
+          device [
+            PositionSensor {
+              name "Front Right Encoder"
+            }
+            RotationalMotor {
+              name "Front Right"
+              maxVelocity 100
+            }
+          ]
+          endPoint Solid {
+            translation 0.167 0 0.232
+            rotation 1 1.66348979090243e-11 1.6634836805744632e-11 1.5708
+            children [
+              Shape {
+                appearance PBRAppearance {
+                  metalness 0.5
+                }
+                geometry USE Wheel
+              }
+            ]
+            boundingObject USE Wheel
+            physics Physics {
+            }
+            linearVelocity 1.6834909220920884e-16 -1.0527020643233175e-05 -5.740751394212656e-11
+            angularVelocity -9.03874117794681e-10 1.3052183798982395e-15 -1.5215268260381945e-15
+          }
+        }
+        Shape {
+          appearance PBRAppearance {
+          }
+          geometry DEF Base Box {
+            size 0.46101 0.05 0.45085
+          }
+        }
+      ]
+      boundingObject USE Base
+      physics Physics {
+      }
+    }
+    Pen {
+      translation 0 0.001 0
+      inkColor 1 0 0
+      inkDensity 1
+      leadSize 0.1
+    }
+  ]
+  boundingObject USE Base
+  physics Physics {
+    density -1
+    mass 10
+  }
+  controller "<extern>"
+  linearVelocity 1.824667881851062e-16 -1.0505931914908063e-05 -5.718569184507502e-11
+  angularVelocity -9.038348020364612e-10 1.3053423256360057e-15 -1.8211105666438962e-15
+}
