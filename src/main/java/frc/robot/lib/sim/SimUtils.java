@@ -33,7 +33,7 @@ public final class SimUtils {
             public void periodic() {
                 method.run();
             }
-        }.register();;
+        }.register();
     }
 
     public static void registerSimDeviceCreatedCallback(String prefix, SimDeviceCallback callback, boolean initialNotify) {

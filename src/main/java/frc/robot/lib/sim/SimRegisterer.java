@@ -32,7 +32,7 @@ public class SimRegisterer {
     private static <T> void registerDeviceType(String type, int max, IntFunction<T> newFunc, Function<T, Boolean> isInitalized, CallbackRegisterFunc<T> registerFunc) {
         for(int i = 0; i < max; i++) {
             T obj = newFunc.apply(i);
-            if(isInitalized.apply(obj)) {System.out.println(i + " is init");
+            if(isInitalized.apply(obj)) {
                 callback(type, i, null, null, -1);
                 continue;
             }
@@ -67,7 +67,7 @@ public class SimRegisterer {
         miscDevices.add(name);
     }
 
-    private static void callback(String type, int port, String name, HALValue value, int storePos) {System.out.println(port + " is now init");
+    private static void callback(String type, int port, String name, HALValue value, int storePos) {
         devices.add(new PortDevice(type, port));
         if(storePos > -1) {
             callbacks.get(storePos).close();
