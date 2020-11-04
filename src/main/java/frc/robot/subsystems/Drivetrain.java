@@ -10,7 +10,6 @@ import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMaxLowLevel;
 
 import edu.wpi.first.hal.HALValue;
-import edu.wpi.first.hal.sim.PWMSim;
 import edu.wpi.first.hal.sim.SimDeviceSim;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.SerialPort.Port;
@@ -22,9 +21,8 @@ import edu.wpi.first.wpilibj.kinematics.DifferentialDriveOdometry;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import frc.robot.Constants;
-import frc.robot.WebotsMotorForwarder;
-import frc.robot.lib.Field2d;
-import frc.robot.lib.MockSparkMax;
+import frc.robot.lib.sim.Field2d;
+import frc.robot.lib.sim.MockSparkMax;
 
 public class Drivetrain extends SubsystemBase {
     public enum Side {
@@ -86,10 +84,10 @@ public class Drivetrain extends SubsystemBase {
             wpiGyroSim = new SimDeviceSim("navX-Sensor[0]");
 
             // For each motor controller, register a "speed callback" which calls WebotsMotorForwarder.callback() everytime the speed is set
-            new PWMSim(Constants.CANPorts.dtFrontLeft).registerSpeedCallback(new WebotsMotorForwarder(robot, "Front Left", Constants.neoMotorConstant), true);
-            new PWMSim(Constants.CANPorts.dtFrontRight).registerSpeedCallback(new WebotsMotorForwarder(robot, "Front Right", Constants.neoMotorConstant), true);
-            new PWMSim(Constants.CANPorts.dtBackLeft).registerSpeedCallback(new WebotsMotorForwarder(robot, "Back Left", Constants.neoMotorConstant), true);
-            new PWMSim(Constants.CANPorts.dtBackRight).registerSpeedCallback(new WebotsMotorForwarder(robot, "Back Right", Constants.neoMotorConstant), true);
+            // new PWMSim(Constants.CANPorts.dtFrontLeft).registerSpeedCallback(new WebotsMotorForwarder(robot, "Front Left", Constants.neoMotorConstant), true);
+            // new PWMSim(Constants.CANPorts.dtFrontRight).registerSpeedCallback(new WebotsMotorForwarder(robot, "Front Right", Constants.neoMotorConstant), true);
+            // new PWMSim(Constants.CANPorts.dtBackLeft).registerSpeedCallback(new WebotsMotorForwarder(robot, "Back Left", Constants.neoMotorConstant), true);
+            // new PWMSim(Constants.CANPorts.dtBackRight).registerSpeedCallback(new WebotsMotorForwarder(robot, "Back Right", Constants.neoMotorConstant), true);
         } 
         // If not simulated, go about the usual business
         else {
@@ -115,7 +113,7 @@ public class Drivetrain extends SubsystemBase {
         // conversion is in m/rev
         double conversion = Constants.wheelDiameter * Math.PI / Constants.motorGearing;
         leftEnc.setPositionConversionFactor(conversion);
-        rightEnc.setVelocityConversionFactor(conversion / 60.);
+        leftEnc.setVelocityConversionFactor(conversion / 60.);
         rightEnc.setPositionConversionFactor(conversion);
         rightEnc.setVelocityConversionFactor(conversion / 60.);
     }
