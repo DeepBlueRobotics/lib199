@@ -87,6 +87,7 @@ public final class SimUtils {
         }
     }
 
+    //These classes are used to access package fields of their corresponding WPILib classes until the issue (#2526) is fixed
     public static final class SimDeviceInfo {
         public final String name;
         public final int handle;
