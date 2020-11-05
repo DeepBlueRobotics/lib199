@@ -34,6 +34,11 @@ public final class SimUtils {
     }
 
     //Custom implementations of WPILib methods. These are required due to a bug in WPILib which hinderes their functionality (https://github.com/wpilibsuite/allwpilib/issues/2832)
+    //The origional WPILib methods produce a crash in native code when called
+    //To make migration to the WPILib methods easier, these methods have similar type signatures to their corresponding WPILib methods
+    //Notable differences:
+    //The WPILib methods are called at the time the Device or Value is created. These methods work by contnually polling WPILib for changes, so they notify their callbacks during the robot's periodic loop
+    //The value name and readOnly state cannot be obtained from the value object and the handle is ambiguous as to whether its a device or value handle, so value callbacks are called with "null" versions of these arguments
 
     //Custom implementation of {@link SimDeviceSim#registerSimDeviceCreatedCallback}
     public static void registerSimDeviceCreatedCallback(String prefix, SimDeviceCallback callback, boolean initialNotify) {

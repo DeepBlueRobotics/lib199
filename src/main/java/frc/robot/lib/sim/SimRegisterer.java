@@ -14,6 +14,7 @@ import edu.wpi.first.hal.sim.SimDeviceSim;
 import edu.wpi.first.wpilibj.SensorUtil;
 
 //Performs automatic registration of callbacks detecting both the initalization of new devices as well as data callbacks for devices such as Motors, Gyros, etc.
+//This allows us to automatically link these devices to Webots, reducing the amount of code we would have to change from a standard robot project
 public class SimRegisterer {
     
     private static final SimDeviceCallback MISC_DEVICE_CALLBACK = SimRegisterer::callback;
@@ -30,6 +31,7 @@ public class SimRegisterer {
         Simulation.registerPeriodicMethod(SimRegisterer::periodic);
     }
 
+    //Initalize SimRegisterer. This method exists to ensure that the static block is called
     public static void init() {}
 
     //Register callbacks for known devices on Non-Can ports
@@ -85,6 +87,10 @@ public class SimRegisterer {
         }
     }
 
+    //Callback methods which place new devices in a processing queue which is processed every robot period.
+    //The WPILib callbacks are notified as part of the device creation. This process ensures that the devices complete their setup process.
+    //This is especially important for SimDevice's because their initalized callbacks can be notified before their values have been created
+
     //Callback for when a Miscellaneous Device is registered
     private static void callback(String name, int handle) {
         miscDevices.add(name);
@@ -105,6 +111,7 @@ public class SimRegisterer {
     }
 
     //Mapping between device types and ports
+    //This is only used internally to maintain this link in the device queue
     private static class PortDevice {
 
         final String type;
