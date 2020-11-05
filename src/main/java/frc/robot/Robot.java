@@ -7,20 +7,10 @@
 
 package frc.robot;
 
-import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.TimedRobot;
-import edu.wpi.first.wpilibj.controller.RamseteController;
-import edu.wpi.first.wpilibj.trajectory.Trajectory;
-import edu.wpi.first.wpilibj.trajectory.TrajectoryUtil;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.RamseteCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
-import frc.robot.subsystems.Drivetrain;
 
 public class Robot extends TimedRobot {
   private RobotContainer robotContainer;
@@ -35,21 +25,6 @@ public class Robot extends TimedRobot {
     timeStep = (int) Math.round(robot.getBasicTimeStep());
     // Make sure to remove the robot when the WPIlib simulation ends
     Runtime.getRuntime().addShutdownHook(new Thread(robot::delete));
-
-    // Load a path to follow and create a RamseteCommand for that path
-    try {
-      String trajectoryName = "Bruh";
-      Path pathToTrajectoryJson = Paths.get(System.getProperty("user.dir") + "/Pathweaver/output/" + trajectoryName + ".wpilib.json");
-      Trajectory trajectory = TrajectoryUtil.fromPathweaverJson(pathToTrajectoryJson);
-      Drivetrain dt = robotContainer.getDrivetrain();
-      
-      RamseteCommand followPath = new RamseteCommand(trajectory, dt::getPose, new RamseteController(), dt.getKinematics(), dt::tankDriveDirect, dt);
-      InstantCommand loadOdometry = new InstantCommand(() -> dt.loadOdometry(trajectory.getInitialPose(), dt.getHeading()));
-      fullRoutine = loadOdometry.andThen(followPath, new InstantCommand(() -> dt.tankDrive(0, 0), dt));
-    } catch (IOException io) {
-      io.printStackTrace();
-      fullRoutine = null;
-    }
   }
 
   @Override
