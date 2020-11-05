@@ -15,6 +15,8 @@ import edu.wpi.first.hal.sim.SimDeviceSim;
 import edu.wpi.first.hal.sim.SimValueCallback;
 import edu.wpi.first.hal.sim.mockdata.SimDeviceDataJNI;
 
+//Provides utility methods to be used in SimRegister and other simulation code.
+//These are mostly to patch flaws in WPILib for which fixes are still being implemented
 public final class SimUtils {
 
     //Map Device Callbacks to their Prefixes
@@ -30,6 +32,8 @@ public final class SimUtils {
         //Update callbacks as part of the periodic loop
         Simulation.registerPeriodicMethod(SimUtils::periodic);
     }
+
+    //Custom implementations of WPILib methods. These are required due to a bug in WPILib which hinderes their functionality (https://github.com/wpilibsuite/allwpilib/issues/2832)
 
     //Custom implementation of {@link SimDeviceSim#registerSimDeviceCreatedCallback}
     public static void registerSimDeviceCreatedCallback(String prefix, SimDeviceCallback callback, boolean initialNotify) {
@@ -55,6 +59,8 @@ public final class SimUtils {
     //Notify callback and mark the device as known to the callback
     private static final Consumer<SimDeviceInfo> performDeviceCallback(SimDeviceCallback callback) { return (info) -> {
         callback.callback(info.name, info.handle);knownDevices.get(callback).add(info.name);};}
+    
+    //Notify registered callbacks of new devices
     public static void periodic() {
         //Map existing devices to their accessible info counterparts and store them in a new list
         List<SimDeviceInfo> devices = Arrays.stream(SimDeviceSim.enumerateDevices("")).map(SimDeviceInfo::new).collect(Collectors.toList());

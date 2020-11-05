@@ -13,6 +13,7 @@ import edu.wpi.first.hal.sim.SimDeviceCallback;
 import edu.wpi.first.hal.sim.SimDeviceSim;
 import edu.wpi.first.wpilibj.SensorUtil;
 
+//Performs automatic registration of callbacks detecting both the initalization of new devices as well as data callbacks for devices such as Motors, Gyros, etc.
 public class SimRegisterer {
     
     private static final SimDeviceCallback MISC_DEVICE_CALLBACK = SimRegisterer::callback;
@@ -49,6 +50,8 @@ public class SimRegisterer {
         }
     }
 
+    //The registered initalization callbacks place new devices into a queue.
+    //This method processes that queue and tries to link any known devices to Webots
     public static void periodic() {
         while(!devices.isEmpty()) {
             PortDevice device = devices.poll();
