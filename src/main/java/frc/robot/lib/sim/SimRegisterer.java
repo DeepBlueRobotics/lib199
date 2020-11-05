@@ -21,20 +21,28 @@ public class SimRegisterer {
     private static final ArrayList<CallbackStore> callbacks = new ArrayList<>();
 
     static {
+        //Register Initalized Callbacks for Misc Devices
         SimUtils.registerSimDeviceCreatedCallback("", MISC_DEVICE_CALLBACK, true);
+        //Register Initalized Callbacks for PWM Devices
         registerDeviceType("PWM", SensorUtil.kPwmChannels, PWMSim::new, PWMSim::getInitialized, PWMSim::registerInitializedCallback);
+        //Run our periodic method in the periodic loop
         Simulation.registerPeriodicMethod(SimRegisterer::periodic);
     }
 
     public static void init() {}
 
+    //Register callbacks for known devices on Non-Can ports
     private static <T> void registerDeviceType(String type, int max, IntFunction<T> newFunc, Function<T, Boolean> isInitalized, CallbackRegisterFunc<T> registerFunc) {
+        //For all valid device ports
         for(int i = 0; i < max; i++) {
+            //Create a sim for this port
             T obj = newFunc.apply(i);
+            //If already initalized call callback now
             if(isInitalized.apply(obj)) {
                 callback(type, i, null, null, -1);
                 continue;
             }
+            //Otherwise register an initialization callback
             final int port = i;
             final int storePos = callbacks.size();
             callbacks.add(registerFunc.registerInitializedCallback(obj, (name, value) -> callback(type, port, name, value, storePos), false));
@@ -45,23 +53,41 @@ public class SimRegisterer {
         while(!devices.isEmpty()) {
             PortDevice device = devices.poll();
             if(device.type.equals("PWM")) {
-                callbacks.add(new PWMSim(device.port).registerSpeedCallback(new WebotsMotorForwarder(Simulation.robot, "PWM_" + device.port), true));
+                //If a new PWM device has been initalized, attempt to link it to a Webots Motor
+                //Register a speed callback on this device
+                callbacks.add(new PWMSim(device.port).registerSpeedCallback(
+                    //Call a motor forwarder for a callback
+                    new WebotsMotorForwarder(Simulation.robot, "PWM_" + device.port),
+                    //Initalize with current speed
+                    true));
             }
         }
         while(!miscDevices.isEmpty()) {
             String deviceName = miscDevices.poll();
             if(deviceName.startsWith("Talon") || deviceName.startsWith("Victor")) {
+                //If a new Talon or Victor has been initalized, attempt to link it to a Webots Motor
+                //Create a WebotsMotorForwarder for this motor
                 final WebotsMotorForwarder fwdr = new WebotsMotorForwarder(Simulation.robot, deviceName);
-            SimUtils.registerValueChangedCallback(new SimDeviceSim(deviceName), "Motor Output",
-                (name, handle, readonly, value) -> fwdr.callback(name, value), true);
+                //Register a callback for when the Motor Output changes
+                SimUtils.registerValueChangedCallback(new SimDeviceSim(deviceName), "Motor Output",
+                    //Call the callback function
+                    (name, handle, readonly, value) -> fwdr.callback(name, value),
+                    //Initalize with current speed
+                    true);
+            }
+            if(deviceName.startsWith("navX")) {
+                //If a navX is registered, try to link its SimDevice to the Webots robot
+                MockGyro.linkGyro();
             }
         }
     }
 
+    //Callback for when a Miscellaneous Device is registered
     private static void callback(String name, int handle) {
         miscDevices.add(name);
     }
 
+    //Callback for when a known device type is registered on a Non-Can port
     private static void callback(String type, int port, String name, HALValue value, int storePos) {
         devices.add(new PortDevice(type, port));
         if(storePos > -1) {
@@ -70,10 +96,12 @@ public class SimRegisterer {
         }
     }
 
+    //Func template for callbacks
     private static interface CallbackRegisterFunc<T> {
         CallbackStore registerInitializedCallback(T obj, NotifyCallback callback, boolean initialNotify);
     }
 
+    //Mapping between device types and ports
     private static class PortDevice {
 
         final String type;

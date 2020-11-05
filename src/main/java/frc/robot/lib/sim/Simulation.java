@@ -1,6 +1,6 @@
 package frc.robot.lib.sim;
 
-import java.util.ArrayList;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.cyberbotics.webots.controller.Robot;
 
@@ -12,25 +12,30 @@ public final class Simulation {
     public static final Robot robot;
     public static final int timeStep;
     public static final double timeStepMillis;
-    private static final ArrayList<Runnable> periodicMethods;
+    //Use a CopyOnWriteArrayList to prevent syncronization errors
+    private static final CopyOnWriteArrayList<Runnable> periodicMethods;
 
     static {
         if(RobotBase.isSimulation()) {
-            periodicMethods = new ArrayList<>();
+            //Initialize Robot
+            periodicMethods = new CopyOnWriteArrayList<>();
             robot = new com.cyberbotics.webots.controller.Robot();
             // Make sure to remove the robot when the WPIlib simulation ends
             Runtime.getRuntime().addShutdownHook(new Thread(robot::delete));
             timeStep = (int) Math.round(robot.getBasicTimeStep());
             timeStepMillis = robot.getBasicTimeStep() / 1000;
+            //Link to WPILib periodic loop
             new Subsystem() {
                 @Override
                 public void periodic() {
+                    //Sync With Webots
                     robot.step(timeStep);
+                    //Run Simulation Periodic Methods
                     periodicMethods.forEach(Runnable::run);
                 }
             }.register();
+            //Register callbacks
             SimRegisterer.init();
-            MockGyro.linkGyro();
         } else {
             robot = null;
             timeStep = 0;

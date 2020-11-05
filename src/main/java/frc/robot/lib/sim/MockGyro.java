@@ -17,6 +17,7 @@ public final class MockGyro implements Runnable {
             return;
         }
         gyroCreated = true;
+        //Create Sims
         gyroSim = new SimDeviceSim("navX-Sensor[0]");
         webotsGyro = Simulation.robot.getGyro("gyro");
         webotsGyro.enable(BaseSimConfig.getSensorTimestep());

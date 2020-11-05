@@ -14,59 +14,86 @@ import edu.wpi.first.hal.sim.SimDeviceCallback;
 import edu.wpi.first.hal.sim.SimDeviceSim;
 import edu.wpi.first.hal.sim.SimValueCallback;
 import edu.wpi.first.hal.sim.mockdata.SimDeviceDataJNI;
-import edu.wpi.first.wpilibj2.command.Subsystem;
 
 public final class SimUtils {
 
+    //Map Device Callbacks to their Prefixes
     private static final HashMap<SimDeviceCallback, String> prefixes = new HashMap<>();
+    //Keep Track of Devices Known to Each Device Callback
     private static final HashMap<SimDeviceCallback, ArrayList<String>> knownDevices = new HashMap<>();
+    //Keep Track of Values Watched by Each Value Callback
     private static final HashMap<SimValueCallback, SimValue> valueCallbacks = new HashMap<>();
+    //Cache the Previous State of SimValues for New Callbacks
     private static final HashMap<SimValue, HALValue> lastData = new HashMap<>();
 
     static {
+        //Update callbacks as part of the periodic loop
         Simulation.registerPeriodicMethod(SimUtils::periodic);
     }
 
+    //Custom implementation of {@link SimDeviceSim#registerSimDeviceCreatedCallback}
     public static void registerSimDeviceCreatedCallback(String prefix, SimDeviceCallback callback, boolean initialNotify) {
         prefixes.put(callback, prefix);
         knownDevices.put(callback, new ArrayList<>());
     }
 
+    //Custom implementation of {@link SimDeviceSim#registerValueChangedCallback}
     public static void registerValueChangedCallback(SimDeviceSim device, String valueName, SimValueCallback callback, boolean initialNotify) {
+        //Get the Corresponding SimValue
         SimValue value = device.getValue(valueName);
+        //Register this callback
         valueCallbacks.put(callback, value);
+        //Fetch the SimValue if we have not yet done so
+        lastData.put(value, value.getValue());
+        //If requested, notify callback of inital value
         if(initialNotify) {
-            if(!lastData.containsKey(value)) {
-                lastData.put(value, value.getValue());
-            }
+            //Notify the callback using the cached value
             callback.callback("", -1, false, lastData.get(value));
         }
     }
 
+    //Notify callback and mark the device as known to the callback
     private static final Consumer<SimDeviceInfo> performDeviceCallback(SimDeviceCallback callback) { return (info) -> {
         callback.callback(info.name, info.handle);knownDevices.get(callback).add(info.name);};}
     public static void periodic() {
+        //Map existing devices to their accessible info counterparts and store them in a new list
         List<SimDeviceInfo> devices = Arrays.stream(SimDeviceSim.enumerateDevices("")).map(SimDeviceInfo::new).collect(Collectors.toList());
+        //For each device callback
         for(SimDeviceCallback callback : prefixes.keySet()) {
             String prefix = prefixes.get(callback);
             ArrayList<String> kDevs = knownDevices.get(callback);
-            devices.stream().filter((info) -> !kDevs.contains(info.name)).filter((info) -> info.name.startsWith(prefix)).forEach(performDeviceCallback(callback));
+            //For each device
+            devices.stream()
+            //If the callback has not already been not already been notifed of this device
+            .filter((info) -> !kDevs.contains(info.name))
+            //And the device name starts with the prefix
+            .filter((info) -> info.name.startsWith(prefix))
+            //Call the callback
+            .forEach(performDeviceCallback(callback));
         }
         ArrayList<Integer> updatedValues = new ArrayList<>();
+        //For all cached data
         lastData.forEach((simValue, value) -> {
             HALValue newValue = simValue.getValue();
+            //If the value has changed
             if(newValue.getNativeDouble() != value.getNativeDouble() || newValue.getNativeLong() != value.getNativeLong()) {
+                //Update the value and mark it as updated
                 lastData.put(simValue, newValue);
                 updatedValues.add(simValue.getNativeHandle());
             }
         });
+        //For each value callback
         for(SimValueCallback callback : valueCallbacks.keySet()) {
             SimValue value = valueCallbacks.get(callback);
+            //If the value has changed
             if(updatedValues.contains(value.getNativeHandle())) {
+                //Call the callback
                 callback.callback("", -1, false, lastData.get(value));
             }
         }
     }
+
+    //All of this code is for accessing protected WPILib fields (See comment below)
 
     public static <T> T getPrivateField(Object obj, String fieldName, ExceptionBiFunction<Field, Object, T> getFunc) {
         try {
