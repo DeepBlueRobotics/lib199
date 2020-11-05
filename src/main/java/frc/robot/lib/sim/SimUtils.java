@@ -16,7 +16,7 @@ import edu.wpi.first.hal.sim.SimValueCallback;
 import edu.wpi.first.hal.sim.mockdata.SimDeviceDataJNI;
 
 //Provides utility methods to be used in SimRegister and other simulation code.
-//These are mostly to patch flaws in WPILib for which fixes are still being implemented
+//These are mostly (only) to patch flaws in WPILib for which fixes are still being implemented
 public final class SimUtils {
 
     //Map Device Callbacks to their Prefixes
@@ -34,7 +34,7 @@ public final class SimUtils {
     }
 
     //Custom implementations of WPILib methods. These are required due to a bug in WPILib which hinderes their functionality (https://github.com/wpilibsuite/allwpilib/issues/2832)
-    //The origional WPILib methods produce a crash in native code when called
+    //The origional WPILib methods produce a crash in native code when their invoking state is triggered (i.e. When a device or value is created)
     //To make migration to the WPILib methods easier, these methods have similar type signatures to their corresponding WPILib methods
     //Notable differences:
     //The WPILib methods are called at the time the Device or Value is created. These methods work by contnually polling WPILib for changes, so they notify their callbacks during the robot's periodic loop
