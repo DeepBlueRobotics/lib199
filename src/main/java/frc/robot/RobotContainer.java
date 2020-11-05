@@ -18,8 +18,8 @@ public class RobotContainer {
   private final Drivetrain drivetrain;
   private final Joystick joystick = new Joystick(Constants.joystickPort);
 
-  public RobotContainer(Robot robot) {
-    drivetrain = new Drivetrain(robot);
+  public RobotContainer() {
+    drivetrain = new Drivetrain();
     drivetrain.setDefaultCommand(new Drive(drivetrain, joystick));
   }
 

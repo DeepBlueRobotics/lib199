@@ -39,19 +39,12 @@ public class Drivetrain extends SubsystemBase {
     private final DifferentialDriveKinematics kinematics;
     private DifferentialDriveOdometry odometry;
 
-    private PositionSensor leftEncSim;
-    private PositionSensor rightEncSim;
-    private Gyro gyroSim;
-
-    private SimDeviceSim wpiGyroSim;
-    private double angle;
-    private double timestep;
     // Field2d is a class defined by WPIlib that allows the user to see the robot pose in the simulator
     // For some reason it was not included in the edu.wpi.first.simulation package so I needed to add it manually.
     // TODO: This will be fixed in a future WPIlib version, so make sure to get rid of frc.robot.lib.Field2d.
     private final Field2d field = new Field2d();
 
-    public Drivetrain(Robot robot) {
+    public Drivetrain() {
         if (RobotBase.isSimulation()) {
             // Use the mockito code to create mocked/overriden versions of CANSparkMax objects
             leftMaster = MockSparkMax.createMockSparkMax(Constants.CANPorts.dtFrontLeft,
@@ -62,32 +55,6 @@ public class Drivetrain extends SubsystemBase {
                     CANSparkMaxLowLevel.MotorType.kBrushless);
             rightSlave = MockSparkMax.createMockSparkMax(Constants.CANPorts.dtBackRight,
                     CANSparkMaxLowLevel.MotorType.kBrushless);
-
-            // Calling the getEncoder() method on a mocked CANSparkMax will return a mocked CANEncoder
-            leftEnc = leftMaster.getEncoder();
-            rightEnc = rightMaster.getEncoder();
-
-            // Convert from seconds to miliseconds
-            timestep = robot.getBasicTimeStep() / 1000;
-            
-            // Get the Webots encoders and enable them
-            leftEncSim = robot.getPositionSensor("Front Left Encoder");
-            rightEncSim = robot.getPositionSensor("Front Right Encoder");
-            leftEncSim.enable(20);
-            rightEncSim.enable(20);
-
-            // Get the Webots gyro and enable it
-            gyroSim = robot.getGyro("gyro");
-            gyroSim.enable(20);
-
-            // Get the simulated nav-X in the WPIlib simulator
-            wpiGyroSim = new SimDeviceSim("navX-Sensor[0]");
-
-            // For each motor controller, register a "speed callback" which calls WebotsMotorForwarder.callback() everytime the speed is set
-            // new PWMSim(Constants.CANPorts.dtFrontLeft).registerSpeedCallback(new WebotsMotorForwarder(robot, "Front Left", Constants.neoMotorConstant), true);
-            // new PWMSim(Constants.CANPorts.dtFrontRight).registerSpeedCallback(new WebotsMotorForwarder(robot, "Front Right", Constants.neoMotorConstant), true);
-            // new PWMSim(Constants.CANPorts.dtBackLeft).registerSpeedCallback(new WebotsMotorForwarder(robot, "Back Left", Constants.neoMotorConstant), true);
-            // new PWMSim(Constants.CANPorts.dtBackRight).registerSpeedCallback(new WebotsMotorForwarder(robot, "Back Right", Constants.neoMotorConstant), true);
         } 
         // If not simulated, go about the usual business
         else {
@@ -95,10 +62,9 @@ public class Drivetrain extends SubsystemBase {
             rightMaster = new CANSparkMax(Constants.CANPorts.dtFrontRight, CANSparkMaxLowLevel.MotorType.kBrushless);
             leftSlave = new CANSparkMax(Constants.CANPorts.dtBackLeft, CANSparkMaxLowLevel.MotorType.kBrushless);
             rightSlave = new CANSparkMax(Constants.CANPorts.dtBackRight, CANSparkMaxLowLevel.MotorType.kBrushless);
-
-            leftEnc = leftMaster.getEncoder();
-            rightEnc = rightMaster.getEncoder();
         }
+        leftEnc = leftMaster.getEncoder();
+        rightEnc = rightMaster.getEncoder();
         differentialDrive = new DifferentialDrive(leftMaster, rightMaster);
 
         leftSlave.follow(leftMaster);
@@ -120,31 +86,12 @@ public class Drivetrain extends SubsystemBase {
 
     @Override
     public void periodic() {
-        if (RobotBase.isSimulation()) {
-            // Get the position of the Webots encoders and set the position of the WPIlib encoders 
-            // getValue() returns radians
-            leftEnc.setPosition(leftEncSim.getValue() * Constants.wheelDiameter);
-            rightEnc.setPosition(rightEncSim.getValue() * Constants.wheelDiameter);
-
-            /* getValues() returns angular speeds about each axis (x, y, z).
-               reading represents the change in angular position about the y axis.
-               getValues()[1] is negated to convert from Webot's coordinate system (counter-clockwise = positive) to WPIlib's coordinate system (counter-clockwise = negative).
-            */
-            double reading = -gyroSim.getValues()[1] * timestep;
-            // In testing, reading was sometimes NAN in the first second of the simulation.
-            // Also convert from radians to degrees
-            angle += Double.isNaN(reading) ? 0 : (180 * reading / Math.PI);
-            // Make sure angle is between 0 and 359 inclusive
-            angle = Math.copySign(Math.abs(angle) % 360, angle);
-            // Update the WPIlib gyro
-            wpiGyroSim.getValue("Yaw").setValue(HALValue.makeDouble(angle));
-        }
         odometry.update(Rotation2d.fromDegrees(getHeading()), getEncoderPosition(Side.LEFT), getEncoderPosition(Side.RIGHT));
         field.setRobotPose(odometry.getPoseMeters());
     }
 
     public void loadOdometry(Pose2d pose, double heading) {
-        angle = 180 * heading / Math.PI;
+        //angle = 180 * heading / Math.PI;
         odometry = new DifferentialDriveOdometry(Rotation2d.fromDegrees(heading), pose);
     }
 

@@ -5,8 +5,6 @@ import java.util.ArrayList;
 import java.util.function.Function;
 import java.util.function.IntFunction;
 
-import com.cyberbotics.webots.controller.Robot;
-
 import edu.wpi.first.hal.HALValue;
 import edu.wpi.first.hal.sim.CallbackStore;
 import edu.wpi.first.hal.sim.NotifyCallback;
@@ -21,13 +19,14 @@ public class SimRegisterer {
     private static final ArrayDeque<PortDevice> devices = new ArrayDeque<>();
     private static final ArrayDeque<String> miscDevices = new ArrayDeque<>();
     private static final ArrayList<CallbackStore> callbacks = new ArrayList<>();
-    private static Robot robot;
 
     static {
         SimUtils.registerSimDeviceCreatedCallback("", MISC_DEVICE_CALLBACK, true);
         registerDeviceType("PWM", SensorUtil.kPwmChannels, PWMSim::new, PWMSim::getInitialized, PWMSim::registerInitializedCallback);
-        SimUtils.registerPeriodicMethod(SimRegisterer::periodic);
+        Simulation.registerPeriodicMethod(SimRegisterer::periodic);
     }
+
+    public static void init() {}
 
     private static <T> void registerDeviceType(String type, int max, IntFunction<T> newFunc, Function<T, Boolean> isInitalized, CallbackRegisterFunc<T> registerFunc) {
         for(int i = 0; i < max; i++) {
@@ -42,21 +41,17 @@ public class SimRegisterer {
         }
     }
 
-    public static void init(Robot robot) {
-        SimRegisterer.robot = robot;
-    }
-
     public static void periodic() {
         while(!devices.isEmpty()) {
             PortDevice device = devices.poll();
             if(device.type.equals("PWM")) {
-                callbacks.add(new PWMSim(device.port).registerSpeedCallback(new WebotsMotorForwarder(robot, "PWM_" + device.port), true));
+                callbacks.add(new PWMSim(device.port).registerSpeedCallback(new WebotsMotorForwarder(Simulation.robot, "PWM_" + device.port), true));
             }
         }
         while(!miscDevices.isEmpty()) {
             String deviceName = miscDevices.poll();
             if(deviceName.startsWith("Talon") || deviceName.startsWith("Victor")) {
-                final WebotsMotorForwarder fwdr = new WebotsMotorForwarder(robot, deviceName);
+                final WebotsMotorForwarder fwdr = new WebotsMotorForwarder(Simulation.robot, deviceName);
             SimUtils.registerValueChangedCallback(new SimDeviceSim(deviceName), "Motor Output",
                 (name, handle, readonly, value) -> fwdr.callback(name, value), true);
             }

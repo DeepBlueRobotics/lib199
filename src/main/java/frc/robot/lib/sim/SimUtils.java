@@ -24,16 +24,7 @@ public final class SimUtils {
     private static final HashMap<SimValue, HALValue> lastData = new HashMap<>();
 
     static {
-        registerPeriodicMethod(SimUtils::periodic);
-    }
-
-    public static void registerPeriodicMethod(Runnable method) {
-        new Subsystem() {
-            @Override
-            public void periodic() {
-                method.run();
-            }
-        }.register();
+        Simulation.registerPeriodicMethod(SimUtils::periodic);
     }
 
     public static void registerSimDeviceCreatedCallback(String prefix, SimDeviceCallback callback, boolean initialNotify) {

@@ -20,23 +20,22 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RamseteCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
-import frc.robot.lib.sim.SimRegisterer;
+import frc.robot.lib.sim.Simulation;
 import frc.robot.subsystems.Drivetrain;
 
 public class Robot extends TimedRobot {
   private RobotContainer robotContainer;
-  private com.cyberbotics.webots.controller.Robot robot;
-  private int timeStep;
   private SequentialCommandGroup fullRoutine;
 
   @Override
+  public void simulationInit() {
+    SimConfig.initConfig();
+    Simulation.startSimulation();
+  }
+
+  @Override
   public void robotInit() {
-    robot = new com.cyberbotics.webots.controller.Robot();
-    timeStep = (int) Math.round(robot.getBasicTimeStep());
-    SimRegisterer.init(robot);
-    robotContainer = new RobotContainer(robot);
-    // Make sure to remove the robot when the WPIlib simulation ends
-    Runtime.getRuntime().addShutdownHook(new Thread(robot::delete));
+    robotContainer = new RobotContainer();
 
     // Load a path to follow and create a RamseteCommand for that path
     try {
@@ -57,7 +56,6 @@ public class Robot extends TimedRobot {
   @Override
   public void robotPeriodic() {
     CommandScheduler.getInstance().run();
-    if (RobotBase.isSimulation()) robot.step(timeStep);
   }
 
   @Override
