@@ -1,7 +1,7 @@
 package frc.robot.lib.sim;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.function.Function;
 import java.util.function.IntFunction;
 
@@ -18,8 +18,8 @@ import edu.wpi.first.wpilibj.SensorUtil;
 public class SimRegisterer {
     
     private static final SimDeviceCallback MISC_DEVICE_CALLBACK = SimRegisterer::callback;
-    private static final ArrayDeque<PortDevice> devices = new ArrayDeque<>();
-    private static final ArrayDeque<String> miscDevices = new ArrayDeque<>();
+    private static final ConcurrentLinkedDeque<PortDevice> devices = new ConcurrentLinkedDeque<>();
+    private static final ConcurrentLinkedDeque<String> miscDevices = new ConcurrentLinkedDeque<>();
     private static final ArrayList<CallbackStore> callbacks = new ArrayList<>();
 
     static {
@@ -87,9 +87,10 @@ public class SimRegisterer {
         }
     }
 
-    //Callback methods which place new devices in a processing queue which is processed every robot period.
-    //The WPILib callbacks are notified as part of the device creation. This process ensures that the devices complete their setup process.
+    //Callback methods which place new devices in a processing queue which is processed every robot period
+    //The WPILib callbacks are notified as part of the device creation. This process ensures that the devices complete their setup process
     //This is especially important for SimDevice's because their initalized callbacks can be notified before their values have been created
+    //Queuing also ensures that callbacks (which are usually executed asycronously) are processed syncronously with the rest of the robot code
 
     //Callback for when a Miscellaneous Device is registered
     private static void callback(String name, int handle) {
