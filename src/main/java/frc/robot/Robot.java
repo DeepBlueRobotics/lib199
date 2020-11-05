@@ -10,19 +10,19 @@ package frc.robot;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
+import frc.robot.lib.sim.SimRegisterer;
 
 public class Robot extends TimedRobot {
   private RobotContainer robotContainer;
   private com.cyberbotics.webots.controller.Robot robot;
   private int timeStep;
-  private SequentialCommandGroup fullRoutine;
 
   @Override
   public void robotInit() {
     robot = new com.cyberbotics.webots.controller.Robot();
-    robotContainer = new RobotContainer(robot);
     timeStep = (int) Math.round(robot.getBasicTimeStep());
+    SimRegisterer.init(robot);
+    robotContainer = new RobotContainer(robot);
     // Make sure to remove the robot when the WPIlib simulation ends
     Runtime.getRuntime().addShutdownHook(new Thread(robot::delete));
   }
@@ -43,9 +43,6 @@ public class Robot extends TimedRobot {
 
   @Override
   public void autonomousInit() {
-    if (fullRoutine != null) {
-      fullRoutine.schedule();
-    }
   }
 
   @Override

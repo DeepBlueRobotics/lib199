@@ -1,8 +1,9 @@
-package frc.robot.lib;
+package frc.robot.lib.sim;
 
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 
 import edu.wpi.first.wpilibj.Talon;
+import frc.robot.lib.Mocks;
 
 public class MockTalonSRX extends MockPhoenixController {
 

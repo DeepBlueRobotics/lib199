@@ -1,8 +1,9 @@
-package frc.robot.lib;
+package frc.robot.lib.sim;
 
 import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
 
 import edu.wpi.first.wpilibj.VictorSP;
+import frc.robot.lib.Mocks;
 
 public class MockVictorSPX extends MockPhoenixController {
     public MockVictorSPX(int portPWM) {
