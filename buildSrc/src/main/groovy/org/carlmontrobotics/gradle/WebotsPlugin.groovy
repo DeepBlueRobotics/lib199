@@ -57,18 +57,20 @@ class WebotsPlugin implements Plugin<Project> {
         }
 
         def ldpath = webots_home + "/lib/controller"
-        project.repositories.flatDir([ dirs: ldpath+"/java"])
-        def controllerJar = project.files(ldpath+"/java/Controller.jar")
+        project.repositories.flatDir([ dirs: ldpath + "/java"])
+        def controllerJar = project.files(ldpath + "/java/Controller.jar")
         project.dependencies.add("compile", controllerJar)
 
-        def libs = project.files(project.fileTree(ldpath).getFiles())
-        project.dependencies.add("nativeDesktopLib", libs)
-        
+        addNativeDesktopLibs(project, ldpath);
         if (os.isWindows()) {
-            def mingw64libs = project.files(project.fileTree(webots_home+"/msys64/mingw64/bin").getFiles())
-            def mingw64cpplibs = project.files(project.fileTree(webots_home+"/msys64/mingw64/bin/cpp").getFiles())
-            project.dependencies.add("nativeDesktopLib", mingw64libs)
-            project.dependencies.add("nativeDesktopLib", mingw64cpplibs)
+            addNativeDesktopLibs(project, webots_home + "/msys64/mingw64/bin");
+            addNativeDesktopLibs(project, webots_home + "/msys64/mingw64/bin/cpp");
         }
+    }
+    
+    void addNativeDesktopLibs(Project project, String libDir) {
+        def dllPatterns = ["**/*.so*", "**/*.so", "**/*.dll", "**/*.dylib"]
+        def libs = project.files(project.fileTree([ dir: libDir, includes: dllPatterns]).getFiles())
+        project.dependencies.add("nativeDesktopLib", libs)
     }
 }
