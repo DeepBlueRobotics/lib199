@@ -11,8 +11,6 @@ import edu.wpi.first.wpilibj.Joystick;
 import frc.robot.commands.Drive;
 import frc.robot.subsystems.Drivetrain;
 
-import com.cyberbotics.webots.controller.Robot;
-
 public class RobotContainer {
 
   private final Drivetrain drivetrain;

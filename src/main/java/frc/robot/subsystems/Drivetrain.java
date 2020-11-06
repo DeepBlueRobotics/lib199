@@ -1,16 +1,10 @@
 package frc.robot.subsystems;
 
-import com.cyberbotics.webots.controller.Gyro;
-import com.cyberbotics.webots.controller.PositionSensor;
-import com.cyberbotics.webots.controller.Robot;
-
 import com.kauailabs.navx.frc.AHRS;
 import com.revrobotics.CANEncoder;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMaxLowLevel;
 
-import edu.wpi.first.hal.HALValue;
-import edu.wpi.first.hal.sim.SimDeviceSim;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.SerialPort.Port;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
