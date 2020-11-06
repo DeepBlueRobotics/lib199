@@ -17,6 +17,7 @@ import edu.wpi.first.wpilibj.geometry.Pose2d;
 import edu.wpi.first.wpilibj.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.kinematics.DifferentialDriveKinematics;
 import edu.wpi.first.wpilibj.kinematics.DifferentialDriveOdometry;
+import edu.wpi.first.wpilibj.simulation.CallbackStore;
 import edu.wpi.first.wpilibj.simulation.Field2d;
 import edu.wpi.first.wpilibj.simulation.PWMSim;
 import edu.wpi.first.wpilibj.simulation.SimDeviceSim;
@@ -44,6 +45,7 @@ public class Drivetrain extends SubsystemBase {
     private PositionSensor leftEncSim;
     private PositionSensor rightEncSim;
     private Gyro gyroSim;
+    private CallbackStore[] callbacks = new CallbackStore[4];
 
     private SimDeviceSim wpiGyroSim;
     private double angle;
@@ -86,10 +88,10 @@ public class Drivetrain extends SubsystemBase {
             wpiGyroSim = new SimDeviceSim("navX-Sensor[0]");
 
             // For each motor controller, register a "speed callback" which calls WebotsMotorForwarder.callback() everytime the speed is set
-            new PWMSim(Constants.CANPorts.dtFrontLeft).registerSpeedCallback(new WebotsMotorForwarder(robot, "Front Left", Constants.neoMotorConstant), true);
-            new PWMSim(Constants.CANPorts.dtFrontRight).registerSpeedCallback(new WebotsMotorForwarder(robot, "Front Right", Constants.neoMotorConstant), true);
-            new PWMSim(Constants.CANPorts.dtBackLeft).registerSpeedCallback(new WebotsMotorForwarder(robot, "Back Left", Constants.neoMotorConstant), true);
-            new PWMSim(Constants.CANPorts.dtBackRight).registerSpeedCallback(new WebotsMotorForwarder(robot, "Back Right", Constants.neoMotorConstant), true);
+            callbacks[0] = new PWMSim(Constants.CANPorts.dtFrontLeft).registerSpeedCallback(new WebotsMotorForwarder(robot, "Front Left", Constants.neoMotorConstant), true);
+            callbacks[1] = new PWMSim(Constants.CANPorts.dtFrontRight).registerSpeedCallback(new WebotsMotorForwarder(robot, "Front Right", Constants.neoMotorConstant), true);
+            callbacks[2] = new PWMSim(Constants.CANPorts.dtBackLeft).registerSpeedCallback(new WebotsMotorForwarder(robot, "Back Left", Constants.neoMotorConstant), true);
+            callbacks[3] = new PWMSim(Constants.CANPorts.dtBackRight).registerSpeedCallback(new WebotsMotorForwarder(robot, "Back Right", Constants.neoMotorConstant), true);
         } 
         // If not simulated, go about the usual business
         else {
