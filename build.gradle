@@ -1,8 +1,11 @@
 plugins {
     id "java"
     id "org.carlmontrobotics.gradle.webots-plugin" // Defined in ./buildSrc
-    id "edu.wpi.first.GradleRIO" version "2020.3.2"
+    id "edu.wpi.first.GradleRIO" version "2021.1.1-beta-1"
 }
+
+wpi.maven.useDevelopment = true
+wpi.wpilibVersion = '2021.+'
 
 sourceCompatibility = JavaVersion.VERSION_11
 targetCompatibility = JavaVersion.VERSION_11

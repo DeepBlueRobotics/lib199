@@ -4,7 +4,7 @@ import com.cyberbotics.webots.controller.Motor;
 import com.cyberbotics.webots.controller.Robot;
 
 import edu.wpi.first.hal.HALValue;
-import edu.wpi.first.hal.sim.NotifyCallback;
+import edu.wpi.first.hal.simulation.NotifyCallback;
 
 public class WebotsMotorForwarder implements NotifyCallback {
 

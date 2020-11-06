@@ -10,8 +10,6 @@ import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMaxLowLevel;
 
 import edu.wpi.first.hal.HALValue;
-import edu.wpi.first.hal.sim.PWMSim;
-import edu.wpi.first.hal.sim.SimDeviceSim;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.SerialPort.Port;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
@@ -19,11 +17,13 @@ import edu.wpi.first.wpilibj.geometry.Pose2d;
 import edu.wpi.first.wpilibj.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.kinematics.DifferentialDriveKinematics;
 import edu.wpi.first.wpilibj.kinematics.DifferentialDriveOdometry;
+import edu.wpi.first.wpilibj.simulation.Field2d;
+import edu.wpi.first.wpilibj.simulation.PWMSim;
+import edu.wpi.first.wpilibj.simulation.SimDeviceSim;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import frc.robot.Constants;
 import frc.robot.WebotsMotorForwarder;
-import frc.robot.lib.Field2d;
 import frc.robot.lib.MockSparkMax;
 
 public class Drivetrain extends SubsystemBase {
