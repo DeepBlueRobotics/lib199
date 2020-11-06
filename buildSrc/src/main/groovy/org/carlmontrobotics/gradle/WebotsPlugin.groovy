@@ -13,6 +13,17 @@ import org.gradle.jvm.tasks.Jar
 import org.gradle.api.tasks.StopActionException
 import org.slf4j.LoggerFactory
 
+/* 
+    Adds support for building a running a Webots extern controller using the 
+    local Webots installation.
+    
+    Specifically, it adds Controller.jar as a "compile" dependency and adds
+    the necessary dlls to the "nativeDesktopLib" dependency.
+
+    If the WEBOTS_HOME environment variable is set, it will assume that is 
+    where Webots is installed. Otherwise, it will look for it in the default 
+    installation locations. 
+*/
 @CompileStatic
 class WebotsPlugin implements Plugin<Project> {
 
@@ -30,7 +41,7 @@ class WebotsPlugin implements Plugin<Project> {
         }
 
         if (dirs_to_check.size() == 0) {
-            log.info "WEBOTS_HOME environment variable is not set, so trying to set it automatically."
+            log.info "WEBOTS_HOME environment variable is not set, so looking for Webots installation."
             if (os.isLinux()) {
                 dirs_to_check.add "/usr/local/webots"
             } else if (os.isMacOsX()) {
@@ -52,7 +63,7 @@ class WebotsPlugin implements Plugin<Project> {
         }
 
         if (webots_home == "") {
-            log.warn "Can't find Webots installation directory. Install Webots and/or set WEBOTS_HOME environment variable for Webots support."
+            log.warn "Can't find Webots installation. To build and run a Webots extern controller, install Webots and, if necessary, set WEBOTS_HOME environment variable ."
             return
         }
 
