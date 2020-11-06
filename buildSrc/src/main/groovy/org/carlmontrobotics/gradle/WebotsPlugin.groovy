@@ -63,5 +63,12 @@ class WebotsPlugin implements Plugin<Project> {
 
         def libs = project.files(project.fileTree(ldpath).getFiles())
         project.dependencies.add("nativeDesktopLib", libs)
+        
+        if (os.isWindows()) {
+            def mingw64libs = project.files(project.fileTree(webots_home+"/msys64/mingw64/bin").getFiles())
+            def mingw64cpplibs = project.files(project.fileTree(webots_home+"/msys64/mingw64/bin/cpp").getFiles())
+            project.dependencies.add("nativeDesktopLib", mingw64libs)
+            project.dependencies.add("nativeDesktopLib", mingw64cpplibs)
+        }
     }
 }
