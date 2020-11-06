@@ -17,11 +17,13 @@ public class WebotsMotorForwarder implements NotifyCallback {
         motor.setPosition(Double.POSITIVE_INFINITY);
         motor.setVelocity(0);
         this.motorConstant = motorConstant;
+        System.out.println("WebotsMotorForwarder created for motor " + motor.getName());
     }
 
     @Override
     public void callback(String name, HALValue value) {
         motor.setVelocity(motorConstant * value.getDouble());
+        System.out.println("called setVelocity(" + motorConstant * value.getDouble() + ") for motor " + motor.getName());
     }
 
 }
