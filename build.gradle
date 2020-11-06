@@ -1,5 +1,6 @@
 plugins {
     id "java"
+    id "org.carlmontrobotics.gradle.webots-plugin"
     id "edu.wpi.first.GradleRIO" version "2020.3.2"
 }
 
@@ -36,12 +37,6 @@ deploy {
         }
     }
 }
- 
-repositories {
-    flatDir {
-        dirs 'libs'
-    }
-}
 
 // Set this to true to enable desktop support.
 def includeDesktopSupport = true
@@ -66,9 +61,6 @@ dependencies {
     simulation wpi.deps.sim.gui(wpi.platforms.desktop, false)
     compile group: 'org.apache.commons', name: 'commons-csv', version: '1.6'
     compile 'org.mockito:mockito-core:3.2.4'
-    implementation name: 'Controller'
-    compile files("libs/Controller.jar")
-    nativeDesktopZip name: 'dlls', ext: 'zip'
 }
 
 // Setting up my Jar File. In this case, adding all libraries into the main jar ('fat jar')
