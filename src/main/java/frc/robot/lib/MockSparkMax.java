@@ -6,9 +6,9 @@ import com.revrobotics.CANEncoder;
 import com.revrobotics.CANError;
 import com.revrobotics.CANSparkMax;
 
-import edu.wpi.first.hal.sim.EncoderSim;
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.Spark;
+import edu.wpi.first.wpilibj.simulation.EncoderSim;
 
 public class MockSparkMax extends CANSparkMax {
     // Assign the CAN port to a PWM port so it works with the simulator. Not a fan of this solution though
@@ -80,7 +80,7 @@ class MockedSparkEncoder extends CANEncoder {
         // Match motor on CAN 0 with channels [0, 1], CAN 1 to channels [2, 3], etc.
         // Probably not the best way to do it but it works
         encoder = new Encoder(2 * id, 2 * id + 1);
-        encoderSim = new EncoderSim(encodersCreated);
+        encoderSim = EncoderSim.createForIndex(encodersCreated);
         encodersCreated++;
     }
 
