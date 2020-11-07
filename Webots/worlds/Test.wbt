@@ -35,12 +35,12 @@ Robot {
             }
             RotationalMotor {
               name "PWM_2"
-              maxVelocity 21.8525
+              maxVelocity 87.4102
             }
           ]
           endPoint Solid {
             translation -0.167 0 -0.232
-            rotation 1 1.3327719896439287e-10 1.332767094108046e-10 1.5708
+            rotation 1 1.9992088122702872e-10 1.999201468779763e-10 1.5708
             children [
               Shape {
                 appearance PBRAppearance {
@@ -70,12 +70,12 @@ Robot {
             }
             RotationalMotor {
               name "PWM_0"
-              maxVelocity 21.8525
+              maxVelocity 87.4102
             }
           ]
           endPoint Solid {
             translation 0.167 0 -0.232
-            rotation 1 1.333056997857223e-10 1.3330521012744482e-10 1.5708
+            rotation 1 1.9996367177204513e-10 1.999629372658144e-10 1.5708
             children [
               Shape {
                 appearance PBRAppearance {
@@ -102,7 +102,7 @@ Robot {
             }
             RotationalMotor {
               name "PWM_3"
-              maxVelocity 21.8525
+              maxVelocity 87.4102
             }
           ]
           endPoint Solid {
@@ -134,7 +134,7 @@ Robot {
             }
             RotationalMotor {
               name "PWM_1"
-              maxVelocity 21.8525
+              maxVelocity 87.4102
             }
           ]
           endPoint Solid {
