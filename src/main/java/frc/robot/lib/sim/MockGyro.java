@@ -3,7 +3,7 @@ package frc.robot.lib.sim;
 import com.cyberbotics.webots.controller.Gyro;
 
 import edu.wpi.first.hal.HALValue;
-import edu.wpi.first.hal.sim.SimDeviceSim;
+import edu.wpi.first.wpilibj.simulation.SimDeviceSim;
 
 public final class MockGyro implements Runnable {
 

@@ -1,19 +1,17 @@
 package frc.robot.lib.sim;
 
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 import edu.wpi.first.hal.HALValue;
 import edu.wpi.first.hal.SimValue;
-import edu.wpi.first.hal.sim.SimDeviceCallback;
-import edu.wpi.first.hal.sim.SimDeviceSim;
-import edu.wpi.first.hal.sim.SimValueCallback;
-import edu.wpi.first.hal.sim.mockdata.SimDeviceDataJNI;
+import edu.wpi.first.hal.simulation.SimDeviceCallback;
+import edu.wpi.first.hal.simulation.SimValueCallback;
+import edu.wpi.first.hal.simulation.SimDeviceDataJNI.SimDeviceInfo;
+import edu.wpi.first.wpilibj.simulation.SimDeviceSim;
 
 // Provides utility methods to be used in SimRegister and other simulation code.
 // These are mostly (only) to patch flaws in WPILib for which fixes are still being implemented
@@ -67,8 +65,8 @@ public final class SimUtils {
     
     // Notify registered callbacks of new devices
     public static void periodic() {
-        // Map existing devices to their accessible info counterparts and store them in a new list
-        List<SimDeviceInfo> devices = Arrays.stream(SimDeviceSim.enumerateDevices("")).map(SimDeviceInfo::new).collect(Collectors.toList());
+        // Get existing devices
+        List<SimDeviceInfo> devices = Arrays.asList(SimDeviceSim.enumerateDevices(""));
         // For each device callback
         for(SimDeviceCallback callback : prefixes.keySet()) {
             String prefix = prefixes.get(callback);
@@ -102,46 +100,6 @@ public final class SimUtils {
                 callback.callback("", -1, false, lastData.get(value));
             }
         }
-    }
-
-    // All of this code is for accessing protected WPILib fields (See comment below)
-
-    public static <T> T getPrivateField(Object obj, String fieldName, ExceptionBiFunction<Field, Object, T> getFunc) {
-        try {
-            Field field = obj.getClass().getDeclaredField(fieldName);
-            field.setAccessible(true);
-            return getFunc.apply(field, obj);
-        } catch(Exception e) {
-            return null;
-        }
-    }
-
-    // These classes are used to access package fields of their corresponding WPILib classes until the issue (#2526) is fixed
-    public static final class SimDeviceInfo {
-        public final String name;
-        public final int handle;
-
-        public SimDeviceInfo(SimDeviceDataJNI.SimDeviceInfo info) {
-          this.name = (String)getPrivateField(info, "name", Field::get);
-          this.handle = getPrivateField(info, "handle", Field::getInt);
-        }
-    }
-
-    public static class SimValueInfo {
-        public final String name;
-        public final int handle;
-        public final boolean readonly;
-        public final HALValue value;
-        public SimValueInfo(SimDeviceDataJNI.SimValueInfo info) {
-            this.name = (String)getPrivateField(info, "name", Field::get);
-            this.handle = getPrivateField(info, "handle", Field::getInt);
-            this.readonly = getPrivateField(info, "readonly", Field::getBoolean);
-            this.value = (HALValue)getPrivateField(info, "value", Field::get);
-        }
-    }
-
-    public static interface ExceptionBiFunction<T, U, R> {
-        public R apply(T arg1, U arg2) throws Exception;
     }
 
 }

@@ -6,12 +6,12 @@ import java.util.function.Function;
 import java.util.function.IntFunction;
 
 import edu.wpi.first.hal.HALValue;
-import edu.wpi.first.hal.sim.CallbackStore;
-import edu.wpi.first.hal.sim.NotifyCallback;
-import edu.wpi.first.hal.sim.PWMSim;
-import edu.wpi.first.hal.sim.SimDeviceCallback;
-import edu.wpi.first.hal.sim.SimDeviceSim;
+import edu.wpi.first.hal.simulation.NotifyCallback;
+import edu.wpi.first.hal.simulation.SimDeviceCallback;
 import edu.wpi.first.wpilibj.SensorUtil;
+import edu.wpi.first.wpilibj.simulation.CallbackStore;
+import edu.wpi.first.wpilibj.simulation.PWMSim;
+import edu.wpi.first.wpilibj.simulation.SimDeviceSim;
 
 // Performs automatic registration of callbacks detecting both the initalization of new devices as well as data callbacks for devices such as Motors, Gyros, etc.
 // This allows us to automatically link these devices to Webots, reducing the amount of code we would have to change from a standard robot project
