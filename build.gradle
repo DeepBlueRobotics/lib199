@@ -3,9 +3,6 @@ plugins {
     id "edu.wpi.first.GradleRIO" version "2021.1.1-beta-1"
 }
 
-wpi.maven.useDevelopment = true
-wpi.wpilibVersion = '2021.+'
-
 sourceCompatibility = JavaVersion.VERSION_11
 targetCompatibility = JavaVersion.VERSION_11
 
@@ -39,7 +36,7 @@ deploy {
         }
     }
 }
- 
+
 repositories {
     flatDir {
         dirs 'libs'
@@ -47,12 +44,11 @@ repositories {
 }
 
 // Set this to true to enable desktop support.
-def includeDesktopSupport = true
+def includeDesktopSupport = false
 
 // Defining my dependencies. In this case, WPILib (+ friends), and vendor libraries.
 // Also defines JUnit 4.
 dependencies {
-
     implementation wpi.deps.wpilib()
     nativeZip wpi.deps.wpilibJni(wpi.platforms.roborio)
     nativeDesktopZip wpi.deps.wpilibJni(wpi.platforms.desktop)
@@ -62,13 +58,18 @@ dependencies {
     nativeZip wpi.deps.vendor.jni(wpi.platforms.roborio)
     nativeDesktopZip wpi.deps.vendor.jni(wpi.platforms.desktop)
 
-    testImplementation 'junit:junit:4.12'
+    testImplementation 'junit:junit:4.13'
 
     // Enable simulation gui support. Must check the box in vscode to enable support
     // upon debugging
     simulation wpi.deps.sim.gui(wpi.platforms.desktop, false)
-    compile group: 'org.apache.commons', name: 'commons-csv', version: '1.6'
-    compile 'org.mockito:mockito-core:3.2.4'
+    simulation wpi.deps.sim.driverstation(wpi.platforms.desktop, false)
+
+    // Websocket extensions require additional configuration.
+    // simulation wpi.deps.sim.ws_server(wpi.platforms.desktop, false)
+    // simulation wpi.deps.sim.ws_client(wpi.platforms.desktop, false)
+    compile group: 'org.apache.commons', name: 'commons-csv', version: '1.8'
+    compile 'org.mockito:mockito-core:3.6.0'
     implementation name: 'Controller'
     compile files("libs/Controller.jar")
     nativeDesktopZip name: 'dlls', ext: 'zip'

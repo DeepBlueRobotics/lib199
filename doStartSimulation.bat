@@ -10,7 +10,7 @@ start "" %WORLD_PATH%
 popd
 timeout /T 3 /nobreak
 pushd %~3
-call gradlew simulateJava -Dorg.gradle.java.home="C:\Users\Public\wpilib\2020\jdk"
+call gradlew simulateJava -Dorg.gradle.java.home="C:\Users\Public\wpilib\2021\jdk"
 popd
 endlocal
 @echo on
