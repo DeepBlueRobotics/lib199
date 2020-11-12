@@ -80,7 +80,7 @@ class WebotsPlugin implements Plugin<Project> {
     }
     
     void addNativeDesktopLibs(Project project, String libDir) {
-        def dllPatterns = ["**/*.so*", "**/*.so", "**/*.dll", "**/*.dylib"]
+        def dllPatterns = ["**/*.so*", "**/*.so", "**/*.dll", "**/*.dylib", "**/*.jnilib"]
         def libs = project.files(project.fileTree([ dir: libDir, includes: dllPatterns]).getFiles())
         project.dependencies.add("nativeDesktopLib", libs)
     }
