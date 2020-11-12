@@ -5,7 +5,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import com.cyberbotics.webots.controller.Robot;
 
 import edu.wpi.first.wpilibj.RobotBase;
-import edu.wpi.first.wpilibj2.command.Subsystem;
 
 public final class Simulation {
 
@@ -25,15 +24,16 @@ public final class Simulation {
             timeStep = (int) Math.round(robot.getBasicTimeStep());
             timeStepMillis = robot.getBasicTimeStep() / 1000;
             // Link to WPILib periodic loop
-            new Subsystem() {
-                @Override
-                public void periodic() {
+            Thread updater = new Thread(() -> {
+                while(true) {
                     // Sync With Webots
                     robot.step(timeStep);
                     // Run Simulation Periodic Methods
                     periodicMethods.forEach(Runnable::run);
                 }
-            }.register();
+            });
+            updater.setDaemon(true);
+            updater.start();
             // Register callbacks
             SimRegisterer.init();
         } else {
