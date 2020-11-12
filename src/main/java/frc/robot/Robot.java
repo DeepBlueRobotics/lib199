@@ -7,30 +7,54 @@
 
 package frc.robot;
 
-import edu.wpi.first.wpilibj.RobotBase;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.controller.RamseteController;
+import edu.wpi.first.wpilibj.trajectory.Trajectory;
+import edu.wpi.first.wpilibj.trajectory.TrajectoryUtil;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import frc.robot.lib.sim.SimRegisterer;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.RamseteCommand;
+import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
+import frc.robot.lib.sim.Simulation;
+import frc.robot.subsystems.Drivetrain;
 
 public class Robot extends TimedRobot {
   private RobotContainer robotContainer;
-  private com.cyberbotics.webots.controller.Robot robot;
-  private int timeStep;
+  private SequentialCommandGroup fullRoutine;
+
+  @Override
+  public void simulationInit() {
+    SimConfig.initConfig();
+    Simulation.startSimulation();
+  }
 
   @Override
   public void robotInit() {
-    robot = new com.cyberbotics.webots.controller.Robot();
-    timeStep = (int) Math.round(robot.getBasicTimeStep());
-    SimRegisterer.init(robot);
-    robotContainer = new RobotContainer(robot);
-    // Make sure to remove the robot when the WPIlib simulation ends
-    Runtime.getRuntime().addShutdownHook(new Thread(robot::delete));
+    robotContainer = new RobotContainer();
+
+    // Load a path to follow and create a RamseteCommand for that path
+    try {
+      String trajectoryName = "Bruh";
+      Path pathToTrajectoryJson = Paths.get(System.getProperty("user.dir") + "/Pathweaver/output/" + trajectoryName + ".wpilib.json");
+      Trajectory trajectory = TrajectoryUtil.fromPathweaverJson(pathToTrajectoryJson);
+      Drivetrain dt = robotContainer.getDrivetrain();
+      
+      RamseteCommand followPath = new RamseteCommand(trajectory, dt::getPose, new RamseteController(), dt.getKinematics(), dt::tankDriveDirect, dt);
+      InstantCommand loadOdometry = new InstantCommand(() -> dt.loadOdometry(trajectory.getInitialPose(), dt.getHeading()));
+      fullRoutine = loadOdometry.andThen(followPath, new InstantCommand(() -> dt.tankDrive(0, 0), dt));
+    } catch (IOException io) {
+      io.printStackTrace();
+      fullRoutine = null;
+    }
   }
 
   @Override
   public void robotPeriodic() {
     CommandScheduler.getInstance().run();
-    if (RobotBase.isSimulation()) robot.step(timeStep);
   }
 
   @Override
@@ -43,6 +67,9 @@ public class Robot extends TimedRobot {
 
   @Override
   public void autonomousInit() {
+    if (fullRoutine != null) {
+      fullRoutine.schedule();
+    }
   }
 
   @Override
