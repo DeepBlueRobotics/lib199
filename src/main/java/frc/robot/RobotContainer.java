@@ -11,15 +11,13 @@ import edu.wpi.first.wpilibj.Joystick;
 import frc.robot.commands.Drive;
 import frc.robot.subsystems.Drivetrain;
 
-import com.cyberbotics.webots.controller.Robot;
-
 public class RobotContainer {
 
   private final Drivetrain drivetrain;
   private final Joystick joystick = new Joystick(Constants.joystickPort);
 
-  public RobotContainer(Robot robot) {
-    drivetrain = new Drivetrain(robot);
+  public RobotContainer() {
+    drivetrain = new Drivetrain();
     drivetrain.setDefaultCommand(new Drive(drivetrain, joystick));
   }
 
