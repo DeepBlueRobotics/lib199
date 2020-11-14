@@ -1,0 +1,13 @@
+plugins {
+    id 'java-gradle-plugin'
+}
+
+gradlePlugin {
+    plugins {
+        simplePlugin {
+            id = 'org.carlmontrobotics.gradle.webots-plugin'
+            implementationClass = 'org.carlmontrobotics.gradle.WebotsPlugin'
+        }
+    }
+}
+
