@@ -6,6 +6,7 @@ plugins {
 
 wpi.maven.useDevelopment = true
 wpi.wpilibVersion = '2021.+'
+wpi.opencvVersion = '3.4.7-5' // Remove when officially released
 
 sourceCompatibility = JavaVersion.VERSION_11
 targetCompatibility = JavaVersion.VERSION_11
