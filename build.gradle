@@ -6,7 +6,13 @@ plugins {
 
 wpi.maven.useDevelopment = true
 wpi.wpilibVersion = '2021.+'
-wpi.opencvVersion = '3.4.7-5' // Remove when officially released
+
+// Ensure opencv version is high enough to avoid missing libs on Mac
+import org.gradle.util.VersionNumber
+def minOpencvVersionReq = VersionNumber.parse('3.4.7-5')
+if (VersionNumber.parse(wpi.opencvVersion) < minOpencvVersionReq) {
+    wpi.opencvVersion = minOpencvVersionReq
+}
 
 sourceCompatibility = JavaVersion.VERSION_11
 targetCompatibility = JavaVersion.VERSION_11
