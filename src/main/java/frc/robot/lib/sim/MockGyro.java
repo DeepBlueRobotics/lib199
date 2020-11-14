@@ -5,6 +5,10 @@ import com.cyberbotics.webots.controller.Gyro;
 import edu.wpi.first.hal.HALValue;
 import edu.wpi.first.wpilibj.simulation.SimDeviceSim;
 
+/**
+ * Handles the linking of the simulated AHRS gyro to Webots
+ * @see com.kauailabs.navx.frc.AHRS
+ */
 public final class MockGyro implements Runnable {
 
     private static boolean gyroCreated = false;
@@ -12,6 +16,9 @@ public final class MockGyro implements Runnable {
     private static Gyro webotsGyro;
     private static double angle = 0;
 
+    /**
+     * Links the simulated AHRS gyro to Webots if it has not been already
+     */
     public static void linkGyro() {
         if(gyroCreated) {
             return;
