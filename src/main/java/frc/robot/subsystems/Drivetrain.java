@@ -25,10 +25,6 @@ public class Drivetrain extends SubsystemBase {
 
     private final CANSparkMax leftMaster, rightMaster, leftSlave, rightSlave;
     private final CANEncoder leftEnc, rightEnc;
-
-    private final AHRS gyro = new AHRS(Port.kUSB1);
-    private final boolean gyroReversed = false;
-
     private final DifferentialDrive differentialDrive;
     private final DifferentialDriveKinematics kinematics;
     private DifferentialDriveOdometry odometry;
@@ -37,6 +33,9 @@ public class Drivetrain extends SubsystemBase {
     // For some reason it was not included in the edu.wpi.first.simulation package so I needed to add it manually.
     // TODO: This will be fixed in a future WPIlib version, so make sure to get rid of frc.robot.lib.Field2d.
     private final Field2d field = new Field2d();
+
+    private final AHRS gyro = new AHRS(Port.kUSB1);
+    private final boolean gyroReversed = false;
 
     public Drivetrain() {
         if (RobotBase.isSimulation()) {
@@ -70,12 +69,9 @@ public class Drivetrain extends SubsystemBase {
         odometry = new DifferentialDriveOdometry(Rotation2d.fromDegrees(getHeading()));
         kinematics = new DifferentialDriveKinematics(Constants.trackWidth);
 
-        // conversion is in m/rev
         double conversion = Constants.wheelDiameter * Math.PI / Constants.motorGearing;
         leftEnc.setPositionConversionFactor(conversion);
-        leftEnc.setVelocityConversionFactor(conversion / 60.);
         rightEnc.setPositionConversionFactor(conversion);
-        rightEnc.setVelocityConversionFactor(conversion / 60.);
     }
 
     @Override
