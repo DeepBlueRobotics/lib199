@@ -15,6 +15,7 @@ public class MockSparkMax extends CANSparkMax {
     private final int portPWM;
     private final Spark motorPWM;
     private CANEncoder encoder;
+    private IdleMode mode;
     private boolean isInverted;
     // Since we need to keep a record of all the motor's followers
     private static HashMap<Integer, Spark> followMap = new HashMap<Integer, Spark>();
@@ -41,6 +42,30 @@ public class MockSparkMax extends CANSparkMax {
     @Override
     public CANError follow(CANSparkMax leader) {
         if (!followMap.containsValue(motorPWM)) followMap.put(leader.getDeviceId(), motorPWM);
+        return CANError.kOk;
+    }
+
+    @Override
+    public CANError follow(ExternalFollower leader, int deviceID) {
+        if (leader != ExternalFollower.kFollowerDisabled) {
+            if (!followMap.containsValue(motorPWM)) followMap.put(deviceID, motorPWM);
+        }
+        return CANError.kOk;
+    }
+
+    @Override
+    public CANError setIdleMode(IdleMode mode) {
+        this.mode = mode;
+        return CANError.kOk;
+    }
+
+    @Override
+    public CANError enableVoltageCompensation(double nominalVoltage) {
+        return CANError.kOk;
+    }
+
+    @Override
+    public CANError setSmartCurrentLimit(int limit) {
         return CANError.kOk;
     }
 

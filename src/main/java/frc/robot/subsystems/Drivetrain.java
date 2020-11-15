@@ -3,9 +3,7 @@ package frc.robot.subsystems;
 import com.kauailabs.navx.frc.AHRS;
 import com.revrobotics.CANEncoder;
 import com.revrobotics.CANSparkMax;
-import com.revrobotics.CANSparkMaxLowLevel;
 
-import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.SerialPort.Port;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.geometry.Pose2d;
@@ -16,7 +14,7 @@ import edu.wpi.first.wpilibj.simulation.Field2d;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import frc.robot.Constants;
-import frc.robot.lib.sim.MockSparkMax;
+import frc.robot.lib.MotorControllerFactory;
 
 public class Drivetrain extends SubsystemBase {
     public enum Side {
@@ -38,24 +36,11 @@ public class Drivetrain extends SubsystemBase {
     private final boolean gyroReversed = false;
 
     public Drivetrain() {
-        if (RobotBase.isSimulation()) {
-            // Use the mockito code to create mocked/overriden versions of CANSparkMax objects
-            leftMaster = MockSparkMax.createMockSparkMax(Constants.CANPorts.dtFrontLeft,
-                    CANSparkMaxLowLevel.MotorType.kBrushless);
-            rightMaster = MockSparkMax.createMockSparkMax(Constants.CANPorts.dtFrontRight,
-                    CANSparkMaxLowLevel.MotorType.kBrushless);
-            leftSlave = MockSparkMax.createMockSparkMax(Constants.CANPorts.dtBackLeft,
-                    CANSparkMaxLowLevel.MotorType.kBrushless);
-            rightSlave = MockSparkMax.createMockSparkMax(Constants.CANPorts.dtBackRight,
-                    CANSparkMaxLowLevel.MotorType.kBrushless);
-        } 
-        // If not simulated, go about the usual business
-        else {
-            leftMaster = new CANSparkMax(Constants.CANPorts.dtFrontLeft, CANSparkMaxLowLevel.MotorType.kBrushless);
-            rightMaster = new CANSparkMax(Constants.CANPorts.dtFrontRight, CANSparkMaxLowLevel.MotorType.kBrushless);
-            leftSlave = new CANSparkMax(Constants.CANPorts.dtBackLeft, CANSparkMaxLowLevel.MotorType.kBrushless);
-            rightSlave = new CANSparkMax(Constants.CANPorts.dtBackRight, CANSparkMaxLowLevel.MotorType.kBrushless);
-        }
+        leftMaster = MotorControllerFactory.createSparkMax(Constants.CANPorts.dtFrontLeft);
+        rightMaster = MotorControllerFactory.createSparkMax(Constants.CANPorts.dtFrontRight);
+        leftSlave = MotorControllerFactory.createSparkMax(Constants.CANPorts.dtBackLeft);
+        rightSlave = MotorControllerFactory.createSparkMax(Constants.CANPorts.dtBackRight);
+
         leftEnc = leftMaster.getEncoder();
         rightEnc = rightMaster.getEncoder();
         differentialDrive = new DifferentialDrive(leftMaster, rightMaster);
