@@ -1,6 +1,14 @@
 plugins {
     id "java"
+    id "org.carlmontrobotics.gradle.webots-plugin" // Defined in ./buildSrc
     id "edu.wpi.first.GradleRIO" version "2021.1.1-beta-1"
+}
+
+// Ensure opencv version is high enough to avoid missing libs on Mac
+import org.gradle.util.VersionNumber
+def minOpencvVersionReq = VersionNumber.parse('3.4.7-5')
+if (VersionNumber.parse(wpi.opencvVersion) < minOpencvVersionReq) {
+    wpi.opencvVersion = minOpencvVersionReq
 }
 
 sourceCompatibility = JavaVersion.VERSION_11
@@ -37,12 +45,6 @@ deploy {
     }
 }
 
-repositories {
-    flatDir {
-        dirs 'libs'
-    }
-}
-
 // Set this to true to enable desktop support.
 def includeDesktopSupport = true
 
@@ -70,9 +72,6 @@ dependencies {
     // simulation wpi.deps.sim.ws_client(wpi.platforms.desktop, false)
     compile group: 'org.apache.commons', name: 'commons-csv', version: '1.8'
     compile 'org.mockito:mockito-core:3.6.0'
-    implementation name: 'Controller'
-    compile files("libs/Controller.jar")
-    nativeDesktopZip name: 'dlls', ext: 'zip'
 }
 
 // Setting up my Jar File. In this case, adding all libraries into the main jar ('fat jar')

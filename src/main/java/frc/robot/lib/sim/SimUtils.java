@@ -13,8 +13,10 @@ import edu.wpi.first.hal.simulation.SimValueCallback;
 import edu.wpi.first.hal.simulation.SimDeviceDataJNI.SimDeviceInfo;
 import edu.wpi.first.wpilibj.simulation.SimDeviceSim;
 
-// Provides utility methods to be used in SimRegister and other simulation code.
-// These are mostly (only) to patch flaws in WPILib for which fixes are still being implemented
+/**
+ * Provides utility methods to be used in SimRegister and other simulation code.
+ * These are mostly (only) to patch flaws in WPILib for which fixes are still being implemented
+ */
 public final class SimUtils {
 
     // Map Device Callbacks to their Prefixes
