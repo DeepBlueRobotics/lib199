@@ -1,6 +1,6 @@
 plugins {
     id "java"
-    id "org.carlmontrobotics.gradle.webots-plugin" // Defined in ./buildSrc
+    id "org.carlmontrobotics.webots" version "0.6"
     id "edu.wpi.first.GradleRIO" version "2021.1.1-beta-1"
 }
 
@@ -59,6 +59,7 @@ dependencies {
     implementation wpi.deps.vendor.java()
     nativeZip wpi.deps.vendor.jni(wpi.platforms.roborio)
     nativeDesktopZip wpi.deps.vendor.jni(wpi.platforms.desktop)
+    nativeDesktopLib webots.nativeLibs
 
     testImplementation 'junit:junit:4.13'
 
