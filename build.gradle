@@ -1,6 +1,6 @@
 plugins {
     id "java"
-    id "org.carlmontrobotics.webots" version "0.6"
+    id "org.carlmontrobotics.gradle.webots" version "0.1"
     id "edu.wpi.first.GradleRIO" version "2021.1.1-beta-1"
 }
 

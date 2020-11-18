@@ -23,18 +23,5 @@ pluginManagement {
             name 'frcHome'
             url frcHomeMaven
         }
-        maven {
-            name = "GitHubPackages"
-            url = uri("https://maven.pkg.github.com/DeepBlueRobotics/webots-gradle-plugin")
-            // Credentials are required until GitHub addresses the issue discussed here:
-            // https://github.community/t/download-from-github-package-registry-without-authentication/14407
-            credentials {
-                username = 'deepbluerobotics-user'
-                // Split the token into 2 parts so that github doesn't redact it.
-                // Note that the token only allows downloading packages from repos that deepblueobotics-user
-                // has access to, so this is not a security issue.
-                password = '7b96'+'841b48a341316dcd4da8fbb8cd89be660196'
-            }
-        }        
     }
 }
