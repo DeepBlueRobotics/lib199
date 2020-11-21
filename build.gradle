@@ -1,7 +1,7 @@
 plugins {
     id "java-library"
     id "org.carlmontrobotics.webots" version "0.8"
-    id "edu.wpi.first.GradleRIO" version "2021.1.1-beta-1"
+    id "edu.wpi.first.GradleRIO" version "2021.1.1-beta-2"
 }
 
 group 'org.carlmontrobotics'
