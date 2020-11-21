@@ -21,7 +21,7 @@ public class SimRegisterer {
 
     static {
         // Register Initalized Callbacks for Misc Devices
-        SimUtils.registerSimDeviceCreatedCallback("", MISC_DEVICE_CALLBACK, true);
+        SimDeviceSim.registerDeviceCreatedCallback("", MISC_DEVICE_CALLBACK, true);
         // Register Initalized Callbacks for PWM Devices
         registerDeviceType("PWM", SensorUtil.kPwmChannels, PWMSim::new, PWMSim::getInitialized, PWMSim::registerInitializedCallback);
     }
