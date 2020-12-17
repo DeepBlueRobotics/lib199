@@ -23,7 +23,7 @@ public class MockSparkMax extends CANSparkMax {
         super(portPWM, type);
         this.portPWM = portPWM;
         motorPWM = new Spark(portPWM);
-        encoder = Mocks.createMock(CANEncoder.class, new MockedSparkEncoder(this, "PWM_" + portPWM));
+        encoder = Mocks.createMock(CANEncoder.class, new MockedSparkEncoder(this));
         isInverted = false;
     }
 
