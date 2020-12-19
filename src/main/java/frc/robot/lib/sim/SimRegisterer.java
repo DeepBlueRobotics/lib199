@@ -59,11 +59,12 @@ public class SimRegisterer {
             // Create a WebotsMotorForwarder for this motor
             final WebotsMotorForwarder fwdr = new WebotsMotorForwarder(Simulation.robot, deviceName);
             // Register a callback for when the Motor Output changes
-            SimUtils.registerValueChangedCallback(new SimDeviceSim(deviceName), "Motor Output",
+            SimDeviceSim motor = new SimDeviceSim(deviceName);
+            callbacks.add(motor.registerValueChangedCallback(motor.getValue("Motor Output"),
                 // Call the callback function
                 (name, handle, readonly, value) -> fwdr.callback(name, value),
                 // Initalize with current speed
-                true);
+                true));
         }
         if(deviceName.startsWith("navX")) {
             // If a navX is registered, try to link its SimDevice to the Webots robot
