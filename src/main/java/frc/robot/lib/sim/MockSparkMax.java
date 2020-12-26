@@ -20,7 +20,8 @@ public class MockSparkMax extends CANSparkMax {
     private static HashMap<Integer, Spark> followMap = new HashMap<Integer, Spark>();
 
     public MockSparkMax(int portPWM, MotorType type) {
-        super(portPWM, type);
+        super(portPWM+10, type);
+        portPWM += 10;
         this.portPWM = portPWM;
         motorPWM = new Spark(portPWM);
         encoder = Mocks.createMock(CANEncoder.class, new MockedSparkEncoder(this));
