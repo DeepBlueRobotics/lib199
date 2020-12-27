@@ -6,23 +6,26 @@ import com.revrobotics.CANEncoder;
 import com.revrobotics.CANError;
 import com.revrobotics.CANSparkMax;
 
-import edu.wpi.first.wpilibj.Spark;
+import edu.wpi.first.hal.SimDevice;
+import edu.wpi.first.hal.SimDouble;
 import frc.robot.lib.Mocks;
 
 public class MockSparkMax extends CANSparkMax {
     // Assign the CAN port to a PWM port so it works with the simulator. Not a fan of this solution though
     // CAN ports should be separate from PWM ports
-    private final int portPWM;
-    private final Spark motorPWM;
+    private final int port;
+    private final SimDevice motor;
+    private final SimDouble speed;
     private CANEncoder encoder;
     private boolean isInverted;
     // Since we need to keep a record of all the motor's followers
-    private static HashMap<Integer, Spark> followMap = new HashMap<Integer, Spark>();
+    private static HashMap<Integer, SimDouble> followMap = new HashMap<>();
 
-    public MockSparkMax(int portPWM, MotorType type) {
-        super(portPWM, type);
-        this.portPWM = portPWM;
-        motorPWM = new Spark(portPWM);
+    public MockSparkMax(int port, MotorType type) {
+        super(port, type);
+        this.port = port;
+        motor = SimDevice.create("SparkMax", port);
+        speed = motor.createDouble("Motor Output", false, 0);
         encoder = Mocks.createMock(CANEncoder.class, new MockedSparkEncoder(this));
         isInverted = false;
     }
@@ -34,24 +37,24 @@ public class MockSparkMax extends CANSparkMax {
     @Override
     public void set(double speed) {
         speed = (isInverted ? -1.0 : 1.0) * speed;
-        motorPWM.set(speed);
-        if (followMap.containsKey(portPWM)) followMap.get(portPWM).set(speed); 
+        this.speed.set(speed);
+        if (followMap.containsKey(port)) followMap.get(port).set(speed); 
     }
 
     @Override
     public CANError follow(CANSparkMax leader) {
-        if (!followMap.containsValue(motorPWM)) followMap.put(leader.getDeviceId(), motorPWM);
+        if (!followMap.containsValue(speed)) followMap.put(leader.getDeviceId(), speed);
         return CANError.kOk;
     }
 
     @Override
     public double get() {
-        return motorPWM.get();
+        return speed.get();
     }
 
     @Override
     public int getDeviceId() {
-        return portPWM;
+        return port;
     }
 
     @Override
