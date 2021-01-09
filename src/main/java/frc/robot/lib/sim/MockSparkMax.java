@@ -39,8 +39,8 @@ public class MockSparkMax extends CANSparkMax {
     public void set(double speed) {
         speed = (isInverted ? -1.0 : 1.0) * speed;
         this.speed.set(speed);
-        if (followMap.containsKey(port)) {
-            for (SimDouble motorOutput : followMap.get(port)) motorOutput.set(speed);
+        if (followMap.containsKey(getDeviceId())) {
+            for (SimDouble motorOutput : followMap.get(getDeviceId())) motorOutput.set(speed);
         }
     }
 

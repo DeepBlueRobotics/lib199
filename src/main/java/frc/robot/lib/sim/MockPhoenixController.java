@@ -29,8 +29,8 @@ abstract class MockPhoenixController implements IMotorController {
     public void set(double speed) {
         speed = (getInverted() ? -1.0 : 1.0) * speed;
         motorPWM.set(speed);
-        if (followMap.containsKey(portPWM)) {
-            for (PWMSpeedController motor : followMap.get(portPWM)) motor.set(speed);
+        if (followMap.containsKey(getDeviceID())) {
+            for (PWMSpeedController motor : followMap.get(getDeviceID())) motor.set(speed);
         }
     }
 
