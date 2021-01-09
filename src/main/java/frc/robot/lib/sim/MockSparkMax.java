@@ -1,5 +1,6 @@
 package frc.robot.lib.sim;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import com.revrobotics.CANEncoder;
@@ -19,7 +20,7 @@ public class MockSparkMax extends CANSparkMax {
     private CANEncoder encoder;
     private boolean isInverted;
     // Since we need to keep a record of all the motor's followers
-    private static HashMap<Integer, SimDouble> followMap = new HashMap<>();
+    private static HashMap<Integer, ArrayList<SimDouble>> followMap = new HashMap<>();
 
     public MockSparkMax(int port, MotorType type) {
         super(port, type);
@@ -38,12 +39,20 @@ public class MockSparkMax extends CANSparkMax {
     public void set(double speed) {
         speed = (isInverted ? -1.0 : 1.0) * speed;
         this.speed.set(speed);
-        if (followMap.containsKey(port)) followMap.get(port).set(speed); 
+        if (followMap.containsKey(port)) {
+            for (SimDouble motorOutput : followMap.get(port)) motorOutput.set(speed);
+        }
     }
 
     @Override
     public CANError follow(CANSparkMax leader) {
-        if (!followMap.containsValue(speed)) followMap.put(leader.getDeviceId(), speed);
+        if (!followMap.containsKey(leader.getDeviceId())) {
+            ArrayList<SimDouble> arr = new ArrayList<SimDouble>();
+            arr.add(speed);
+            followMap.put(leader.getDeviceId(), arr);
+        } else {
+            followMap.get(leader.getDeviceId()).add(speed);
+        }
         return CANError.kOk;
     }
 

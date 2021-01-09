@@ -1,5 +1,6 @@
 package frc.robot.lib.sim;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import com.ctre.phoenix.ErrorCode;
@@ -18,7 +19,7 @@ abstract class MockPhoenixController implements IMotorController {
     // CAN ports should be separate from PWM ports
     protected PWMSpeedController motorPWM;
     // Since we need to keep a record of all the motor's followers
-    protected static HashMap<Integer, PWMSpeedController> followMap = new HashMap<Integer, PWMSpeedController>();
+    protected static HashMap<Integer, ArrayList<PWMSpeedController>> followMap = new HashMap<>();
 
     public MockPhoenixController(int portPWM) {
         this.portPWM = portPWM;
@@ -28,7 +29,9 @@ abstract class MockPhoenixController implements IMotorController {
     public void set(double speed) {
         speed = (getInverted() ? -1.0 : 1.0) * speed;
         motorPWM.set(speed);
-        if (followMap.containsKey(getDeviceID())) followMap.get(getDeviceID()).set(speed); 
+        if (followMap.containsKey(portPWM)) {
+            for (PWMSpeedController motor : followMap.get(portPWM)) motor.set(speed);
+        }
     }
 
 	public void set(ControlMode Mode, double demand) {}
@@ -44,7 +47,13 @@ abstract class MockPhoenixController implements IMotorController {
     }
 
     public void follow(IMotorController leader) {
-        if (!followMap.containsValue(motorPWM)) followMap.put(leader.getDeviceID(), motorPWM);
+        if (!followMap.containsKey(leader.getDeviceID())) {
+            ArrayList<PWMSpeedController> arr = new ArrayList<PWMSpeedController>();
+            arr.add(motorPWM);
+            followMap.put(leader.getDeviceID(), arr);
+        } else {
+            followMap.get(leader.getDeviceID()).add(motorPWM);
+        }
     }
     
     public void setInverted(boolean invert) { 
