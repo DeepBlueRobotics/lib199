@@ -5,6 +5,7 @@ import java.util.HashMap;
 
 import com.revrobotics.CANEncoder;
 import com.revrobotics.CANError;
+import com.revrobotics.CANPIDController;
 import com.revrobotics.CANSparkMax;
 
 import edu.wpi.first.hal.SimDevice;
@@ -18,6 +19,7 @@ public class MockSparkMax extends CANSparkMax {
     private final SimDevice motor;
     private final SimDouble speed;
     private CANEncoder encoder;
+    private CANPIDController pidController;
     private boolean isInverted;
     // Since we need to keep a record of all the motor's followers
     private static HashMap<Integer, ArrayList<SimDouble>> followMap = new HashMap<>();
@@ -28,6 +30,7 @@ public class MockSparkMax extends CANSparkMax {
         motor = SimDevice.create("SparkMax", port);
         speed = motor.createDouble("Motor Output", false, 0);
         encoder = Mocks.createMock(CANEncoder.class, new MockedSparkEncoder(this));
+        pidController = Mocks.createMock(CANPIDController.class, new MockedCANPIDController(this));
         isInverted = false;
     }
 
@@ -45,13 +48,18 @@ public class MockSparkMax extends CANSparkMax {
     }
 
     @Override
-    public CANError follow(CANSparkMax leader) {
-        if (!followMap.containsKey(leader.getDeviceId())) {
+    public CANError follow(ExternalFollower leader, int deviceID) {
+        return follow(leader, deviceID, false);
+    }
+
+    @Override
+    public CANError follow(ExternalFollower leader, int deviceID, boolean invert) {
+        if (!followMap.containsKey(deviceID)) {
             ArrayList<SimDouble> arr = new ArrayList<SimDouble>();
             arr.add(speed);
-            followMap.put(leader.getDeviceId(), arr);
+            followMap.put(deviceID, arr);
         } else {
-            followMap.get(leader.getDeviceId()).add(speed);
+            followMap.get(deviceID).add(speed);
         }
         return CANError.kOk;
     }
@@ -74,5 +82,35 @@ public class MockSparkMax extends CANSparkMax {
     @Override
     public void setInverted(boolean inverted) {
         isInverted = inverted;
+    }
+
+    @Override
+    public CANError restoreFactoryDefaults() {
+        return CANError.kOk;
+    }
+
+    @Override
+    public CANError setIdleMode(IdleMode mode) {
+        return CANError.kOk;
+    }
+
+    @Override
+    public CANError enableVoltageCompensation(double nominalVoltage) {
+		return CANError.kOk;
+	}
+
+	@Override
+	public CANError disableVoltageCompensation() {
+		return CANError.kOk;
+    }
+    
+    @Override
+    public CANError setSmartCurrentLimit(int limit) {
+        return CANError.kOk;
+    }
+
+    @Override
+    public CANPIDController getPIDController() {
+        return pidController;
     }
 }
