@@ -8,7 +8,6 @@ import com.revrobotics.ControlType;
 import edu.wpi.first.wpilibj.controller.PIDController;
 
 public class MockedCANPIDController extends CANPIDController {
-    private CANSparkMax device;
     private PIDController pidController;
 
     public MockedCANPIDController(CANSparkMax device) {
