@@ -17,8 +17,6 @@ public class MockedSparkEncoder extends CANEncoder {
     public MockedSparkEncoder(CANSparkMax motor) {
         super(motor);
         int id = motor.getDeviceId();
-        // Match motor on CAN 0 with channels [0, 1], CAN 1 to channels [2, 3], etc.
-        // Probably not the best way to do it but it works
         device = SimDevice.create("CANEncoder_SparkMax", id);
         dpp = device.createDouble("distancePerPulse", false, 1);
         count = device.createDouble("count", false, 0);
