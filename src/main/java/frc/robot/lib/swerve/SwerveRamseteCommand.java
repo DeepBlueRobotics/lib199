@@ -1,4 +1,4 @@
-package frc.robot.lib;
+package frc.robot.lib.swerve;
 
 import static edu.wpi.first.wpilibj.util.ErrorMessages.requireNonNullParam;
 
