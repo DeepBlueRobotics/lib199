@@ -47,7 +47,7 @@ public class SwerveDriveVoltageConstraint implements TrajectoryConstraint {
   public MinMax getMinMaxAccelerationMetersPerSecondSq(Pose2d poseMeters, double curvatureRadPerMeter, double velocityMetersPerSecond) {
     SwerveModuleState[] states =
         kinematics.toSwerveModuleStates(new ChassisSpeeds(velocityMetersPerSecond * poseMeters.getRotation().getSin(), 
-                                                          velocityMetersPerSecond * poseMeters.getRotation().getCos(),
+                                                          -velocityMetersPerSecond * poseMeters.getRotation().getCos(),
                                                           velocityMetersPerSecond * curvatureRadPerMeter));
     double[] wheelSpeeds = new double[states.length];
     for (int i = 0; i < states.length; i++) wheelSpeeds[i] = states[i].speedMetersPerSecond;

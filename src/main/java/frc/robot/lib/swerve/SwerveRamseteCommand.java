@@ -149,7 +149,7 @@ public class SwerveRamseteCommand extends CommandBase {
     // Forward velocity
     double vx = initialState.velocityMetersPerSecond * Math.sin(heading);
     // Strafe velocity
-    double vy = initialState.velocityMetersPerSecond * Math.cos(heading);
+    double vy = -initialState.velocityMetersPerSecond * Math.cos(heading);
     // Angular velocity (rad/m * m/s = rad/s)
     double angularVel = initialState.curvatureRadPerMeter * initialState.velocityMetersPerSecond;
     // Inverse kinemtics: robot velocities ---> swerve module speed and angle
@@ -170,7 +170,7 @@ public class SwerveRamseteCommand extends CommandBase {
 
     // We have no history - do nothing.
     if (prevTime < 0) {
-        output.accept(new SwerveModuleState[4]);
+        output.accept(new SwerveModuleState[pidControllers.length]);
         prevTime = curTime;
         return;
     }
