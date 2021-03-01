@@ -49,6 +49,14 @@ public class MockSparkMax {
             for (SimDouble motorOutput : followMap.get(getDeviceId())) motorOutput.set(speed);
         }
     }
+
+    public CANError follow(CANSparkMax leader) {
+        return follow(leader, false);
+    }
+
+    public CANError follow(CANSparkMax leader, boolean invert) {
+		return follow(ExternalFollower.kFollowerSparkMax, leader.getDeviceId(), invert);
+	}
     
     public CANError follow(ExternalFollower leader, int deviceID) {
         return follow(leader, deviceID, false);
@@ -56,12 +64,9 @@ public class MockSparkMax {
 
     public CANError follow(ExternalFollower leader, int deviceID, boolean invert) {
         if (!followMap.containsKey(deviceID)) {
-            ArrayList<SimDouble> arr = new ArrayList<SimDouble>();
-            arr.add(speed);
-            followMap.put(deviceID, arr);
-        } else {
-            followMap.get(deviceID).add(speed);
+            followMap.put(deviceID, new ArrayList<SimDouble>());
         }
+        followMap.get(deviceID).add(speed);
         return CANError.kOk;
     }
     
