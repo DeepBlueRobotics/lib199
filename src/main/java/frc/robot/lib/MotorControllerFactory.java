@@ -58,10 +58,10 @@ public class MotorControllerFactory {
     MotorErrors.reportError(talon.configNominalOutputReverse(0, 10));
     MotorErrors.reportError(talon.configPeakOutputForward(1, 10));
     MotorErrors.reportError(talon.configPeakOutputReverse(-1, 10));
-    MotorErrors.reportError(talon.configPeakCurrentLimit(0, 0));
-    MotorErrors.reportError(talon.configPeakCurrentDuration(0, 0));
+    //MotorErrors.reportError(talon.configPeakCurrentLimit(0, 0));
+    //MotorErrors.reportError(talon.configPeakCurrentDuration(0, 0));
     // 40 Amps is the amp limit of a CIM. lThe PDP has 40 amp circuit breakers,
-    MotorErrors.reportError(talon.configContinuousCurrentLimit(30, 0));
+    //MotorErrors.reportError(talon.configContinuousCurrentLimit(30, 0));
     talon.enableCurrentLimit(true);
     MotorErrors.reportError(talon.configNeutralDeadband(0.001, 10));
     talon.setNeutralMode(NeutralMode.Brake);
