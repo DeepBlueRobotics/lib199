@@ -7,7 +7,7 @@ import org.mockito.invocation.InvocationOnMock;
 
 public class ErrorCodeAnswer extends ReturnsSmartNulls {
 
-    private static final long serialVersionUID = -561160298532167923L;
+    private static final long serialVersionUID = -4964720958493493935L;
 
     @Override
     public Object answer(InvocationOnMock invocation) throws Throwable {
