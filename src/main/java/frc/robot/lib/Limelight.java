@@ -26,15 +26,18 @@ public class Limelight {
   */
   private double tv, tx, ty, ta;
   private boolean stopSteer = false;
-  private double mounting_angle;
+  // Mounting angle is the angle of the limelight (angled up = +, angled down = -)
+  private double mountingAngle;
   private double prev_tx = 1.0;
 
   private PIDController pidController;
   private boolean newPIDLoop = false;
-  // Parameters for vision using linear algebra. 
+  // Parameters for vision using linear algebra.
+  /*
   private double[][] rotMat = {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}};
   private double[] translateVec = {0, 0, 0};
   private double[] defaultValue = {0, 0, 0, 0};
+  */
 
   public Limelight() {
     SmartDashboard.putNumber("Area Threshold", 0.02);
@@ -52,28 +55,40 @@ public class Limelight {
     pidController.setTolerance(SmartDashboard.getNumber("AutoAlign: Tolerance", 0.01));
   }
 
+  /*
   // For the shooter. Given what the limelight sees and the shooter angle, compute the desired initial speed for the shooter.
   public double computeSpeed(double angle, double cameraHeight, double objectHeight) {
     double distance = determineObjectDist(cameraHeight, objectHeight);
     return Math.sqrt((16.1 * Math.pow(distance, 2)) / (distance * Math.tan(angle) - cameraHeight - objectHeight)) / Math.cos(angle);
   }
+  */
 
   /* Determine the mounting angle of the camera given a vision target and its known distance, height off of the ground,
    and the height of the camera off of the ground. */
   public void determineMountingAngle(double distance, double cameraHeight, double objectHeight) {
     // NOTE: ty may be negative.
     ty = NetworkTableInstance.getDefault().getTable("limelight").getEntry("ty").getDouble(0.0);
-    mounting_angle = Math.atan((cameraHeight - objectHeight) / distance) - ty;
+    mountingAngle = Math.atan((cameraHeight - objectHeight) / distance) - ty;
   }
 
-  // Determine the distance an object is from the limelight given the camera's height off of the ground and the object's height off of the ground.
-  public double determineObjectDist(double cameraHeight, double objectHeight) {
+  /* Determine the distance an object in the robot's reference frame given the camera's height off of the ground and the object's height off of the ground.
+     Output is {forward distance (x), strafe distance (y)}.
+     cameraHeight is the height of the base of the camera from ground level.
+     objectHeight is the height of the base of the object from ground level.  */
+  public double[] determineObjectDist(double cameraHeight, double objectHeight) {
+    tx = NetworkTableInstance.getDefault().getTable("limelight").getEntry("tx").getDouble(0.0);
     ty = NetworkTableInstance.getDefault().getTable("limelight").getEntry("ty").getDouble(0.0);
-    return (objectHeight - cameraHeight) / (Math.tan(mounting_angle + ty));
+
+    double diff = cameraHeight - objectHeight;
+    double forward = Math.abs(diff / (Math.tan(mountingAngle + ty)));
+    double hypotenuse = Math.sqrt(forward * forward + diff * diff);
+    double strafe = Math.tan(tx) * hypotenuse; 
+    return new double[]{forward, strafe};
   }
 
   /* Given what is currently seen, determine the entries rotMat and translateVec parameters
     by solving a system of equations using Gaussian-elimination */
+    /*
   public void computeParams(double[] worldXs, double[] worldYs, double[] worldZs) {
     double[] cornerXs = NetworkTableInstance.getDefault().getTable("limelight").getEntry("tcornx").getDoubleArray(defaultValue);
     double[] cornerYs = NetworkTableInstance.getDefault().getTable("limelight").getEntry("tcorny").getDoubleArray(defaultValue);
@@ -90,8 +105,8 @@ public class Limelight {
         matrix[row][4] = corners[i][row];
       }
 
-      /* Row reduce and find solutions; assumed that echelon is of the form [I | x] 
-         where I is the identity matrix and x are the solutions. This has not been tested yet. */
+      // Row reduce and find solutions; assumed that echelon is of the form [I | x] 
+      // where I is the identity matrix and x are the solutions. This has not been tested yet.
       double[][] echelon = Gaussian(matrix);
       rotMat[i][0] = echelon[0][4];
       rotMat[i][1] = echelon[1][4];
@@ -99,6 +114,7 @@ public class Limelight {
       translateVec[i] = echelon[3][4];
     }
   }
+  */
 
   // Adjusts the distance between a vision target and the robot. Uses basic PID with the ty value from the network table.
   public double distanceAssist() {
@@ -173,6 +189,7 @@ public class Limelight {
   /* Given a desired straight-line distance targetDist away from the vision target, determine the distance 
     in order to face the target from head-on. Returns the required distance at the current heading.
   */
+  /*
   public double[] determineDist(double targetDist) {
     // Get the x and y coordinates of the corners of the bounding box.
     double[] cornerXs = NetworkTableInstance.getDefault().getTable("limelight").getEntry("tcornx").getDoubleArray(defaultValue);
@@ -285,7 +302,7 @@ public class Limelight {
       }
     }
     return true;
-  }
+  }*/
 
   public PIDController getPIDController() {
     return pidController;
