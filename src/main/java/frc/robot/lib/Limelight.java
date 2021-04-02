@@ -28,7 +28,12 @@ public class Limelight {
   private boolean stopSteer = false;
   // Mounting angle is the angle of the limelight (angled up = +, angled down = -)
   private double mountingAngle;
+  
+  private double steering_factor = 0.25;
   private double prev_tx = 1.0;
+  private double tolerance = 0.01;
+  private double backlashOffset = 0.0;
+  private double prevHeading = 0;
 
   private PIDController pidController;
   private boolean newPIDLoop = false;
@@ -133,7 +138,7 @@ public class Limelight {
   }
 
   // Adjusts the angle facing a vision target. Uses basic PID with the tx value from the network table.
-  public double steeringAssist() {
+  public double steeringAssist(double heading) {
     tv = NetworkTableInstance.getDefault().getTable("limelight").getEntry("tv").getDouble(0.0);
     tx = NetworkTableInstance.getDefault().getTable("limelight").getEntry("tx").getDouble(0.0);
     ta = NetworkTableInstance.getDefault().getTable("limelight").getEntry("ta").getDouble(0.0);
@@ -141,12 +146,10 @@ public class Limelight {
     SmartDashboard.putNumber("Found Vision Target", tv);
     SmartDashboard.putNumber("Prev_tx", prev_tx);
     tx = Double.isNaN(tx) ? 0 : tx;
-    double[] pidValues = SmartDashboard.getNumberArray("AutoAlign: PID Values", new double[]{0.015,0,0});
-    pidController.setPID(pidValues[0],pidValues[1],pidValues[2]);
+    double[] pidValues = SmartDashboard.getNumberArray("AutoAlign: PID Values", new double[]{0.015, 0, 0});
+    pidController.setPID(pidValues[0], pidValues[1], pidValues[2]);
     pidController.setTolerance(SmartDashboard.getNumber("AutoAlign: Tolerance", 0.01));
-    
-    double adjustment = 0;
-    double steering_factor = 0.25;
+    double adjustment = 0.0;
   
     if (tv == 1.0 && !stopSteer) {
       if (ta > SmartDashboard.getNumber("Area Threshold", 0.02)) {
@@ -155,33 +158,36 @@ public class Limelight {
         
         if (!newPIDLoop) {
           newPIDLoop = true;
-          pidController.setSetpoint(Math.signum(tx)*SmartDashboard.getNumber("AutoAlign: Backlash Offset",0));
+          pidController.setSetpoint(Math.signum(prev_tx) * SmartDashboard.getNumber("AutoAlign: Backlash Offset", backlashOffset));
         }
       }
     } else {
       newPIDLoop = false;
       pidController.reset();
-      adjustment += Math.signum(prev_tx) * steering_factor;
+      adjustment = Math.signum(prev_tx) * steering_factor;
     }
 
-    if (Math.abs(tx) < 1.0) {
-      stopSteer = true;
-    } else {
-      stopSteer = false;
+    if (Math.abs(tx) < 1.0 && Math.abs(prev_tx) < 1.0 && Math.abs(heading - prevHeading) < 1) stopSteer = true;
+    else stopSteer = false;
+    if(stopSteer) {
+      adjustment = 0;
     }
+    prevHeading = heading;
+
     SmartDashboard.putBoolean("Stop Auto Steering", stopSteer);
 
     adjustment = Math.signum(tx) * Math.min(Math.abs(adjustment), 0.5);
     SmartDashboard.putNumber("Adjustment", adjustment);
     return adjustment;
   }
+
   public boolean isAligned() {
     return pidController.atSetpoint();
   }
   // Combination of distance assist and steering assist
-  public double[] autoTarget() {
+  public double[] autoTarget(double heading) {
     double dist_assist = distanceAssist();
-    double steer_assist = steeringAssist();
+    double steer_assist = steeringAssist(heading);
     double[] params = {dist_assist + steer_assist, dist_assist - steer_assist};
     return params;
   }
