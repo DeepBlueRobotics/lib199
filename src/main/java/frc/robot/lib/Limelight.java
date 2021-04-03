@@ -55,7 +55,7 @@ public class Limelight {
     SmartDashboard.setPersistent("AutoAlign: Backlash Offset");
     
     double[] pidValues = SmartDashboard.getNumberArray("AutoAlign: PID Values", new double[]{0.015,0,0});
-    pidController = new PIDController(pidValues[0],pidValues[1],pidValues[2],1/90);
+    pidController = new PIDController(pidValues[0],pidValues[1],pidValues[2],1.0/90.0);
     pidController.setSetpoint(0);
     pidController.setTolerance(SmartDashboard.getNumber("AutoAlign: Tolerance", 0.01));
   }
