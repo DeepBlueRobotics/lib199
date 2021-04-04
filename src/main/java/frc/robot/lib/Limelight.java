@@ -49,7 +49,11 @@ public class Limelight {
     SmartDashboard.putNumberArray("AutoAlign: PID Values", new double[]{0.015,0,0});
     SmartDashboard.putNumber("AutoAlign: Tolerance", 0.01);
     SmartDashboard.putNumber("AutoAlign: Backlash Offset", 0);
+    SmartDashboard.putNumber("AutoAlign: Steering Factor", 0.25);
+    SmartDashboard.putNumber("Maximum Adjustment", 1.0);
     SmartDashboard.setPersistent("Area Threshold");
+    SmartDashboard.setPersistent("AutoAlign: Steering Factor");
+    SmartDashboard.setPersistent("Maximum Adjustment");
     SmartDashboard.setPersistent("AutoAlign: PID Values");
     SmartDashboard.setPersistent("AutoAlign: Tolerance");
     SmartDashboard.setPersistent("AutoAlign: Backlash Offset");
@@ -133,7 +137,7 @@ public class Limelight {
     if (tv == 1.0) {
       adjustment = (area_threshold - ta) * Kp;
     }
-    adjustment = Math.signum(adjustment) * Math.min(Math.abs(adjustment), 0.5);
+    adjustment = Math.signum(adjustment) * Math.min(Math.abs(adjustment), SmartDashboard.getNumber("Maximum Adjustment", 1.0));
     return adjustment;
   }
 
@@ -150,6 +154,7 @@ public class Limelight {
     pidController.setPID(pidValues[0], pidValues[1], pidValues[2]);
     pidController.setTolerance(SmartDashboard.getNumber("AutoAlign: Tolerance", 0.01));
     double adjustment = 0.0;
+    steering_factor = SmartDashboard.getNumber("AutoAlign: Steering Factor", 0.25);
   
     if (tv == 1.0 && !stopSteer) {
       if (ta > SmartDashboard.getNumber("Area Threshold", 0.02)) {
@@ -176,7 +181,7 @@ public class Limelight {
 
     SmartDashboard.putBoolean("Stop Auto Steering", stopSteer);
 
-    adjustment = Math.signum(tx) * Math.min(Math.abs(adjustment), 0.5);
+    adjustment = Math.signum(tx) * Math.min(Math.abs(adjustment), SmartDashboard.getNumber("Maximum Adjustment", 1.0));
     SmartDashboard.putNumber("Adjustment", adjustment);
     return adjustment;
   }
