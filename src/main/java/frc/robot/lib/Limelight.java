@@ -10,7 +10,6 @@ package frc.robot.lib;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.controller.PIDController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-
 public class Limelight {
   
   public enum Mode {
@@ -24,13 +23,13 @@ public class Limelight {
   ta = Target Area (0% of image to 100% of image)
   There are more values we could be using. Check the documentation.
   */
-  private double tv, tx, ty, ta;
+  private double tv, txDeg, tyDeg, ta;
   private boolean stopSteer = false;
   // Mounting angle is the angle of the limelight (angled up = +, angled down = -)
-  private double mountingAngle;
+  private double mountingAngleDeg;
   
   private double steering_factor = 0.25;
-  private double prev_tx = 1.0;
+  private double prev_txDeg = 1.0;
   private double tolerance = 0.01;
   private double backlashOffset = 0.0;
   private double prevHeading = 0;
@@ -76,22 +75,23 @@ public class Limelight {
    and the height of the camera off of the ground. */
   public void determineMountingAngle(double distance, double cameraHeight, double objectHeight) {
     // NOTE: ty may be negative.
-    ty = NetworkTableInstance.getDefault().getTable("limelight").getEntry("ty").getDouble(0.0);
-    mountingAngle = Math.atan((cameraHeight - objectHeight) / distance) - ty;
+    tyDeg = NetworkTableInstance.getDefault().getTable("limelight").getEntry("ty").getDouble(0.0);
+    mountingAngleDeg = Math.atan((cameraHeight - objectHeight) / distance)*180/Math.PI - tyDeg;
   }
 
   /* Determine the distance an object in the robot's reference frame given the camera's height off of the ground and the object's height off of the ground.
      Output is {forward distance (x), strafe distance (y)}.
      cameraHeight is the height of the base of the camera from ground level.
      objectHeight is the height of the base of the object from ground level.  */
-  public double[] determineObjectDist(double cameraHeight, double objectHeight) {
-    tx = NetworkTableInstance.getDefault().getTable("limelight").getEntry("tx").getDouble(0.0);
-    ty = NetworkTableInstance.getDefault().getTable("limelight").getEntry("ty").getDouble(0.0);
-
+  public double[] determineObjectDist(double cameraHeight, double objectHeight, double cameraAngle) {
+    txDeg = NetworkTableInstance.getDefault().getTable("limelight").getEntry("tx").getDouble(0.0);
+    tyDeg = NetworkTableInstance.getDefault().getTable("limelight").getEntry("ty").getDouble(0.0);
+    mountingAngleDeg = cameraAngle;
     double diff = cameraHeight - objectHeight;
-    double forward = Math.abs(diff / (Math.tan(mountingAngle + ty)));
+    double forward = Math.abs(diff / (Math.tan((mountingAngleDeg + tyDeg)/180*Math.PI)));
     double hypotenuse = Math.sqrt(forward * forward + diff * diff);
-    double strafe = Math.tan(tx) * hypotenuse; 
+    double strafe = Math.tan(txDeg/180*Math.PI) * hypotenuse; 
+    SmartDashboard.putNumber("distance to ball", forward);
     return new double[]{forward, strafe};
   }
 
@@ -129,7 +129,7 @@ public class Limelight {
   public double distanceAssist() {
     tv = NetworkTableInstance.getDefault().getTable("limelight").getEntry("tv").getDouble(0.0);
     ta = NetworkTableInstance.getDefault().getTable("limelight").getEntry("ta").getDouble(0.0);
-    SmartDashboard.putNumber("Crosshair Vertical Offset", ty);
+    SmartDashboard.putNumber("Crosshair Vertical Offset", tyDeg);
     double adjustment = 0.0;
     double area_threshold = 1.75;
     double Kp = 0.225;
@@ -144,12 +144,12 @@ public class Limelight {
   // Adjusts the angle facing a vision target. Uses basic PID with the tx value from the network table.
   public double steeringAssist(double heading) {
     tv = NetworkTableInstance.getDefault().getTable("limelight").getEntry("tv").getDouble(0.0);
-    tx = NetworkTableInstance.getDefault().getTable("limelight").getEntry("tx").getDouble(0.0);
+    txDeg = NetworkTableInstance.getDefault().getTable("limelight").getEntry("tx").getDouble(0.0);
     ta = NetworkTableInstance.getDefault().getTable("limelight").getEntry("ta").getDouble(0.0);
-    SmartDashboard.putNumber("Crosshair Horizontal Offset", tx);
+    SmartDashboard.putNumber("Crosshair Horizontal Offset", txDeg);
     SmartDashboard.putNumber("Found Vision Target", tv);
-    SmartDashboard.putNumber("Prev_tx", prev_tx);
-    tx = Double.isNaN(tx) ? 0 : tx;
+    SmartDashboard.putNumber("Prev_tx", prev_txDeg);
+    txDeg = Double.isNaN(txDeg) ? 0 : txDeg;
     double[] pidValues = SmartDashboard.getNumberArray("AutoAlign: PID Values", new double[]{0.015, 0, 0});
     pidController.setPID(pidValues[0], pidValues[1], pidValues[2]);
     pidController.setTolerance(SmartDashboard.getNumber("AutoAlign: Tolerance", 0.01));
@@ -158,21 +158,21 @@ public class Limelight {
   
     if (tv == 1.0 && !stopSteer) {
       if (ta > SmartDashboard.getNumber("Area Threshold", 0.02)) {
-        adjustment = pidController.calculate(tx);
-        prev_tx = tx;
+        adjustment = pidController.calculate(txDeg);
+        prev_txDeg = txDeg;
         
         if (!newPIDLoop) {
           newPIDLoop = true;
-          pidController.setSetpoint(Math.signum(prev_tx) * SmartDashboard.getNumber("AutoAlign: Backlash Offset", backlashOffset));
+          pidController.setSetpoint(Math.signum(prev_txDeg) * SmartDashboard.getNumber("AutoAlign: Backlash Offset", backlashOffset));
         }
       }
     } else {
       newPIDLoop = false;
       pidController.reset();
-      adjustment = Math.signum(prev_tx) * steering_factor;
+      adjustment = Math.signum(prev_txDeg) * steering_factor;
     }
 
-    if (Math.abs(tx) < 1.0 && Math.abs(prev_tx) < 1.0 && Math.abs(heading - prevHeading) < 1) stopSteer = true;
+    if (Math.abs(txDeg) < 1.0 && Math.abs(prev_txDeg) < 1.0 && Math.abs(heading - prevHeading) < 1) stopSteer = true;
     else stopSteer = false;
     if(stopSteer) {
       adjustment = 0;
@@ -181,7 +181,7 @@ public class Limelight {
 
     SmartDashboard.putBoolean("Stop Auto Steering", stopSteer);
 
-    adjustment = Math.signum(tx) * Math.min(Math.abs(adjustment), SmartDashboard.getNumber("Maximum Adjustment", 1.0));
+    adjustment = Math.signum(txDeg) * Math.min(Math.abs(adjustment), SmartDashboard.getNumber("Maximum Adjustment", 1.0));
     SmartDashboard.putNumber("Adjustment", adjustment);
     return adjustment;
   }
