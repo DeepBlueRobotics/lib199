@@ -181,7 +181,7 @@ public class Limelight {
 
     SmartDashboard.putBoolean("Stop Auto Steering", stopSteer);
 
-    adjustment = Math.signum(txDeg) * Math.min(Math.abs(adjustment), SmartDashboard.getNumber("Maximum Adjustment", 1.0));
+    adjustment = Math.copySign(Math.min(Math.abs(adjustment), SmartDashboard.getNumber("Maximum Adjustment", 1.0)), txDeg);
     SmartDashboard.putNumber("Adjustment", adjustment);
     return adjustment;
   }
