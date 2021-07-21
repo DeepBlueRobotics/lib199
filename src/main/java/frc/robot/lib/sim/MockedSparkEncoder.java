@@ -4,6 +4,7 @@ import com.revrobotics.CANError;
 
 import edu.wpi.first.hal.SimDevice;
 import edu.wpi.first.hal.SimDouble;
+import edu.wpi.first.hal.SimDevice.Direction;
 
 public class MockedSparkEncoder {
     private SimDevice device;
@@ -17,8 +18,8 @@ public class MockedSparkEncoder {
         // Match motor on CAN 0 with channels [0, 1], CAN 1 to channels [2, 3], etc.
         // Probably not the best way to do it but it works
         device = SimDevice.create("CANEncoder_SparkMax", id);
-        dpp = device.createDouble("distancePerPulse", false, 1);
-        count = device.createDouble("count", false, 0);
+        dpp = device.createDouble("distancePerPulse", Direction.kOutput, 1);
+        count = device.createDouble("count", Direction.kInput, 0);
     }
 
     public double getPosition() {

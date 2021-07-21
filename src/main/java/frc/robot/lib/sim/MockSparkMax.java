@@ -13,6 +13,7 @@ import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
 import edu.wpi.first.hal.SimDevice;
 import edu.wpi.first.hal.SimDouble;
+import edu.wpi.first.hal.SimDevice.Direction;
 import frc.robot.lib.CANErrorAnswer;
 import frc.robot.lib.DummySparkMaxAnswer;
 import frc.robot.lib.Mocks;
@@ -32,7 +33,7 @@ public class MockSparkMax {
     public MockSparkMax(int port, MotorType type) {
         this.port = port;
         motor = SimDevice.create("SparkMax", port);
-        speed = motor.createDouble("Motor Output", false, 0);
+        speed = motor.createDouble("Motor Output", Direction.kOutput, 0);
         encoder = Mocks.createMock(CANEncoder.class, new MockedSparkEncoder(this), new CANErrorAnswer());
         pidController = Mocks.createMock(CANPIDController.class, new MockedCANPIDController(this), new CANErrorAnswer());
         isInverted = false;
