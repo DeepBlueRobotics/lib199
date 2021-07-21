@@ -30,7 +30,6 @@ public class Limelight {
   
   private double steering_factor = 0.25;
   private double prev_txDeg = 1.0;
-  private double tolerance = 0.01;
   private double backlashOffset = 0.0;
   private double prevHeading = 0;
 
