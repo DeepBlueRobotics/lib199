@@ -18,7 +18,7 @@ public class MockedSparkEncoder implements AutoCloseable {
         // Probably not the best way to do it but it works
         device = SimDevice.create("CANEncoder_SparkMax", id);
         dpp = device.createDouble("distancePerPulse", Direction.kOutput, 1);
-        count = device.createDouble("count", Direction.kBidir, 0);
+        count = device.createDouble("count", Direction.kInput, 0);
     }
 
     public double getPosition() {
