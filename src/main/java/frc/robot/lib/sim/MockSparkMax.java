@@ -34,8 +34,8 @@ public class MockSparkMax {
         this.port = port;
         motor = SimDevice.create("SparkMax", port);
         speed = motor.createDouble("Motor Output", Direction.kOutput, 0);
-        encoder = Mocks.createMock(CANEncoder.class, new MockedSparkEncoder(this), new CANErrorAnswer());
-        pidController = Mocks.createMock(CANPIDController.class, new MockedCANPIDController(this), new CANErrorAnswer());
+        encoder = Mocks.createMock(CANEncoder.class, new MockedSparkEncoder(port), new CANErrorAnswer());
+        pidController = Mocks.createMock(CANPIDController.class, new MockedCANPIDController(), new CANErrorAnswer());
         isInverted = false;
     }
 

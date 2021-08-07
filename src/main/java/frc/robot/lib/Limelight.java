@@ -72,10 +72,11 @@ public class Limelight {
 
   /* Determine the mounting angle of the camera given a vision target and its known distance, height off of the ground,
    and the height of the camera off of the ground. */
-  public void determineMountingAngle(double distance, double cameraHeight, double objectHeight) {
+  public double determineMountingAngle(double distance, double cameraHeight, double objectHeight) {
     // NOTE: ty may be negative.
     tyDeg = NetworkTableInstance.getDefault().getTable("limelight").getEntry("ty").getDouble(0.0);
     mountingAngleDeg = Math.atan((cameraHeight - objectHeight) / distance)*180/Math.PI - tyDeg;
+    return mountingAngleDeg;
   }
 
   /* Determine the distance an object in the robot's reference frame given the camera's height off of the ground and the object's height off of the ground.

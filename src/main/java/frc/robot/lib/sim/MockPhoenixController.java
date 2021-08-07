@@ -8,7 +8,7 @@ import com.ctre.phoenix.motorcontrol.IMotorController;
 
 import edu.wpi.first.wpilibj.PWMSpeedController;
 
-abstract class MockPhoenixController {
+abstract class MockPhoenixController implements AutoCloseable {
     private final int portPWM;
     private boolean isInverted;
     // Assign the CAN port to a PWM port so it works with the simulator. Not a fan of this solution though
@@ -54,4 +54,10 @@ abstract class MockPhoenixController {
 	
 	public int getDeviceID() { return portPWM; }
     public ControlMode getControlMode() { return ControlMode.PercentOutput; }
+
+    @Override
+    public void close() {
+        motorPWM.close();
+        followMap.values().forEach(followList -> followList.remove(motorPWM));
+    }
 }

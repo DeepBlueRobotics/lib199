@@ -6,20 +6,19 @@ import edu.wpi.first.hal.SimDevice;
 import edu.wpi.first.hal.SimDouble;
 import edu.wpi.first.hal.SimDevice.Direction;
 
-public class MockedSparkEncoder {
+public class MockedSparkEncoder implements AutoCloseable {
     private SimDevice device;
     private SimDouble dpp;
     private SimDouble count;
     // Default value for a CANEncoder
     private final int countsPerRevolution = 4096;
 
-    public MockedSparkEncoder(MockSparkMax motor) {
-        int id = motor.getDeviceId();
+    public MockedSparkEncoder(int id) {
         // Match motor on CAN 0 with channels [0, 1], CAN 1 to channels [2, 3], etc.
         // Probably not the best way to do it but it works
         device = SimDevice.create("CANEncoder_SparkMax", id);
         dpp = device.createDouble("distancePerPulse", Direction.kOutput, 1);
-        count = device.createDouble("count", Direction.kInput, 0);
+        count = device.createDouble("count", Direction.kBidir, 0);
     }
 
     public double getPosition() {
@@ -41,5 +40,10 @@ public class MockedSparkEncoder {
 
     public double getPositionConversionFactor() {
         return dpp.get() * countsPerRevolution;
+    }
+
+    @Override
+    public void close() {
+        device.close();
     }
 }
