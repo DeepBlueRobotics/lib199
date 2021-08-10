@@ -27,7 +27,7 @@ public final class Mocks {
      * @see #createMock(java.lang.Class, java.lang.Object, java.lang.Class...) 
      */
     public static <T, U> T createMock(Class<T> classToMock, U implClass, Class<?>... interfaces) {
-        return createMock(classToMock, implClass, true);
+        return createMock(classToMock, implClass, true, interfaces);
     }
     
     /**

@@ -74,19 +74,7 @@ public class SwerveMath {
      * @return An array consisting of the the corresponding forward, strafe, and rotation values measured in m/s, m/s, and rad/s respectively.
      */
     public static double[] inverseSwerve(double length, double width, SwerveModuleState ...states) {
-        // Calculate helper variables
-        double a = states[4].speedMetersPerSecond * Math.cos(states[4].angle.getRadians());
-        double b = states[1].speedMetersPerSecond * Math.cos(states[1].angle.getRadians());
-        double c = states[2].speedMetersPerSecond * Math.sin(states[2].angle.getRadians());
-        double d = states[3].speedMetersPerSecond * Math.sin(states[3].angle.getRadians());
-        double r = Math.sqrt(length * length + width * width);
-
-        // Calculate forward, strafe, and rotation
-        double forward = (c + d) / 2;
-        double strafe = (a + b) / 2;
-        double rotation = (b - strafe) * (r / length);
-
-        return new double[]{forward, strafe, rotation};
+        return inverseSwerve(length, width, 0, states);
     }
 
     /**
@@ -101,10 +89,10 @@ public class SwerveMath {
      */
     public static double[] inverseSwerve(double length, double width, double heading, SwerveModuleState ...states) {
         // Calculate helper variables
-        double a = states[4].speedMetersPerSecond * Math.cos(states[4].angle.getRadians());
-        double b = states[1].speedMetersPerSecond * Math.cos(states[1].angle.getRadians());
-        double c = states[2].speedMetersPerSecond * Math.sin(states[4].angle.getRadians());
-        double d = states[3].speedMetersPerSecond * Math.sin(states[3].angle.getRadians());
+        double a = states[3].speedMetersPerSecond * Math.cos(states[3].angle.getRadians());
+        double b = states[0].speedMetersPerSecond * Math.cos(states[0].angle.getRadians());
+        double c = states[1].speedMetersPerSecond * Math.sin(states[1].angle.getRadians());
+        double d = states[2].speedMetersPerSecond * Math.sin(states[2].angle.getRadians());
         double r = Math.sqrt(length * length + width * width);
 
         // Calculate forward, strafe, and rotation
