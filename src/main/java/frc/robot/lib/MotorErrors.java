@@ -109,6 +109,7 @@ public final class MotorErrors {
             double temp = spark.getMotorTemperature();
             SmartDashboard.putNumber("Port " + port + " Spark Max Temp", temp);
             if(temp >= 100) {
+                System.err.println("Port " + port + " spark max is operating at " + temp + " degrees Celsius! It will be disabled until the robot code is restarted.");
                 spark.setSmartCurrentLimit(1);
             }
         });
