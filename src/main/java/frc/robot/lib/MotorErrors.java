@@ -1,5 +1,6 @@
 package frc.robot.lib;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 
@@ -15,6 +16,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 public final class MotorErrors {
 
     private static final HashMap<Integer, CANSparkMax> temperatureSparks = new HashMap<>();
+    private static final ArrayList<Integer> overheatedSparks = new ArrayList<>();
     private static final HashMap<CANSparkMax, Short> flags = new HashMap<>();
     private static final HashMap<CANSparkMax, Short> stickyFlags = new HashMap<>();
 
@@ -108,8 +110,12 @@ public final class MotorErrors {
         temperatureSparks.forEach((port, spark) -> {
             double temp = spark.getMotorTemperature();
             SmartDashboard.putNumber("Port " + port + " Spark Max Temp", temp);
-            if(temp >= 100) {
-                System.err.println("Port " + port + " spark max is operating at " + temp + " degrees Celsius! It will be disabled until the robot code is restarted.");
+            // Check if temperature exceeds the setpoint or if the contoller has already overheated to prevent other code from resetting the current limit after the controller has cooled
+            if(temp >= 100 || overheatedSparks.contains(port)) {
+                if(!overheatedSparks.contains(port)) {
+                    overheatedSparks.add(port);
+                    System.err.println("Port " + port + " spark max is operating at " + temp + " degrees Celsius! It will be disabled until the robot code is restarted.");
+                }
                 spark.setSmartCurrentLimit(1);
             }
         });

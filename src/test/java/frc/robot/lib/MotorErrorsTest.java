@@ -173,10 +173,13 @@ public class MotorErrorsTest extends ErrStreamTest {
         CommandScheduler.getInstance().run();
         assertEquals(75, SmartDashboard.getNumber(smartDashboardKey, 0), 0.01);
         assertEquals(50, spark.getSmartCurrentLimit());
+        assertEquals(0, errStream.size());
         spark.setTemperature(100);
         CommandScheduler.getInstance().run();
         assertEquals(100, SmartDashboard.getNumber(smartDashboardKey, 0), 0.01);
         assertEquals(1, spark.getSmartCurrentLimit());
+        assertNotEquals(0, errStream.size());
+        errStream.reset();
         spark.setTemperature(110);
         CommandScheduler.getInstance().run();
         assertEquals(110, SmartDashboard.getNumber(smartDashboardKey, 0), 0.01);
@@ -185,6 +188,7 @@ public class MotorErrorsTest extends ErrStreamTest {
         CommandScheduler.getInstance().run();
         assertEquals(50, SmartDashboard.getNumber(smartDashboardKey, 0), 0.01);
         assertEquals(1, spark.getSmartCurrentLimit());
+        assertEquals(0, errStream.size());
     }
 
 }
