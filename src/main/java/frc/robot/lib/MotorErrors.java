@@ -10,10 +10,17 @@ import com.revrobotics.CANSparkMax.FaultID;
 
 import org.mockito.Mockito;
 
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+
 public final class MotorErrors {
 
+    private static final HashMap<Integer, CANSparkMax> temperatureSparks = new HashMap<>();
     private static final HashMap<CANSparkMax, Short> flags = new HashMap<>();
     private static final HashMap<CANSparkMax, Short> stickyFlags = new HashMap<>();
+
+    static {
+        Lib199Subsystem.registerPeriodic(MotorErrors::doReportSparkMaxTemp);
+    }
 
     public static void reportError(ErrorCode error) {
         reportError("CTRE", error, ErrorCode.OK);
@@ -90,6 +97,21 @@ public final class MotorErrors {
 
     public static CANSparkMax createDummySparkMax() {
         return Mockito.mock(CANSparkMax.class, new DummySparkMaxAnswer());
+    }
+
+    public static void reportSparkMaxTemp(CANSparkMax spark) {
+        int id = spark.getDeviceId();
+        temperatureSparks.put(id, spark);
+    }
+
+    public static void doReportSparkMaxTemp() {
+        temperatureSparks.forEach((port, spark) -> {
+            double temp = spark.getMotorTemperature();
+            SmartDashboard.putNumber("Port " + port + " Spark Max Temp", temp);
+            if(temp >= 100) {
+                spark.setSmartCurrentLimit(1);
+            }
+        });
     }
 
     private MotorErrors() {}
