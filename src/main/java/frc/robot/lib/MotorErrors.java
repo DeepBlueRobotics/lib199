@@ -1,5 +1,6 @@
 package frc.robot.lib;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 
@@ -10,10 +11,18 @@ import com.revrobotics.CANSparkMax.FaultID;
 
 import org.mockito.Mockito;
 
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+
 public final class MotorErrors {
 
+    private static final HashMap<Integer, CANSparkMax> temperatureSparks = new HashMap<>();
+    private static final ArrayList<Integer> overheatedSparks = new ArrayList<>();
     private static final HashMap<CANSparkMax, Short> flags = new HashMap<>();
     private static final HashMap<CANSparkMax, Short> stickyFlags = new HashMap<>();
+
+    static {
+        Lib199Subsystem.registerPeriodic(MotorErrors::doReportSparkMaxTemp);
+    }
 
     public static void reportError(ErrorCode error) {
         reportError("CTRE", error, ErrorCode.OK);
@@ -90,6 +99,26 @@ public final class MotorErrors {
 
     public static CANSparkMax createDummySparkMax() {
         return Mockito.mock(CANSparkMax.class, new DummySparkMaxAnswer());
+    }
+
+    public static void reportSparkMaxTemp(CANSparkMax spark) {
+        int id = spark.getDeviceId();
+        temperatureSparks.put(id, spark);
+    }
+
+    public static void doReportSparkMaxTemp() {
+        temperatureSparks.forEach((port, spark) -> {
+            double temp = spark.getMotorTemperature();
+            SmartDashboard.putNumber("Port " + port + " Spark Max Temp", temp);
+            // Check if temperature exceeds the setpoint or if the contoller has already overheated to prevent other code from resetting the current limit after the controller has cooled
+            if(temp >= 100 || overheatedSparks.contains(port)) {
+                if(!overheatedSparks.contains(port)) {
+                    overheatedSparks.add(port);
+                    System.err.println("Port " + port + " spark max is operating at " + temp + " degrees Celsius! It will be disabled until the robot code is restarted.");
+                }
+                spark.setSmartCurrentLimit(1);
+            }
+        });
     }
 
     private MotorErrors() {}

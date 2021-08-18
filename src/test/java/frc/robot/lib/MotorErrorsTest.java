@@ -10,11 +10,13 @@ import com.revrobotics.CANSparkMax.FaultID;
 
 import org.junit.Test;
 
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.lib.testUtils.ErrStreamTest;
 
 public class MotorErrorsTest extends ErrStreamTest {
 
-    public class SensorFaultSparkMax {
+    public static class SensorFaultSparkMax {
         public short getFaults() {
             return (short)FaultID.kSensorFault.value;
         }
@@ -24,7 +26,7 @@ public class MotorErrorsTest extends ErrStreamTest {
         }
     }
 
-    public class StickySensorFaultSparkMax {
+    public static class StickySensorFaultSparkMax {
         public short getStickyFaults() {
             return (short)FaultID.kSensorFault.value;
         }
@@ -33,6 +35,48 @@ public class MotorErrorsTest extends ErrStreamTest {
             return faultID == FaultID.kSensorFault;
         }
     }
+
+    public static interface TemperatureSparkMax {
+
+        public void setTemperature(double temperature);
+        public int getSmartCurrentLimit();
+        public double getMotorTemperature();
+        public CANError setSmartCurrentLimit(int limit);
+
+        public static class Instance {
+
+            private int smartCurrentLimit = 50;
+            private double temperature = 30;
+            private final int id;
+
+            public Instance(int id) {
+                this.id = id;
+            }
+
+            public void setTemperature(double temperature) {
+                this.temperature = temperature;
+            }
+
+            public int getSmartCurrentLimit() {
+                return smartCurrentLimit;
+            }
+
+            public double getMotorTemperature() {
+	        	return temperature;
+            }
+
+            public CANError setSmartCurrentLimit(int limit) {
+                smartCurrentLimit = limit;
+    		    return CANError.kOk;
+            }
+            
+            public int getDeviceId() {
+                return id;
+            }
+        }
+
+    }
+
     @Test
     public void testOkErrors() {
         errStream.reset();
@@ -107,6 +151,44 @@ public class MotorErrorsTest extends ErrStreamTest {
     @Test
     public void testDummySparkMax() {
         DummySparkMaxAnswerTest.assertTestResponses(MotorErrors.createDummySparkMax());
+    }
+
+    @Test
+    public void testReportSparkMaxTemp() {
+        doTestReportSparkMaxTemp(0);
+        doTestReportSparkMaxTemp(1);
+        doTestReportSparkMaxTemp(2);
+    }
+
+    private void doTestReportSparkMaxTemp(int id) {
+        TemperatureSparkMax spark = (TemperatureSparkMax)Mocks.createMock(CANSparkMax.class, new TemperatureSparkMax.Instance(id), TemperatureSparkMax.class);
+        MotorErrors.reportSparkMaxTemp((CANSparkMax)spark);
+        spark.setSmartCurrentLimit(50);
+        spark.setTemperature(50);
+        CommandScheduler.getInstance().run();
+        String smartDashboardKey = "Port " + id + " Spark Max Temp";
+        assertEquals(50, SmartDashboard.getNumber(smartDashboardKey, 0), 0.01);
+        assertEquals(50, spark.getSmartCurrentLimit());
+        spark.setTemperature(75);
+        CommandScheduler.getInstance().run();
+        assertEquals(75, SmartDashboard.getNumber(smartDashboardKey, 0), 0.01);
+        assertEquals(50, spark.getSmartCurrentLimit());
+        assertEquals(0, errStream.size());
+        spark.setTemperature(100);
+        CommandScheduler.getInstance().run();
+        assertEquals(100, SmartDashboard.getNumber(smartDashboardKey, 0), 0.01);
+        assertEquals(1, spark.getSmartCurrentLimit());
+        assertNotEquals(0, errStream.size());
+        errStream.reset();
+        spark.setTemperature(110);
+        CommandScheduler.getInstance().run();
+        assertEquals(110, SmartDashboard.getNumber(smartDashboardKey, 0), 0.01);
+        assertEquals(1, spark.getSmartCurrentLimit());
+        spark.setTemperature(50);
+        CommandScheduler.getInstance().run();
+        assertEquals(50, SmartDashboard.getNumber(smartDashboardKey, 0), 0.01);
+        assertEquals(1, spark.getSmartCurrentLimit());
+        assertEquals(0, errStream.size());
     }
 
 }
