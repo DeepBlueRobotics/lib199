@@ -83,17 +83,24 @@ public class Limelight {
      Output is {forward distance (x), strafe distance (y)}.
      cameraHeight is the height of the base of the camera from ground level.
      objectHeight is the height of the base of the object from ground level.  */
-  public double[] determineObjectDist(double cameraHeight, double objectHeight, double cameraAngle) {
-    txDeg = NetworkTableInstance.getDefault().getTable("limelight").getEntry("tx").getDouble(0.0);
-    tyDeg = NetworkTableInstance.getDefault().getTable("limelight").getEntry("ty").getDouble(0.0);
-    mountingAngleDeg = cameraAngle;
-    double diff = cameraHeight - objectHeight;
-    double forward = Math.abs(diff / (Math.tan((mountingAngleDeg + tyDeg)/180*Math.PI)));
-    double hypotenuse = Math.sqrt(forward * forward + diff * diff);
-    double strafe = Math.tan(txDeg/180*Math.PI) * hypotenuse; 
-    SmartDashboard.putNumber("distance to ball", forward);
-    return new double[]{forward, strafe};
-  }
+     public double[] determineObjectDist(double cameraHeight, double objectHeight, double cameraAngle) {
+      //angle b/t where limelight is looking, and target in x direction
+      txDeg = NetworkTableInstance.getDefault().getTable("limelight").getEntry("tx").getDouble(0.0);
+      //angle b/t where limelight is looking, and target in y direction
+      tyDeg = NetworkTableInstance.getDefault().getTable("limelight").getEntry("ty").getDouble(0.0);
+      //angle b/t limelight's looking line and flat
+      mountingAngleDeg = cameraAngle;
+      //diff b/t height of camera and height of target
+      double diff = cameraHeight - objectHeight;
+      //distance (parallel to ground) b/t limelight and target (does not include height difference)
+      double forward = Math.abs(diff / (Math.tan((mountingAngleDeg + tyDeg)/180*Math.PI)));
+      //hypotenuse of height difference and depth difference (ignores left & right difference) between limelight and target
+      double hypotenuse = Math.sqrt(forward * forward + diff * diff);
+      //left and right distance b/t target and limelight (only x difference, does not inlcude height or depth)
+      double strafe = Math.tan(txDeg/180*Math.PI) * hypotenuse; 
+      SmartDashboard.putNumber("distance to ball", forward);
+      return new double[]{forward, strafe};
+    }
 
   /* Given what is currently seen, determine the entries rotMat and translateVec parameters
     by solving a system of equations using Gaussian-elimination */
