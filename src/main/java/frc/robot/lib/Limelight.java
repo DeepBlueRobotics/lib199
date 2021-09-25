@@ -44,7 +44,7 @@ public class Limelight {
 
   public Limelight() {
     SmartDashboard.putNumber("Area Threshold", 0.02);
-    SmartDashboard.putNumberArray("AutoAlign: PID Values", new double[]{0.015,0,0});
+    SmartDashboard.putNumberArray("AutoAlign: PID Values", new double[]{0.01,0.03,0});
     SmartDashboard.putNumber("AutoAlign: Tolerance", 0.01);
     SmartDashboard.putNumber("AutoAlign: Backlash Offset", 0);
     SmartDashboard.putNumber("AutoAlign: Steering Factor", 0.25);
@@ -56,7 +56,7 @@ public class Limelight {
     SmartDashboard.setPersistent("AutoAlign: Tolerance");
     SmartDashboard.setPersistent("AutoAlign: Backlash Offset");
     
-    double[] pidValues = SmartDashboard.getNumberArray("AutoAlign: PID Values", new double[]{0.015,0,0});
+    double[] pidValues = SmartDashboard.getNumberArray("AutoAlign: PID Values", new double[]{0.01,0.03,0});
     pidController = new PIDController(pidValues[0],pidValues[1],pidValues[2],1.0/90.0);
     pidController.setSetpoint(0);
     pidController.setTolerance(SmartDashboard.getNumber("AutoAlign: Tolerance", 0.01));
@@ -157,7 +157,7 @@ public class Limelight {
     SmartDashboard.putNumber("Found Vision Target", tv);
     SmartDashboard.putNumber("Prev_tx", prev_txDeg);
     txDeg = Double.isNaN(txDeg) ? 0 : txDeg;
-    double[] pidValues = SmartDashboard.getNumberArray("AutoAlign: PID Values", new double[]{0.015, 0, 0});
+    double[] pidValues = SmartDashboard.getNumberArray("AutoAlign: PID Values", new double[]{0.01, 0.03, 0});
     pidController.setPID(pidValues[0], pidValues[1], pidValues[2]);
     pidController.setTolerance(SmartDashboard.getNumber("AutoAlign: Tolerance", 0.01));
     double adjustment = 0.0;
