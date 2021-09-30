@@ -176,12 +176,12 @@ public class Limelight {
     } else {
       newPIDLoop = false;
       pidController.reset();
-      adjustment = Math.signum(prev_txDeg) * steering_factor;
+      adjustment = Math.copySign(steering_factor, prev_txDeg);
     }
 
     if (Math.abs(txDeg) < 1.0 && Math.abs(prev_txDeg) < 1.0 && Math.abs(heading - prevHeading) < 1) stopSteer = true;
     else stopSteer = false;
-    if(stopSteer) {
+    if(stopSteer && tv == 1.0) {
       adjustment = 0;
     }
     prevHeading = heading;
