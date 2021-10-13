@@ -10,12 +10,14 @@ package frc.robot.lib;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.controller.PIDController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+
 public class Limelight {
   
   public enum Mode {
     DIST, STEER, TARGET
-  }
-
+    }
+  public final Config config = new Config();
+  public final DebugInfo debugInfo = new DebugInfo();
   /* http://docs.limelightvision.io/en/latest/networktables_api.html
   tv = Whether the limelight has any valid targets (0 or 1)
   tx = Horizontal Offset From Crosshair To Target (-27 degrees to 27 degrees)
@@ -28,9 +30,7 @@ public class Limelight {
   // Mounting angle is the angle of the limelight (angled up = +, angled down = -)
   private double mountingAngleDeg;
   
-  private double steering_factor = 0.25;
   private double prev_txDeg = 1.0;
-  private double backlashOffset = 0.0;
   private double prevHeading = 0;
 
   private PIDController pidController;
@@ -41,25 +41,16 @@ public class Limelight {
   private double[] translateVec = {0, 0, 0};
   private double[] defaultValue = {0, 0, 0, 0};
   */
-
   public Limelight() {
-    SmartDashboard.putNumber("Area Threshold", 0.02);
-    SmartDashboard.putNumberArray("AutoAlign: PID Values", new double[]{0.01,0.03,0});
-    SmartDashboard.putNumber("AutoAlign: Tolerance", 0.01);
-    SmartDashboard.putNumber("AutoAlign: Backlash Offset", 0);
-    SmartDashboard.putNumber("AutoAlign: Steering Factor", 0.25);
-    SmartDashboard.putNumber("Maximum Adjustment", 1.0);
-    SmartDashboard.setPersistent("Area Threshold");
-    SmartDashboard.setPersistent("AutoAlign: Steering Factor");
-    SmartDashboard.setPersistent("Maximum Adjustment");
-    SmartDashboard.setPersistent("AutoAlign: PID Values");
-    SmartDashboard.setPersistent("AutoAlign: Tolerance");
-    SmartDashboard.setPersistent("AutoAlign: Backlash Offset");
+    this("limelight");
+  }
+  public Limelight(String ntName){
+    config.ntName = ntName;
     
-    double[] pidValues = SmartDashboard.getNumberArray("AutoAlign: PID Values", new double[]{0.01,0.03,0});
+    double[] pidValues = config.pidValues;
     pidController = new PIDController(pidValues[0],pidValues[1],pidValues[2],1.0/90.0);
     pidController.setSetpoint(0);
-    pidController.setTolerance(SmartDashboard.getNumber("AutoAlign: Tolerance", 0.01));
+    pidController.setTolerance(config.tolerance);
   }
 
   /*
@@ -144,7 +135,7 @@ public class Limelight {
     if (tv == 1.0) {
       adjustment = (area_threshold - ta) * Kp;
     }
-    adjustment = Math.signum(adjustment) * Math.min(Math.abs(adjustment), SmartDashboard.getNumber("Maximum Adjustment", 1.0));
+    adjustment = Math.signum(adjustment) * Math.min(Math.abs(adjustment), config.maxAdjustment);
     return adjustment;
   }
 
@@ -157,26 +148,25 @@ public class Limelight {
     SmartDashboard.putNumber("Found Vision Target", tv);
     SmartDashboard.putNumber("Prev_tx", prev_txDeg);
     txDeg = Double.isNaN(txDeg) ? 0 : txDeg;
-    double[] pidValues = SmartDashboard.getNumberArray("AutoAlign: PID Values", new double[]{0.01, 0.03, 0});
+    double[] pidValues = config.pidValues;
     pidController.setPID(pidValues[0], pidValues[1], pidValues[2]);
-    pidController.setTolerance(SmartDashboard.getNumber("AutoAlign: Tolerance", 0.01));
+    pidController.setTolerance(config.tolerance);
     double adjustment = 0.0;
-    steering_factor = SmartDashboard.getNumber("AutoAlign: Steering Factor", 0.25);
   
     if (tv == 1.0 && !stopSteer) {
-      if (ta > SmartDashboard.getNumber("Area Threshold", 0.02)) {
+      if (ta > config.areaThreshold) {
         adjustment = pidController.calculate(txDeg);
         prev_txDeg = txDeg;
         
         if (!newPIDLoop) {
           newPIDLoop = true;
-          pidController.setSetpoint(Math.signum(prev_txDeg) * SmartDashboard.getNumber("AutoAlign: Backlash Offset", backlashOffset));
+          pidController.setSetpoint(Math.signum(prev_txDeg) * config.backlashOffset);
         }
       }
     } else {
       newPIDLoop = false;
       pidController.reset();
-      adjustment = Math.copySign(steering_factor, prev_txDeg);
+      adjustment = Math.copySign(config.steeringFactor, prev_txDeg);
     }
 
     if (Math.abs(txDeg) < 1.0 && Math.abs(prev_txDeg) < 1.0 && Math.abs(heading - prevHeading) < 1) stopSteer = true;
@@ -188,7 +178,7 @@ public class Limelight {
 
     SmartDashboard.putBoolean("Stop Auto Steering", stopSteer);
 
-    adjustment = Math.copySign(Math.min(Math.abs(adjustment), SmartDashboard.getNumber("Maximum Adjustment", 1.0)), txDeg);
+    adjustment = Math.copySign(Math.min(Math.abs(adjustment), config.maxAdjustment), txDeg);
     SmartDashboard.putNumber("Adjustment", adjustment);
     return adjustment;
   }
@@ -324,5 +314,16 @@ public class Limelight {
 
   public PIDController getPIDController() {
     return pidController;
+  }
+  public static class Config {
+    public String ntName = "limelight";
+    public double[] pidValues = {0.01, 0.03, 0};
+    public double tolerance = 0.01;
+    public double steeringFactor = 0.25;
+    public double areaThreshold = 0.02;
+    public double maxAdjustment = 1.0;
+    public double backlashOffset = 0.0;
+  }
+  public static class DebugInfo {
   }
 }
