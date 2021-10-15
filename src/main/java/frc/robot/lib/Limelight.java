@@ -9,7 +9,6 @@ package frc.robot.lib;
 
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.controller.PIDController;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class Limelight {
 
@@ -28,15 +27,11 @@ public class Limelight {
    * documentation.
    */
   private double tv, txDeg, tyDeg, ta;
-  private boolean stopSteer = false;
   // Mounting angle is the angle of the limelight (angled up = +, angled down = -)
   private double mountingAngleDeg;
 
-  private double prev_txDeg = 1.0;
-  private double prevHeading = 0;
 
   private PIDController pidController;
-  private boolean newPIDLoop = false;
 
   public Limelight() {
     this("limelight");
@@ -82,13 +77,14 @@ public class Limelight {
     // distance (parallel to ground) b/t limelight and target (does not include
     // height difference)
     double forward = Math.abs(diff / (Math.tan((mountingAngleDeg + tyDeg) / 180 * Math.PI)));
+    debugInfo.ballForward = forward;
     // hypotenuse of height difference and depth difference (ignores left & right
     // difference) between limelight and target
     double hypotenuse = Math.sqrt(forward * forward + diff * diff);
     // left and right distance b/t target and limelight (only x difference, does not
     // inlcude height or depth)
     double strafe = Math.tan(txDeg / 180 * Math.PI) * hypotenuse;
-    SmartDashboard.putNumber("distance to ball", forward);
+    debugInfo.ballStrafe = strafe;
     return new double[] { forward, strafe };
   }
 
@@ -97,10 +93,10 @@ public class Limelight {
   public double distanceAssist() {
     tv = NetworkTableInstance.getDefault().getTable(config.ntName).getEntry("tv").getDouble(0.0);
     ta = NetworkTableInstance.getDefault().getTable(config.ntName).getEntry("ta").getDouble(0.0);
-    SmartDashboard.putNumber("Crosshair Vertical Offset", tyDeg);
+    debugInfo.tyDeg = tyDeg;
     double adjustment = 0.0;
-    double area_threshold = 1.75;
-    double Kp = 0.225;
+    double area_threshold = config.area_threshold;
+    double Kp = config.kP;
 
     if (tv == 1.0) {
       adjustment = (area_threshold - ta) * Kp;
@@ -115,44 +111,16 @@ public class Limelight {
     tv = NetworkTableInstance.getDefault().getTable(config.ntName).getEntry("tv").getDouble(0.0);
     txDeg = NetworkTableInstance.getDefault().getTable(config.ntName).getEntry("tx").getDouble(0.0);
     ta = NetworkTableInstance.getDefault().getTable(config.ntName).getEntry("ta").getDouble(0.0);
-    SmartDashboard.putNumber("Crosshair Horizontal Offset", txDeg);
-    SmartDashboard.putNumber("Found Vision Target", tv);
-    SmartDashboard.putNumber("Prev_tx", prev_txDeg);
+    debugInfo.txDeg = txDeg;
+    debugInfo.tv = tv;
+
     txDeg = Double.isNaN(txDeg) ? 0 : txDeg;
     double[] pidValues = config.pidValues;
     pidController.setPID(pidValues[0], pidValues[1], pidValues[2]);
     pidController.setTolerance(config.tolerance);
     double adjustment = 0.0;
-
-    if (tv == 1.0 && !stopSteer) {
-      if (ta > config.areaThreshold) {
-        adjustment = pidController.calculate(txDeg);
-        prev_txDeg = txDeg;
-
-        if (!newPIDLoop) {
-          newPIDLoop = true;
-          pidController.setSetpoint(Math.signum(prev_txDeg) * config.backlashOffset);
-        }
-      }
-    } else {
-      newPIDLoop = false;
-      pidController.reset();
-      adjustment = Math.copySign(config.steeringFactor, prev_txDeg);
-    }
-
-    if (Math.abs(txDeg) < 1.0 && Math.abs(prev_txDeg) < 1.0 && Math.abs(heading - prevHeading) < 1)
-      stopSteer = true;
-    else
-      stopSteer = false;
-    if (stopSteer && tv == 1.0) {
-      adjustment = 0;
-    }
-    prevHeading = heading;
-
-    SmartDashboard.putBoolean("Stop Auto Steering", stopSteer);
-
     adjustment = Math.copySign(Math.min(Math.abs(adjustment), config.maxAdjustment), txDeg);
-    SmartDashboard.putNumber("Adjustment", adjustment);
+    debugInfo.adjustment = adjustment;
     return adjustment;
   }
 
@@ -180,8 +148,16 @@ public class Limelight {
     public double areaThreshold = 0.02;
     public double maxAdjustment = 1.0;
     public double backlashOffset = 0.0;
+    public double area_threshold = 1.75;
+    public double kP = 0.225;
   }
 
   public static class DebugInfo {
+    public double ballStrafe = 0;
+    public double ballForward = 0;
+    public double tyDeg = 0;
+    public double txDeg = 0;
+    public double tv = 0;
+    public double adjustment = 0;
   }
 }
