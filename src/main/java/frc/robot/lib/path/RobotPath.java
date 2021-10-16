@@ -1,4 +1,4 @@
-package frc.robot.lib.Paths;
+package frc.robot.lib.path;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -7,31 +7,29 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 
 import edu.wpi.first.wpilibj.Filesystem;
-import edu.wpi.first.wpilibj.controller.RamseteController;
-import edu.wpi.first.wpilibj.controller.SimpleMotorFeedforward;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.geometry.Pose2d;
 import edu.wpi.first.wpilibj.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.geometry.Translation2d;
-import edu.wpi.first.wpilibj.kinematics.DifferentialDriveOdometry;
 import edu.wpi.first.wpilibj.trajectory.Trajectory;
 import edu.wpi.first.wpilibj.trajectory.TrajectoryConfig;
 import edu.wpi.first.wpilibj.trajectory.TrajectoryGenerator;
-import edu.wpi.first.wpilibj.trajectory.constraint.DifferentialDriveVoltageConstraint;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.RamseteCommand;
 
 //Findd Me
 public class RobotPath {
 
     private Trajectory trajectory;
     private DrivetrainInterface dt;
+    private HeadingSupplier hs;
 
     public RobotPath(String pathName, DrivetrainInterface dt, boolean isInverted, Translation2d initPos) throws IOException {
         this(getPointsFromFile(pathName, dt, isInverted, initPos), isInverted, dt);
@@ -48,37 +46,30 @@ public class RobotPath {
     public RobotPath(Trajectory trajectory, DrivetrainInterface dt) {
         this.trajectory = trajectory;
         this.dt = dt;
+        this.hs = new HeadingSupplier(trajectory);
     }
 
-    public Command getPathCommand() {
-        RamseteCommand ram = new RamseteCommand(trajectory, 
-                                                () -> dt.getOdometry().getPoseMeters(), 
-                                                new RamseteController(), 
-                                                dt.getKinematics(),
-                                                dt::charDriveDirect,
-                                                dt);
-        return new InstantCommand(this::loadOdometry).andThen(ram, new InstantCommand(() -> dt.charDriveTank(0, 0), dt)); //TODO: Configure Ramsete Controller Values
+    public Command getPathCommand(boolean faceInPathDirection, boolean stopAtEnd) {
+        hs.reset();
+        Supplier<Rotation2d> headingSupplier = (!faceInPathDirection) ? () -> Rotation2d.fromDegrees(dt.getHeading()) : () -> hs.sample();
+        Command command = new InstantCommand(this::loadOdometry).andThen(dt.createRamseteCommand(trajectory, headingSupplier));
+        if(stopAtEnd) {
+            command = command.andThen(new InstantCommand(dt::stop, dt));
+        }
+        return command;
     }
 
     public void loadOdometry() {
-        dt.setOdometry(new DifferentialDriveOdometry(Rotation2d.fromDegrees(dt.getHeading()), trajectory.getInitialPose()));
+        dt.setOdometry(Rotation2d.fromDegrees(dt.getHeading()), trajectory.getInitialPose());
     }
 
     public static TrajectoryConfig createConfig(boolean isInverted, DrivetrainInterface dt) {
-        TrajectoryConfig config = new TrajectoryConfig(dt.getConfig().kAutoMaxSpeed, 
-                                                       dt.getConfig().kAutoMaxAccel);
-        config.setKinematics(dt.getKinematics());
+        TrajectoryConfig config = new TrajectoryConfig(dt.getAutoMaxSpeed(),
+                                                       dt.getAutoMaxAccel());
+        dt.configureTrajectory(config);
 
-
-        double kVoltAVG = 0.25 * (dt.getConfig().kVolts[0] + dt.getConfig().kVolts[1] + dt.getConfig().kVolts[2] + dt.getConfig().kVolts[3]);
-        double kVelsAVG = 0.25 * (dt.getConfig().kVels[0] + dt.getConfig().kVels[1] + dt.getConfig().kVels[2] + dt.getConfig().kVels[3]);
-        double kAccelAVG = 0.25 * (dt.getConfig().kAccels[0] + dt.getConfig().kAccels[1] + dt.getConfig().kAccels[2] + dt.getConfig().kAccels[3]);
-        DifferentialDriveVoltageConstraint voltConstraint = new DifferentialDriveVoltageConstraint(
-            new SimpleMotorFeedforward(kVoltAVG, kVelsAVG, kAccelAVG), dt.getKinematics(), dt.getConfig().kAutoMaxVolt);
-        config.addConstraint(voltConstraint);
-        
         if (isInverted) { config.setReversed(true); }
-        
+
         return config;
     }
 
@@ -116,5 +107,30 @@ public class RobotPath {
 
     public static File getPathFile(String pathName) {
         return Filesystem.getDeployDirectory().toPath().resolve(Paths.get("PathWeaver/Paths/" + pathName + ".path")).toFile();
+    }
+
+    private static class HeadingSupplier {
+        private Trajectory trajectory;
+        private Timer timer;
+        private boolean timerStarted;
+
+        public HeadingSupplier(Trajectory trajectory) {
+            this.trajectory = trajectory;
+            timer = new Timer();
+            timerStarted = false;
+        }
+
+        public Rotation2d sample() {
+            if (!timerStarted) {
+                timerStarted = true;
+                timer.start();
+            }
+            return trajectory.sample(timer.get()).poseMeters.getRotation();
+        }
+
+        public void reset() {
+            timerStarted = false;
+            timer.reset();
+        }
     }
 }
