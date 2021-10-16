@@ -11,18 +11,18 @@ import edu.wpi.first.wpilibj2.command.Subsystem;
 
 public interface DrivetrainInterface extends Subsystem {
 
-    public void setOdometry(Rotation2d gyroAngle, Pose2d initialPose);
+    public void configureTrajectory(TrajectoryConfig config);
 
-    public void stop();
-
-    public double getHeading();
-
-    public Command createRamseteCommand(Trajectory trajectory, Supplier<Rotation2d> headingSupplier);
-
-    public double getAutoMaxSpeed();
+    public Command createRamseteCommand(Trajectory trajectory, Supplier<Rotation2d> desiredHeading);
 
     public double getAutoMaxAccel();
 
-    public void configureTrajectory(TrajectoryConfig config);
+    public double getAutoMaxSpeed();
+
+    public double getHeading();
+
+    public void setOdometry(Rotation2d gyroAngle, Pose2d initialPose);
+
+    public void stop();
 
 }

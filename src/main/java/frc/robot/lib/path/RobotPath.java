@@ -51,8 +51,10 @@ public class RobotPath {
 
     public Command getPathCommand(boolean faceInPathDirection, boolean stopAtEnd) {
         hs.reset();
-        Supplier<Rotation2d> headingSupplier = (!faceInPathDirection) ? () -> Rotation2d.fromDegrees(dt.getHeading()) : () -> hs.sample();
-        Command command = new InstantCommand(this::loadOdometry).andThen(dt.createRamseteCommand(trajectory, headingSupplier));
+        // We want the robot to stay facing the same direction (in this case), so save the current heading
+        Rotation2d heading = Rotation2d.fromDegrees(dt.getHeading());
+        Supplier<Rotation2d> desiredHeading = (!faceInPathDirection) ? () -> heading : () -> hs.sample();
+        Command command = new InstantCommand(this::loadOdometry).andThen(dt.createRamseteCommand(trajectory, desiredHeading));
         if(stopAtEnd) {
             command = command.andThen(new InstantCommand(dt::stop, dt));
         }
