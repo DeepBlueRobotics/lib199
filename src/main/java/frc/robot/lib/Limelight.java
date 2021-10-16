@@ -26,11 +26,12 @@ public class Limelight {
      * image to 100% of image) There are more values we could be using. Check the
      * documentation.
      */
-    private double tv, txDeg, tyDeg, ta;
+    private double tv, txDeg, tyDeg, ta, prev_txDeg = 1.0D;
     // Mounting angle is the angle of the limelight (angled up = +, angled down = -)
     private double mountingAngleDeg;
 
     private PIDController pidController;
+    private boolean newPIDLoop = false;
 
     public Limelight() {
         this("limelight");
@@ -118,6 +119,21 @@ public class Limelight {
         pidController.setPID(pidValues[0], pidValues[1], pidValues[2]);
         pidController.setTolerance(config.tolerance);
         double adjustment = 0.0;
+
+        if (tv == 1.0) {
+            adjustment = pidController.calculate(txDeg);
+            prev_txDeg = txDeg;
+
+            if (!newPIDLoop) {
+                newPIDLoop = true;
+                pidController.setSetpoint(Math.signum(prev_txDeg) * config.backlashOffset);
+            }
+        } else {
+            newPIDLoop = false;
+            pidController.reset();
+            adjustment = Math.copySign(config.steeringFactor, prev_txDeg);
+        }
+
         adjustment = Math.copySign(Math.min(Math.abs(adjustment), config.maxAdjustment), txDeg);
         debugInfo.adjustment = adjustment;
         return adjustment;
