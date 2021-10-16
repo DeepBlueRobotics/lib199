@@ -30,7 +30,6 @@ public class Limelight {
   // Mounting angle is the angle of the limelight (angled up = +, angled down = -)
   private double mountingAngleDeg;
 
-
   private PIDController pidController;
 
   public Limelight() {
@@ -107,7 +106,7 @@ public class Limelight {
 
   // Adjusts the angle facing a vision target. Uses basic PID with the tx value
   // from the network table.
-  public double steeringAssist(double heading) {
+  public double steeringAssist() {
     tv = NetworkTableInstance.getDefault().getTable(config.ntName).getEntry("tv").getDouble(0.0);
     txDeg = NetworkTableInstance.getDefault().getTable(config.ntName).getEntry("tx").getDouble(0.0);
     ta = NetworkTableInstance.getDefault().getTable(config.ntName).getEntry("ta").getDouble(0.0);
@@ -129,9 +128,9 @@ public class Limelight {
   }
 
   // Combination of distance assist and steering assist
-  public double[] autoTarget(double heading) {
+  public double[] autoTarget() {
     double dist_assist = distanceAssist();
-    double steer_assist = steeringAssist(heading);
+    double steer_assist = steeringAssist();
     double[] params = { dist_assist + steer_assist, dist_assist - steer_assist };
     return params;
   }
