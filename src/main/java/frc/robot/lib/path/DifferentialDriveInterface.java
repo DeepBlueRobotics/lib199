@@ -1,6 +1,7 @@
 package frc.robot.lib.path;
 
 import java.util.function.Supplier;
+import java.util.stream.DoubleStream;
 
 import edu.wpi.first.wpilibj.controller.RamseteController;
 import edu.wpi.first.wpilibj.controller.SimpleMotorFeedforward;
@@ -13,7 +14,6 @@ import edu.wpi.first.wpilibj.trajectory.TrajectoryConfig;
 import edu.wpi.first.wpilibj.trajectory.constraint.DifferentialDriveVoltageConstraint;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.RamseteCommand;
-import frc.robot.lib.Utils199;
 
 public interface DifferentialDriveInterface extends DrivetrainInterface {
 
@@ -40,7 +40,10 @@ public interface DifferentialDriveInterface extends DrivetrainInterface {
 
         double[][] charVals = getCharacterizationValues();
         config.addConstraint(new DifferentialDriveVoltageConstraint(
-            new SimpleMotorFeedforward(Utils199.average(charVals[0]), Utils199.average(charVals[1]), Utils199.average(charVals[2])),
+            // new SimpleMotorFeedforward(Utils199.average(charVals[0]), Utils199.average(charVals[1]), Utils199.average(charVals[2])),
+            new SimpleMotorFeedforward(DoubleStream.of(charVals[0]).average().getAsDouble(), 
+                                        DoubleStream.of(charVals[1]).average().getAsDouble(), 
+                                        DoubleStream.of(charVals[2]).average().getAsDouble()),
             getKinematics(), getAutoMaxVolt()));
     }
 
