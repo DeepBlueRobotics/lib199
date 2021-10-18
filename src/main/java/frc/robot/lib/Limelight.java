@@ -9,6 +9,7 @@ package frc.robot.lib;
 
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.controller.PIDController;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class Limelight {
 
@@ -17,7 +18,6 @@ public class Limelight {
     }
 
     public final Config config = new Config();
-    public final DebugInfo debugInfo = new DebugInfo();
     /*
      * http://docs.limelightvision.io/en/latest/networktables_api.html tv = Whether
      * the limelight has any valid targets (0 or 1) tx = Horizontal Offset From
@@ -26,7 +26,7 @@ public class Limelight {
      * image to 100% of image) There are more values we could be using. Check the
      * documentation.
      */
-    private double tv, txDeg, tyDeg, ta, prev_txDeg = 1.0D;
+    private double tv, txDeg, tyDeg, ta, prev_txDeg = 1.0;
     // Mounting angle is the angle of the limelight (angled up = +, angled down = -)
     private double mountingAngleDeg;
 
@@ -41,7 +41,7 @@ public class Limelight {
         config.ntName = ntName;
 
         double[] pidValues = config.pidValues;
-        pidController = new PIDController(pidValues[0], pidValues[1], pidValues[2], 1.0 / 90.0);
+        pidController = new PIDController(pidValues[0], pidValues[1], pidValues[2], config.period);
         pidController.setSetpoint(0);
         pidController.setTolerance(config.tolerance);
     }
@@ -77,14 +77,14 @@ public class Limelight {
         // distance (parallel to ground) b/t limelight and target (does not include
         // height difference)
         double forward = Math.abs(diff / (Math.tan((mountingAngleDeg + tyDeg) / 180 * Math.PI)));
-        debugInfo.ballForward = forward;
+        putValue("forward", forward);
         // hypotenuse of height difference and depth difference (ignores left & right
         // difference) between limelight and target
         double hypotenuse = Math.sqrt(forward * forward + diff * diff);
         // left and right distance b/t target and limelight (only x difference, does not
         // inlcude height or depth)
         double strafe = Math.tan(txDeg / 180 * Math.PI) * hypotenuse;
-        debugInfo.ballStrafe = strafe;
+        putValue("strafe", strafe);
         return new double[] { forward, strafe };
     }
 
@@ -93,7 +93,7 @@ public class Limelight {
     public double distanceAssist() {
         tv = NetworkTableInstance.getDefault().getTable(config.ntName).getEntry("tv").getDouble(0.0);
         ta = NetworkTableInstance.getDefault().getTable(config.ntName).getEntry("ta").getDouble(0.0);
-        debugInfo.tyDeg = tyDeg;
+        putValue("tyDeg", tyDeg);
         double adjustment = 0.0;
         double area_threshold = config.area_threshold;
         double Kp = config.kP;
@@ -111,8 +111,8 @@ public class Limelight {
         tv = NetworkTableInstance.getDefault().getTable(config.ntName).getEntry("tv").getDouble(0.0);
         txDeg = NetworkTableInstance.getDefault().getTable(config.ntName).getEntry("tx").getDouble(0.0);
         ta = NetworkTableInstance.getDefault().getTable(config.ntName).getEntry("ta").getDouble(0.0);
-        debugInfo.txDeg = txDeg;
-        debugInfo.tv = tv;
+        putValue("txDeg", txDeg);
+        putValue("tv", tv);
 
         txDeg = Double.isNaN(txDeg) ? 0 : txDeg;
         double[] pidValues = config.pidValues;
@@ -135,7 +135,7 @@ public class Limelight {
         }
 
         adjustment = Math.copySign(Math.min(Math.abs(adjustment), config.maxAdjustment), txDeg);
-        debugInfo.adjustment = adjustment;
+        putValue("adjustment", adjustment);
         return adjustment;
     }
 
@@ -154,25 +154,28 @@ public class Limelight {
     public PIDController getPIDController() {
         return pidController;
     }
-
-    public static class Config {
-        public String ntName = "limelight";
-        public double[] pidValues = { 0.01, 0.03, 0 };
-        public double tolerance = 0.01;
-        public double steeringFactor = 0.25;
-        public double areaThreshold = 0.02;
-        public double maxAdjustment = 1.0;
-        public double backlashOffset = 0.0;
-        public double area_threshold = 1.75;
-        public double kP = 0.225;
+    public void putValue(String valueName, double value){
+      SmartDashboard.putNumber("Limelight("+ config.ntName + "), (" + valueName + ")", value);
     }
 
-    public static class DebugInfo {
-        public double ballStrafe = 0;
-        public double ballForward = 0;
-        public double tyDeg = 0;
-        public double txDeg = 0;
-        public double tv = 0;
-        public double adjustment = 0;
+    public static class Config {
+      //Limelight name (if using more than one Limelight)
+        public String ntName = "limelight";
+      //PID values for Limelight steering
+        public double[] pidValues = { 0.01, 0.03, 0 }; 
+      //tolerance for PID controller for steering
+        public double tolerance = 0.01;
+      //steering factor for adjustment
+        public double steeringFactor = 0.25;
+      //max value for adjustment
+        public double maxAdjustment = 1.0;
+      //offset for when the limelight overshoots the target
+        public double backlashOffset = 0.0;
+      //desired area of target from Limelight vision (% of target for limelight vision)
+        public double area_threshold = 1.75;
+      //P value for PID control for distance assist
+        public double kP = 0.225;
+      //period of PID controller updates (seconds)
+        public double period = 0.02;
     }
 }
