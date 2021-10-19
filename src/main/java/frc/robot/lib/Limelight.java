@@ -40,10 +40,10 @@ public class Limelight {
     public Limelight(String ntName) {
         config.ntName = ntName;
 
-        double[] pidValues = config.pidValues;
-        pidController = new PIDController(pidValues[0], pidValues[1], pidValues[2], config.period);
+        double[] pidValues = config.pidSteeringValues;
+        pidController = new PIDController(pidValues[0], pidValues[1], pidValues[2], config.pidPeriodSeconds);
         pidController.setSetpoint(0);
-        pidController.setTolerance(config.tolerance);
+        pidController.setTolerance(config.steeringToleranceDegs);
     }
 
     /*
@@ -95,13 +95,13 @@ public class Limelight {
         ta = NetworkTableInstance.getDefault().getTable(config.ntName).getEntry("ta").getDouble(0.0);
         putValue("tyDeg", tyDeg);
         double adjustment = 0.0;
-        double area_threshold = config.area_threshold;
+        double area_threshold = config.areaThresholdPercentage;
         double Kp = config.kP;
 
         if (tv == 1.0) {
             adjustment = (area_threshold - ta) * Kp;
         }
-        adjustment = Math.signum(adjustment) * Math.min(Math.abs(adjustment), config.maxAdjustment);
+        adjustment = Math.signum(adjustment) * Math.min(Math.abs(adjustment), config.maxSteeringAdjustment);
         return adjustment;
     }
 
@@ -115,9 +115,9 @@ public class Limelight {
         putValue("tv", tv);
 
         txDeg = Double.isNaN(txDeg) ? 0 : txDeg;
-        double[] pidValues = config.pidValues;
+        double[] pidValues = config.pidSteeringValues;
         pidController.setPID(pidValues[0], pidValues[1], pidValues[2]);
-        pidController.setTolerance(config.tolerance);
+        pidController.setTolerance(config.steeringToleranceDegs);
         double adjustment = 0.0;
 
         if (tv == 1.0) {
@@ -126,7 +126,7 @@ public class Limelight {
 
             if (!newPIDLoop) {
                 newPIDLoop = true;
-                pidController.setSetpoint(Math.signum(prev_txDeg) * config.backlashOffset);
+                pidController.setSetpoint(Math.signum(prev_txDeg) * config.backlashSteeringOffset);
             }
         } else {
             newPIDLoop = false;
@@ -134,7 +134,7 @@ public class Limelight {
             adjustment = Math.copySign(config.steeringFactor, prev_txDeg);
         }
 
-        adjustment = Math.copySign(Math.min(Math.abs(adjustment), config.maxAdjustment), txDeg);
+        adjustment = Math.copySign(Math.min(Math.abs(adjustment), config.maxSteeringAdjustment), txDeg);
         putValue("adjustment", adjustment);
         return adjustment;
     }
@@ -157,25 +157,43 @@ public class Limelight {
     public void putValue(String valueName, double value){
       SmartDashboard.putNumber("Limelight("+ config.ntName + "), (" + valueName + ")", value);
     }
-
+    
     public static class Config {
-      //Limelight name (if using more than one Limelight)
-        public String ntName = "limelight";
-      //PID values for Limelight steering
-        public double[] pidValues = { 0.01, 0.03, 0 }; 
-      //tolerance for PID controller for steering
-        public double tolerance = 0.01;
-      //steering factor for adjustment
-        public double steeringFactor = 0.25;
-      //max value for adjustment
-        public double maxAdjustment = 1.0;
-      //offset for when the limelight overshoots the target
-        public double backlashOffset = 0.0;
-      //desired area of target from Limelight vision (% of target for limelight vision)
-        public double area_threshold = 1.75;
-      //P value for PID control for distance assist
-        public double kP = 0.225;
-      //period of PID controller updates (seconds)
-        public double period = 0.02;
+      /**
+       * Limelight name (if using more than one Limelight)
+       */ 
+      public String ntName = "limelight";
+      /**
+       *  PID values for Limelight steering
+       */ 
+      public double[] pidSteeringValues = { 0.01, 0.03, 0 }; 
+      /**
+       * Tolerance for PID controller for steering *
+       */
+      public double steeringToleranceDegs = 0.01;
+      /**
+       * steering factor for adjustment
+       */
+      public double steeringFactor = 0.25;
+      /**
+       * max value for adjustment
+       */
+      public double maxSteeringAdjustment = 1.0;
+      /**
+       * offset for when the limelight overshoots the target
+       */
+      public double backlashSteeringOffset = 0.0;
+      /**
+       * desired area of target from Limelight vision (% of target for limelight vision)
+       */
+      public double areaThresholdPercentage = 1.75;
+      /**
+       * P value coefficient for PID control for distance assist
+       */
+      public double kP = 0.225;
+      /**
+       * period of PID controller updates (seconds)
+       */
+      public double pidPeriodSeconds = 0.02;
     }
 }
