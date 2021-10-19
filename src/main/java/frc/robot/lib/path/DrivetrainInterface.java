@@ -29,19 +29,19 @@ public interface DrivetrainInterface extends Subsystem {
      * Gets the Autonomous max acceleration in m/s^2
      * @return max acceleration in m/s^2
      */
-    public double getAutoMaxAccel();
+    public double getAutoMaxAccelMps2();
 
     /**
      * Gets the Autonomous max speed in m/s
      * @return max speed in m/s
      */
-    public double getAutoMaxSpeed();
+    public double getAutoMaxSpeedMps();
 
     /**
      * Gets the current heading in degrees
      * @return current heading in degrees
      */
-    public double getHeading();
+    public double getHeadingDeg();
 
     /**
      * Sets odometry based on current gyro angle and pose

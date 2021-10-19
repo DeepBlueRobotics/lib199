@@ -20,41 +20,77 @@ import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
 
 public interface SwerveDriveInterface extends DrivetrainInterface {
 
+    /**
+     * Drives in autonomous given swerve module states
+     * @param swerveModuleStates Array of Swerve Module states
+     */
     public void autoDrive(SwerveModuleState[] swerveModuleStates);
 
+    /**
+     * Gets Swerve Drive kinematics
+     * @return kinematics
+     */
     public SwerveDriveKinematics getKinematics();
 
+    /**
+     * Gets Swerve Drive odometry
+     * @return odometry
+     */
     public SwerveDriveOdometry getOdometry();
 
-    // Retrieves the PID constants which will be used for path following in the form { xPID, yPID, zPID }
-    // The values in these arrays will be read as P, I, D
-    // All three xPID, yPID, zPID and P, I, D values must be included
+    /**
+     * Retrieves the PID constants which will be used for path following in the form { xPID, yPID, zPID }
+     * The values in these arrays will be read as P, I, D
+     * All three xPID, yPID, zPID and P, I, D values must be included
+     * @return PID constnants
+     */
     public double[][] getPIDConstants();
 
+    /**
+     * Sets odometry based on current kinematics, gyro angle, pose
+     * @param odometry current kinematics, gyro angle, pose
+     */
     public void setOdometry(SwerveDriveOdometry odometry);
 
-    // Retrieves the end velocity which will be used when configuring the next path
-    // (This will be done when the RobotPath constructor is called. NOT when the path is run)
+
+    /**
+     * Retrieves the end velocity which will be used when configuring the next path
+     * (This will be done when the RobotPath constructor is called. NOT when the path is run)
+     * @return End velocity
+     */
     public default double getEndVelocityForNextPath() {
         return 0;
     }
 
-    // Retrieves the region constraints which will be used when configuring the next path
-    // (This will be done when the RobotPath constructor is called. NOT when the path is run)
+    /**
+     * Retrieves the region constraints which will be used when configuring the next path
+     * (This will be done when the RobotPath constructor is called. NOT when the path is run)
+     * @return Region constraints for next path
+     */
     public default ArrayList<EllipticalRegionConstraint> getRegionConstraintsForNextPath() {
         return new ArrayList<>();
     }
 
+    /**
+     * Configures the constants for generating a trajectory
+     * @param config The configuration for generating a trajectory
+     */
     @Override
     public default void configureTrajectory(TrajectoryConfig config) {
         // This performs the same action as setKinematics but with our maxSpeed
-        config.addConstraint(new SwerveDriveKinematicsConstraint(getKinematics(), getAutoMaxSpeed()));
+        config.addConstraint(new SwerveDriveKinematicsConstraint(getKinematics(), getAutoMaxSpeedMps()));
 
         // Ensure that the robot turns slowly around tight turns and doesn't slip
         config.addConstraints(getRegionConstraintsForNextPath());
         config.setEndVelocity(getEndVelocityForNextPath());
     }
 
+    /**
+     * Constructs a new RamseteCommand that, when executed, will follow the provided trajectory.
+     * @param trajectory The trajectory to follow.
+     * @param desiredHeading A function that supplies the robot pose - use one of the odometry classes to provide this.
+     * @return RamseteCommand
+     */
     @Override
     public default Command createRamseteCommand(Trajectory trajectory, Supplier<Rotation2d> desiredHeading) {
         double[][] pidConstants = getPIDConstants();
@@ -87,6 +123,11 @@ public interface SwerveDriveInterface extends DrivetrainInterface {
         );
     }
 
+    /**
+    * Sets odometry based on current kinematics, gyro angle, and pose
+    * @param gyroAngle The angle reported by the gyroscope.
+    * @param initialPose The starting position of the robot on the field.
+    */
     @Override
     public default void setOdometry(Rotation2d gyroAngle, Pose2d initialPose) {
         setOdometry(new SwerveDriveOdometry(getKinematics(), gyroAngle, initialPose));

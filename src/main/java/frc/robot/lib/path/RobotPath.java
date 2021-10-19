@@ -31,43 +31,84 @@ public class RobotPath {
     private DrivetrainInterface dt;
     private HeadingSupplier hs;
 
+    /**
+     * Constructs a RobotPath Object
+     * @param pathName Name of the path
+     * @param dt Drivetrain object
+     * @param isInverted Whether the path is inverted
+     * @param initPos Initial position
+     * @throws IOException If the input wasn't valid
+     */
     public RobotPath(String pathName, DrivetrainInterface dt, boolean isInverted, Translation2d initPos) throws IOException {
         this(getPointsFromFile(pathName, dt, isInverted, initPos), isInverted, dt);
     }
 
+    /**
+     * Constructs a RobotPath Object
+     * @param poses List of points in the .path file
+     * @param isInverted Whether the path is inverted
+     * @param dt Drivetrain object
+     */
     public RobotPath(List<Pose2d> poses, boolean isInverted, DrivetrainInterface dt) {
         this(poses, createConfig(isInverted, dt), dt);
     }
 
+    /**
+     * Constructs a RobotPath Object
+     * @param poses List of points in the .path file
+     * @param config TrajectoryConfig object
+     * @param dt Drivetrain
+     */
     public RobotPath(List<Pose2d> poses, TrajectoryConfig config, DrivetrainInterface dt) {
         this(TrajectoryGenerator.generateTrajectory(poses, config), dt);
     }
 
+    /**
+     * Constructs a RobotPath Object
+     * @param trajectory Trajectory object
+     * @param dt Drivetrain object
+     */
     public RobotPath(Trajectory trajectory, DrivetrainInterface dt) {
         this.trajectory = trajectory;
         this.dt = dt;
         this.hs = new HeadingSupplier(trajectory);
     }
 
+    /**
+     * Gets a path command for the given path
+     * @param faceInPathDirection Only for swerve drive, unless otherwise stated. Determines whether robot stays facing path
+     * @param stopAtEnd whether the robot should stop at the end
+     * @return PathCommand
+     */
     public Command getPathCommand(boolean faceInPathDirection, boolean stopAtEnd) {
         hs.reset();
         // We want the robot to stay facing the same direction (in this case), so save the current heading
-        Rotation2d heading = Rotation2d.fromDegrees(dt.getHeading());
+        Rotation2d heading = Rotation2d.fromDegrees(dt.getHeadingDeg());
         Supplier<Rotation2d> desiredHeading = (!faceInPathDirection) ? () -> heading : () -> hs.sample();
-        Command command = new InstantCommand(this::loadOdometry).andThen(dt.createRamseteCommand(trajectory, desiredHeading));
-        if(stopAtEnd) {
+        Command command = new InstantCommand(this::loadOdometry)
+                .andThen(dt.createRamseteCommand(trajectory, desiredHeading));
+        if (stopAtEnd) {
             command = command.andThen(new InstantCommand(dt::stop, dt));
         }
         return command;
     }
 
+    /**
+     * Loads odometry
+     */
     public void loadOdometry() {
-        dt.setOdometry(Rotation2d.fromDegrees(dt.getHeading()), trajectory.getInitialPose());
+        dt.setOdometry(Rotation2d.fromDegrees(dt.getHeadingDeg()), trajectory.getInitialPose());
     }
 
+    /**
+     * Creates a TrajectoryConfig object
+     * @param isInverted Whether path is inverted
+     * @param dt Drivetrain object
+     * @return TrajectoryConfig object
+     */
     public static TrajectoryConfig createConfig(boolean isInverted, DrivetrainInterface dt) {
-        TrajectoryConfig config = new TrajectoryConfig(dt.getAutoMaxSpeed(),
-                                                       dt.getAutoMaxAccel());
+        TrajectoryConfig config = new TrajectoryConfig(dt.getAutoMaxSpeedMps(),
+                                                       dt.getAutoMaxAccelMps2());
         dt.configureTrajectory(config);
 
         if (isInverted) { config.setReversed(true); }
@@ -75,10 +116,28 @@ public class RobotPath {
         return config;
     }
 
+    /**
+     * Get points of a path from name of a .path file
+     * @param pathName Path name
+     * @param dt Drivetrain object
+     * @param isInverted Whether the path is inverted
+     * @param initPos Initial position
+     * @return List of points in path
+     * @throws IOException
+     */
     public static List<Pose2d> getPointsFromFile(String pathName, DrivetrainInterface dt, boolean isInverted, Translation2d initPos) throws IOException {
         return getPointsFromFile(getPathFile(pathName), dt, isInverted, initPos);
     }
 
+    /**
+     * Get points of a path from a .path file
+     * @param file Filename
+     * @param dt Drivetrain object
+     * @param isInverted Whether the path is inverted
+     * @param initPos Initial position
+     * @return List of points in path
+     * @throws IOException
+     */
     public static List<Pose2d> getPointsFromFile(File file, DrivetrainInterface dt, boolean isInverted, Translation2d initPos) throws IOException {
         ArrayList<Pose2d> poses = new ArrayList<Pose2d>();
 
@@ -107,6 +166,11 @@ public class RobotPath {
         return poses;
     }
 
+    /**
+     * Gets .path file given filename
+     * @param pathName name of file
+     * @return .path file
+     */
     public static File getPathFile(String pathName) {
         return Filesystem.getDeployDirectory().toPath().resolve(Paths.get("PathWeaver/Paths/" + pathName + ".path")).toFile();
     }
@@ -116,12 +180,21 @@ public class RobotPath {
         private Timer timer;
         private boolean timerStarted;
 
+        /**
+         * Constructs a HeadingSupplier object
+         * @param trajectory Represents a time-parameterized trajectory. The trajectory contains of various States that
+         *                   represent the pose, curvature, time elapsed, velocity, and acceleration at that point.
+         */
         public HeadingSupplier(Trajectory trajectory) {
             this.trajectory = trajectory;
             timer = new Timer();
             timerStarted = false;
         }
 
+        /**
+         * Gets the trajectory rotation at current point in time
+         * @return current trajectory rotation at current point in time
+         */
         public Rotation2d sample() {
             if (!timerStarted) {
                 timerStarted = true;
@@ -130,6 +203,9 @@ public class RobotPath {
             return trajectory.sample(timer.get()).poseMeters.getRotation();
         }
 
+        /**
+         * Reset the timer
+         */
         public void reset() {
             timerStarted = false;
             timer.reset();
