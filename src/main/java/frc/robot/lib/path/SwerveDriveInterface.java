@@ -1,6 +1,5 @@
 package frc.robot.lib.path;
 
-import java.util.ArrayList;
 import java.util.function.Supplier;
 
 import edu.wpi.first.wpilibj.controller.PIDController;
@@ -13,7 +12,6 @@ import edu.wpi.first.wpilibj.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.trajectory.Trajectory;
 import edu.wpi.first.wpilibj.trajectory.TrajectoryConfig;
 import edu.wpi.first.wpilibj.trajectory.TrapezoidProfile.Constraints;
-import edu.wpi.first.wpilibj.trajectory.constraint.EllipticalRegionConstraint;
 import edu.wpi.first.wpilibj.trajectory.constraint.SwerveDriveKinematicsConstraint;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
@@ -52,25 +50,6 @@ public interface SwerveDriveInterface extends DrivetrainInterface {
      */
     public void setOdometry(SwerveDriveOdometry odometry);
 
-
-    /**
-     * Retrieves the end velocity which will be used when configuring the next path
-     * (This will be done when the RobotPath constructor is called. NOT when the path is run)
-     * @return End velocity
-     */
-    public default double getEndVelocityForNextPath() {
-        return 0;
-    }
-
-    /**
-     * Retrieves the region constraints which will be used when configuring the next path
-     * (This will be done when the RobotPath constructor is called. NOT when the path is run)
-     * @return Region constraints for next path
-     */
-    public default ArrayList<EllipticalRegionConstraint> getRegionConstraintsForNextPath() {
-        return new ArrayList<>();
-    }
-
     /**
      * Configures the constants for generating a trajectory
      * @param config The configuration for generating a trajectory
@@ -79,10 +58,6 @@ public interface SwerveDriveInterface extends DrivetrainInterface {
     public default void configureTrajectory(TrajectoryConfig config) {
         // This performs the same action as setKinematics but with our maxSpeed
         config.addConstraint(new SwerveDriveKinematicsConstraint(getKinematics(), getAutoMaxSpeedMps()));
-
-        // Ensure that the robot turns slowly around tight turns and doesn't slip
-        config.addConstraints(getRegionConstraintsForNextPath());
-        config.setEndVelocity(getEndVelocityForNextPath());
     }
 
     /**

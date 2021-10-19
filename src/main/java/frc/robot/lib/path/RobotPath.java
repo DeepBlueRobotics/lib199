@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import org.apache.commons.csv.CSVFormat;
@@ -27,7 +28,9 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 //Findd Me
 public class RobotPath {
 
+    private List<Pose2d> poses;
     private Trajectory trajectory;
+    private TrajectoryConfig config;
     private DrivetrainInterface dt;
     private HeadingSupplier hs;
 
@@ -60,18 +63,9 @@ public class RobotPath {
      * @param dt Drivetrain
      */
     public RobotPath(List<Pose2d> poses, TrajectoryConfig config, DrivetrainInterface dt) {
-        this(TrajectoryGenerator.generateTrajectory(poses, config), dt);
-    }
-
-    /**
-     * Constructs a RobotPath Object
-     * @param trajectory Trajectory object
-     * @param dt Drivetrain object
-     */
-    public RobotPath(Trajectory trajectory, DrivetrainInterface dt) {
-        this.trajectory = trajectory;
+        this.poses = poses;
+        this.config = config;
         this.dt = dt;
-        this.hs = new HeadingSupplier(trajectory);
     }
 
     /**
@@ -81,6 +75,9 @@ public class RobotPath {
      * @return PathCommand
      */
     public Command getPathCommand(boolean faceInPathDirection, boolean stopAtEnd) {
+        if(trajectory == null) {
+            generateTrajectory();
+        }
         hs.reset();
         // We want the robot to stay facing the same direction (in this case), so save the current heading
         Rotation2d heading = Rotation2d.fromDegrees(dt.getHeadingDeg());
@@ -97,7 +94,19 @@ public class RobotPath {
      * Loads odometry
      */
     public void loadOdometry() {
+        if(trajectory == null) {
+            generateTrajectory();
+        }
         dt.setOdometry(Rotation2d.fromDegrees(dt.getHeadingDeg()), trajectory.getInitialPose());
+    }
+
+    public void generateTrajectory() {
+        trajectory = TrajectoryGenerator.generateTrajectory(poses, config);
+        hs = new HeadingSupplier(trajectory);
+    }
+
+    public void configureTrajectory(Consumer<TrajectoryConfig> configFunc) {
+        configFunc.accept(config);
     }
 
     /**
