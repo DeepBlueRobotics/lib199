@@ -100,11 +100,18 @@ public class RobotPath {
         dt.setOdometry(Rotation2d.fromDegrees(dt.getHeadingDeg()), trajectory.getInitialPose());
     }
 
+    /**
+     * Generates trajectory using List of poses and TrajectoryConfig objects
+     */
     public void generateTrajectory() {
         trajectory = TrajectoryGenerator.generateTrajectory(poses, config);
         hs = new HeadingSupplier(trajectory);
     }
 
+    /**
+     * Configures trajectory
+     * @param configFunc TrajectoryConfig object
+     */
     public void configureTrajectory(Consumer<TrajectoryConfig> configFunc) {
         configFunc.accept(config);
     }
