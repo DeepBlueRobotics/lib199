@@ -21,23 +21,23 @@ public class Limelight {
     /**
      * Whether the limelight has any valid targets (0 or 1)
      */
-    private double tv,
+    private double tv;
     /**
      * Horizontal Offset From Crosshair To Target (-27 degrees to 27 degrees)
      */
-    txDeg,
+    private double txDeg;
     /**
      * Vertical Offset From Crosshair To Target (-20.5 degrees to 20.5 degrees)
      */
-    tyDeg,
+    private double tyDeg;
     /**
      * Target Area (0% of image to 100% of image)
      */
-    ta,
+    private double ta;
     /**
      * The previous value of txDeg
      */
-    prev_txDeg = 1.0;
+    private double prev_txDeg = 1.0;
     // Mounting angle is the angle of the limelight (angled up = +, angled down = -)
     private double mountingAngleDeg;
 
@@ -137,7 +137,7 @@ public class Limelight {
 
             if (!newPIDLoop) {
                 newPIDLoop = true;
-                pidController.setSetpoint(Math.signum(prev_txDeg) * config.backlashSteeringOffset);
+                pidController.setSetpoint(Math.signum(prev_txDeg) * config.backlashSteeringOffsetDegs);
             }
         } else {
             newPIDLoop = false;
@@ -179,11 +179,11 @@ public class Limelight {
        */ 
       public double[] pidSteeringValues = { 0.01, 0.03, 0 }; 
       /**
-       * Tolerance for PID controller for steering *
+       * Tolerance for PID controller for steering (Degrees)
        */
       public double steeringToleranceDegs = 0.01;
       /**
-       * Steering factor for adjustment
+       * Steering adjustment when it does not see the target
        */
       public double steeringFactor = 0.25;
       /**
@@ -191,11 +191,11 @@ public class Limelight {
        */
       public double maxSteeringAdjustment = 1.0;
       /**
-       * Offset for when the limelight overshoots the target
+       * Setpoint of txDeg that limelight will steer to when it sees a target (Degrees)
        */
-      public double backlashSteeringOffset = 0.0;
+      public double backlashSteeringOffsetDegs = 0.0;
       /**
-       * Desired area of target from Limelight vision (% of target for limelight vision)
+       * Desired area of target from Limelight vision (% of target from limelight vision)
        */
       public double areaThresholdPercentage = 1.75;
       /**
@@ -203,7 +203,7 @@ public class Limelight {
        */
       public double kP = 0.225;
       /**
-       * Period of PID controller updates (seconds)
+       * Period of PID controller updates (Seconds)
        */
       public double pidPeriodSeconds = 0.02;
     }
