@@ -18,15 +18,26 @@ public class Limelight {
     }
 
     public final Config config = new Config();
-    /*
-     * http://docs.limelightvision.io/en/latest/networktables_api.html tv = Whether
-     * the limelight has any valid targets (0 or 1) tx = Horizontal Offset From
-     * Crosshair To Target (-27 degrees to 27 degrees) ty = Vertical Offset From
-     * Crosshair To Target (-20.5 degrees to 20.5 degrees) ta = Target Area (0% of
-     * image to 100% of image) There are more values we could be using. Check the
-     * documentation.
+    /**
+     * Whether the limelight has any valid targets (0 or 1)
      */
-    private double tv, txDeg, tyDeg, ta, prev_txDeg = 1.0;
+    private double tv,
+    /**
+     * Horizontal Offset From Crosshair To Target (-27 degrees to 27 degrees)
+     */
+    txDeg,
+    /**
+     * Vertical Offset From Crosshair To Target (-20.5 degrees to 20.5 degrees)
+     */
+    tyDeg,
+    /**
+     * Target Area (0% of image to 100% of image)
+     */
+    ta,
+    /**
+     * The previous value of txDeg
+     */
+    prev_txDeg = 1.0;
     // Mounting angle is the angle of the limelight (angled up = +, angled down = -)
     private double mountingAngleDeg;
 
@@ -172,27 +183,27 @@ public class Limelight {
        */
       public double steeringToleranceDegs = 0.01;
       /**
-       * steering factor for adjustment
+       * Steering factor for adjustment
        */
       public double steeringFactor = 0.25;
       /**
-       * max value for adjustment
+       * Max value for adjustment
        */
       public double maxSteeringAdjustment = 1.0;
       /**
-       * offset for when the limelight overshoots the target
+       * Offset for when the limelight overshoots the target
        */
       public double backlashSteeringOffset = 0.0;
       /**
-       * desired area of target from Limelight vision (% of target for limelight vision)
+       * Desired area of target from Limelight vision (% of target for limelight vision)
        */
       public double areaThresholdPercentage = 1.75;
       /**
-       * P value coefficient for PID control for distance assist
+       * Proportional value for PID control for distance assist
        */
       public double kP = 0.225;
       /**
-       * period of PID controller updates (seconds)
+       * Period of PID controller updates (seconds)
        */
       public double pidPeriodSeconds = 0.02;
     }
