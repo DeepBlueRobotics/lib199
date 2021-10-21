@@ -52,22 +52,23 @@ public interface SwerveDriveInterface extends DrivetrainInterface {
 
     /**
      * Configures the constants for generating a trajectory
-     * @param config The configuration for generating a trajectory
+     * @param path The configuration for generating a trajectory
      */
     @Override
-    public default void configureTrajectory(TrajectoryConfig config) {
+    public default void configureAutoPath(RobotPath path) {
         // This performs the same action as setKinematics but with our maxSpeed
-        config.addConstraint(new SwerveDriveKinematicsConstraint(getKinematics(), getAutoMaxSpeedMps()));
+        TrajectoryConfig config = path.getTrajectoryConfig();
+        config.addConstraint(new SwerveDriveKinematicsConstraint(getKinematics(), path.getMaxAccelMps2()));
     }
 
     /**
-     * Constructs a new RamseteCommand that, when executed, will follow the provided trajectory.
+     * Constructs a new SwerveControllerCommand that, when executed, will follow the provided trajectory.
      * @param trajectory The trajectory to follow.
      * @param desiredHeading A function that supplies the robot pose - use one of the odometry classes to provide this.
-     * @return RamseteCommand
+     * @return SwerveControllerCommand
      */
     @Override
-    public default Command createRamseteCommand(Trajectory trajectory, Supplier<Rotation2d> desiredHeading) {
+    public default Command createAutoCommand(Trajectory trajectory, Supplier<Rotation2d> desiredHeading) {
         double[][] pidConstants = getPIDConstants();
         double[] xPID = pidConstants[0];
         PIDController xController = new PIDController(xPID[0],

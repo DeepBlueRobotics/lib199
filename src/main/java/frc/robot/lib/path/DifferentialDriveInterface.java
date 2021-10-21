@@ -31,8 +31,8 @@ public interface DifferentialDriveInterface extends DrivetrainInterface {
     public DifferentialDriveKinematics getKinematics();
 
     /**
-     * Gets autonomous max volts
-     * @return autonomous max volts
+     * Gets max volts
+     * @return max volts
      */
     public double getAutoMaxVolt();
 
@@ -64,10 +64,11 @@ public interface DifferentialDriveInterface extends DrivetrainInterface {
 
     /**
      * Configures Trajectory
-     * @param TrajectoryConfig object
+     * @param path RobotPath object
      */
     @Override
-    public default void configureTrajectory(TrajectoryConfig config) {
+    public default void configureAutoPath(RobotPath path) {
+        TrajectoryConfig config = path.getTrajectoryConfig();
         config.setKinematics(getKinematics());
 
         double[][] charVals = getCharacterizationValues();
@@ -86,7 +87,7 @@ public interface DifferentialDriveInterface extends DrivetrainInterface {
      * @return Ramsete Command
      */
     @Override
-    public default Command createRamseteCommand(Trajectory trajectory, Supplier<Rotation2d> desiredHeading) {
+    public default Command createAutoCommand(Trajectory trajectory, Supplier<Rotation2d> desiredHeading) {
         return new RamseteCommand(
             trajectory,
             // Call getOdometry in the supplier because the odometry object may be reset when the command is run

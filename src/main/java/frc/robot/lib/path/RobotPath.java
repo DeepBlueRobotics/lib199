@@ -33,6 +33,8 @@ public class RobotPath {
     private TrajectoryConfig config;
     private DrivetrainInterface dt;
     private HeadingSupplier hs;
+    private double maxAccelMps2;
+    private double maxSpeedMps;
 
     /**
      * Constructs a RobotPath Object
@@ -53,19 +55,10 @@ public class RobotPath {
      * @param dt Drivetrain object
      */
     public RobotPath(List<Pose2d> poses, boolean isInverted, DrivetrainInterface dt) {
-        this(poses, createConfig(isInverted, dt), dt);
-    }
-
-    /**
-     * Constructs a RobotPath Object
-     * @param poses List of points in the .path file
-     * @param config TrajectoryConfig object
-     * @param dt Drivetrain
-     */
-    public RobotPath(List<Pose2d> poses, TrajectoryConfig config, DrivetrainInterface dt) {
         this.poses = poses;
-        this.config = config;
         this.dt = dt;
+        this.maxAccelMps2 = dt.getMaxAccelMps2();
+        this.maxSpeedMps = dt.getMaxSpeedMps();
     }
 
     /**
@@ -83,7 +76,7 @@ public class RobotPath {
         Rotation2d heading = Rotation2d.fromDegrees(dt.getHeadingDeg());
         Supplier<Rotation2d> desiredHeading = (!faceInPathDirection) ? () -> heading : () -> hs.sample();
         Command command = new InstantCommand(this::loadOdometry)
-                .andThen(dt.createRamseteCommand(trajectory, desiredHeading));
+                .andThen(dt.createAutoCommand(trajectory, desiredHeading));
         if (stopAtEnd) {
             command = command.andThen(new InstantCommand(dt::stop, dt));
         }
@@ -103,7 +96,7 @@ public class RobotPath {
     /**
      * Generates trajectory using List of poses and TrajectoryConfig objects
      */
-    public void generateTrajectory() {
+    private void generateTrajectory() {
         trajectory = TrajectoryGenerator.generateTrajectory(poses, config);
         hs = new HeadingSupplier(trajectory);
     }
@@ -112,8 +105,8 @@ public class RobotPath {
      * Configures trajectory
      * @param configFunc TrajectoryConfig object
      */
-    public void configureTrajectory(Consumer<TrajectoryConfig> configFunc) {
-        configFunc.accept(config);
+    public TrajectoryConfig getTrajectoryConfig() {
+        return config;
     }
 
     /**
@@ -122,10 +115,9 @@ public class RobotPath {
      * @param dt Drivetrain object
      * @return TrajectoryConfig object
      */
-    public static TrajectoryConfig createConfig(boolean isInverted, DrivetrainInterface dt) {
-        TrajectoryConfig config = new TrajectoryConfig(dt.getAutoMaxSpeedMps(),
-                                                       dt.getAutoMaxAccelMps2());
-        dt.configureTrajectory(config);
+    public TrajectoryConfig createConfig(boolean isInverted, DrivetrainInterface dt) {
+        config = new TrajectoryConfig(this.getMaxSpeedMps(), this.getMaxAccelMps2());
+        dt.configureAutoPath(this);
 
         if (isInverted) { config.setReversed(true); }
 
@@ -180,6 +172,22 @@ public class RobotPath {
         }
 
         return poses;
+    }
+
+    public double getMaxAccelMps2() {
+        return this.maxAccelMps2;
+    }
+
+    public double getMaxSpeedMps() {
+        return this.maxSpeedMps;
+    }
+
+    public void setMaxAccelMps2(double maxAccelMps2) {
+        this.maxAccelMps2 = maxAccelMps2;
+    }
+
+    public void setMaxSpeedMps(double maxSpeedMps) {
+        this.maxSpeedMps = maxSpeedMps;
     }
 
     /**
