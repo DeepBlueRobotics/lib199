@@ -42,7 +42,7 @@ public class RobotPath {
      * @param dt Drivetrain object
      * @param isInverted Whether the path is inverted
      * @param initPos Initial position
-     * @throws IOException If the input wasn't valid
+     * @throws IOException If an error occured loading the path
      */
     public RobotPath(String pathName, DrivetrainInterface dt, boolean isInverted, Translation2d initPos) throws IOException {
         this(getPointsFromFile(pathName, dt, isInverted, initPos), isInverted, dt);
@@ -131,7 +131,7 @@ public class RobotPath {
      * @param isInverted Whether the path is inverted
      * @param initPos Initial position
      * @return List of points in path
-     * @throws IOException
+     * @throws IOException If an error occured loading the path
      */
     public static List<Pose2d> getPointsFromFile(String pathName, DrivetrainInterface dt, boolean isInverted, Translation2d initPos) throws IOException {
         return getPointsFromFile(getPathFile(pathName), dt, isInverted, initPos);
@@ -144,7 +144,7 @@ public class RobotPath {
      * @param isInverted Whether the path is inverted
      * @param initPos Initial position
      * @return List of points in path
-     * @throws IOException
+     * @throws IOException If an error occured loading the path
      */
     public static List<Pose2d> getPointsFromFile(File file, DrivetrainInterface dt, boolean isInverted, Translation2d initPos) throws IOException {
         ArrayList<Pose2d> poses = new ArrayList<Pose2d>();
