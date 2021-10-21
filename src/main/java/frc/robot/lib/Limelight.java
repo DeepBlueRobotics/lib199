@@ -51,6 +51,12 @@ public class Limelight {
     public Limelight(String ntName) {
         config.ntName = ntName;
 
+        updatePID();
+    }
+    /**
+     * Updates PID values in config
+     */
+    public void updatePID(){
         double[] pidValues = config.pidSteeringValues;
         pidController = new PIDController(pidValues[0], pidValues[1], pidValues[2], config.pidPeriodSeconds);
         pidController.setSetpoint(0);
