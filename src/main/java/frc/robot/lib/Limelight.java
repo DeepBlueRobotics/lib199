@@ -43,22 +43,20 @@ public class Limelight {
 
     private PIDController pidController;
     private boolean newPIDLoop = false;
-
-    public Limelight() {
-        this("limelight");
+    public Limelight(){
+        this("limelight", 0.02);
     }
-
     public Limelight(String ntName) {
-        config.ntName = ntName;
-
-        updatePID();
+        this(ntName, 0.02);
     }
-    /**
-     * Updates PID values in config
-     */
-    public void updatePID(){
+    public Limelight(double period) {
+        this("limelight", period);
+    }
+
+    public Limelight(String ntName, double period) {
+        config.ntName = ntName;
         double[] pidValues = config.pidSteeringValues;
-        pidController = new PIDController(pidValues[0], pidValues[1], pidValues[2], config.pidPeriodSeconds);
+        pidController = new PIDController(pidValues[0], pidValues[1], pidValues[2], period);
         pidController.setSetpoint(0);
         pidController.setTolerance(config.steeringToleranceDegs);
     }
@@ -208,9 +206,5 @@ public class Limelight {
        * Proportional value for PID control for distance assist
        */
       public double kP = 0.225;
-      /**
-       * Period of PID controller updates (Seconds)
-       */
-      public double pidPeriodSeconds = 0.02;
     }
 }
