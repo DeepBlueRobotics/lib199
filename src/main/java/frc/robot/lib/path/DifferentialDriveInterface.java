@@ -19,43 +19,50 @@ public interface DifferentialDriveInterface extends DrivetrainInterface {
 
     /**
      * Drives in autonomous
-     * @param left power to left motor m/s
+     * 
+     * @param left  power to left motor m/s
      * @param right power to right motor m/s
      */
     public void autoDrive(double left, double right);
 
     /**
      * Gets Differential Drive kinematics
+     * 
      * @return kinematics
      */
     public DifferentialDriveKinematics getKinematics();
 
     /**
      * Gets max volts
+     * 
      * @return max volts
      */
     public double getAutoMaxVolt();
 
     /**
      * Gets characterization values in the form { kVolts, kVels, kAccels }
+     * 
      * @return characterization values in the form { kVolts, kVels, kAccels }
      */
     public double[][] getCharacterizationValues();
 
     /**
      * Gets odometry
+     * 
      * @return Odometry
      */
     public DifferentialDriveOdometry getOdometry();
 
     /**
      * Sets odometry
+     * 
      * @param odometry Odometry that will be set
      */
     public void setOdometry(DifferentialDriveOdometry odometry);
 
     /**
      * Creates Ramsete Controller
+     * 
      * @return Ramsete Controller
      */
     public default RamseteController createRamsete() {
@@ -64,6 +71,7 @@ public interface DifferentialDriveInterface extends DrivetrainInterface {
 
     /**
      * Configures Trajectory
+     * 
      * @param path RobotPath object
      */
     @Override
@@ -73,35 +81,33 @@ public interface DifferentialDriveInterface extends DrivetrainInterface {
 
         double[][] charVals = getCharacterizationValues();
         config.addConstraint(new DifferentialDriveVoltageConstraint(
-            // new SimpleMotorFeedforward(Utils199.average(charVals[0]), Utils199.average(charVals[1]), Utils199.average(charVals[2])),
-            new SimpleMotorFeedforward(DoubleStream.of(charVals[0]).average().getAsDouble(), 
-                                        DoubleStream.of(charVals[1]).average().getAsDouble(), 
-                                        DoubleStream.of(charVals[2]).average().getAsDouble()),
-            getKinematics(), getAutoMaxVolt()));
+                // new SimpleMotorFeedforward(Utils199.average(charVals[0]),
+                // Utils199.average(charVals[1]), Utils199.average(charVals[2])),
+                new SimpleMotorFeedforward(DoubleStream.of(charVals[0]).average().getAsDouble(),
+                        DoubleStream.of(charVals[1]).average().getAsDouble(),
+                        DoubleStream.of(charVals[2]).average().getAsDouble()),
+                getKinematics(), getAutoMaxVolt()));
     }
 
     /**
      * Creates Ramsete Command
-     * @param trajectory Trajectory object
+     * 
+     * @param trajectory     Trajectory object
      * @param desiredHeading Desired Heading
      * @return Ramsete Command
      */
     @Override
     public default Command createAutoCommand(Trajectory trajectory, Supplier<Rotation2d> desiredHeading) {
-        return new RamseteCommand(
-            trajectory,
-            // Call getOdometry in the supplier because the odometry object may be reset when the command is run
-            () -> getOdometry().getPoseMeters(),
-            createRamsete(),
-            getKinematics(),
-            this::autoDrive,
-            this
-        );
+        return new RamseteCommand(trajectory,
+                // Call getOdometry in the supplier because the odometry object may be reset
+                // when the command is run
+                () -> getOdometry().getPoseMeters(), createRamsete(), getKinematics(), this::autoDrive, this);
     }
 
     /**
      * Sets odometry based on current gyro angle and pose
-     * @param gyroAngle The angle reported by the gyroscope.
+     * 
+     * @param gyroAngle   The angle reported by the gyroscope.
      * @param initialPose The starting position of the robot on the field.
      */
     @Override
