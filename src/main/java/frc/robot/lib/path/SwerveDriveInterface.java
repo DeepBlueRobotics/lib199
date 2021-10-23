@@ -19,11 +19,11 @@ import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
 public interface SwerveDriveInterface extends DrivetrainInterface {
 
     /**
-     * Drives in autonomous given swerve module states
+     * Drives given swerve module states
      * 
      * @param swerveModuleStates Array of Swerve Module states
      */
-    public void autoDrive(SwerveModuleState[] swerveModuleStates);
+    public void drive(SwerveModuleState[] swerveModuleStates);
 
     /**
      * Gets Swerve Drive kinematics
@@ -91,7 +91,7 @@ public interface SwerveDriveInterface extends DrivetrainInterface {
                 // Call getOdometry in the supplier because the odometry object may be reset
                 // when the command is run
                 () -> getOdometry().getPoseMeters(), getKinematics(), xController, yController, thetaController,
-                desiredHeading, this::autoDrive, this);
+                desiredHeading, this::drive, this);
     }
 
     /**

@@ -18,12 +18,12 @@ import edu.wpi.first.wpilibj2.command.RamseteCommand;
 public interface DifferentialDriveInterface extends DrivetrainInterface {
 
     /**
-     * Drives in autonomous
+     * Drives
      * 
      * @param left  power to left motor m/s
      * @param right power to right motor m/s
      */
-    public void autoDrive(double left, double right);
+    public void drive(double left, double right);
 
     /**
      * Gets Differential Drive kinematics
@@ -37,7 +37,7 @@ public interface DifferentialDriveInterface extends DrivetrainInterface {
      * 
      * @return max volts
      */
-    public double getAutoMaxVolt();
+    public double getMaxVolt();
 
     /**
      * Gets characterization values in the form { kVolts, kVels, kAccels }
@@ -86,7 +86,7 @@ public interface DifferentialDriveInterface extends DrivetrainInterface {
                 new SimpleMotorFeedforward(DoubleStream.of(charVals[0]).average().getAsDouble(),
                         DoubleStream.of(charVals[1]).average().getAsDouble(),
                         DoubleStream.of(charVals[2]).average().getAsDouble()),
-                getKinematics(), getAutoMaxVolt()));
+                getKinematics(), getMaxVolt()));
     }
 
     /**
@@ -101,7 +101,7 @@ public interface DifferentialDriveInterface extends DrivetrainInterface {
         return new RamseteCommand(trajectory,
                 // Call getOdometry in the supplier because the odometry object may be reset
                 // when the command is run
-                () -> getOdometry().getPoseMeters(), createRamsete(), getKinematics(), this::autoDrive, this);
+                () -> getOdometry().getPoseMeters(), createRamsete(), getKinematics(), this::drive, this);
     }
 
     /**
