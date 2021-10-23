@@ -6,8 +6,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import org.apache.commons.csv.CSVFormat;
@@ -35,6 +35,8 @@ public class RobotPath {
     private HeadingSupplier hs;
     private double maxAccelMps2;
     private double maxSpeedMps;
+    private boolean isInverted;
+    
 
     /**
      * Constructs a RobotPath Object
@@ -46,6 +48,7 @@ public class RobotPath {
      */
     public RobotPath(String pathName, DrivetrainInterface dt, boolean isInverted, Translation2d initPos) throws IOException {
         this(getPointsFromFile(pathName, dt, isInverted, initPos), isInverted, dt);
+    
     }
 
     /**
@@ -57,6 +60,7 @@ public class RobotPath {
     public RobotPath(List<Pose2d> poses, boolean isInverted, DrivetrainInterface dt) {
         this.poses = poses;
         this.dt = dt;
+        this.isInverted = isInverted;
         this.maxAccelMps2 = dt.getMaxAccelMps2();
         this.maxSpeedMps = dt.getMaxSpeedMps();
     }
@@ -97,6 +101,9 @@ public class RobotPath {
      * Generates trajectory using List of poses and TrajectoryConfig objects
      */
     private void generateTrajectory() {
+        if (config ==null){
+            createConfig();
+        }
         trajectory = TrajectoryGenerator.generateTrajectory(poses, config);
         hs = new HeadingSupplier(trajectory);
     }
@@ -111,17 +118,21 @@ public class RobotPath {
 
     /**
      * Creates a TrajectoryConfig object
-     * @param isInverted Whether path is inverted
-     * @param dt Drivetrain object
      * @return TrajectoryConfig object
      */
-    public TrajectoryConfig createConfig(boolean isInverted, DrivetrainInterface dt) {
+    public RobotPath createConfig() {
         config = new TrajectoryConfig(this.getMaxSpeedMps(), this.getMaxAccelMps2());
-        dt.configureAutoPath(this);
-
         if (isInverted) { config.setReversed(true); }
-
-        return config;
+        return this;
+    }
+    /**
+     * 
+     * @return
+     */
+    public RobotPath reversed() {
+        List<Pose2d> newPoses = new ArrayList<>(poses);
+        Collections.reverse(newPoses);
+        return new RobotPath(newPoses, true, dt);
     }
 
     /**
@@ -173,21 +184,45 @@ public class RobotPath {
 
         return poses;
     }
-
+    /**
+     * Gets max acceleration for path
+     * @return Max acceleration mps2
+     */
     public double getMaxAccelMps2() {
         return this.maxAccelMps2;
     }
-
+    /**
+     * Gets max speed for path
+     * @return Max speed mps
+     */
     public double getMaxSpeedMps() {
         return this.maxSpeedMps;
     }
-
-    public void setMaxAccelMps2(double maxAccelMps2) {
+    /**
+     * Sets max acceleration for path
+     * @param maxAccelMps2 New max acceleration mps2
+     * @return The robot path
+     */
+    public RobotPath setMaxAccelMps2(double maxAccelMps2) {
+        checkConfig("maxAccelMps2");
         this.maxAccelMps2 = maxAccelMps2;
+        return this;
+    }
+    /**
+     * Sets max speed for path
+     * @param maxSpeedMps New max speed mps
+     * @return The robot path
+     */
+    public RobotPath setMaxSpeedMps(double maxSpeedMps) {
+        checkConfig("maxSpeedMps");
+        this.maxSpeedMps = maxSpeedMps;
+        return this;
     }
 
-    public void setMaxSpeedMps(double maxSpeedMps) {
-        this.maxSpeedMps = maxSpeedMps;
+    public void checkConfig(String varName){
+        if (config != null){
+            System.out.println("Warning: Config has already been created. The changes to " + varName + " will not affect it");
+        }
     }
 
     /**
