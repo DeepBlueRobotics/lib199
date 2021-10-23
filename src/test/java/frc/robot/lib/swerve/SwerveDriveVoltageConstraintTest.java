@@ -13,7 +13,6 @@ import edu.wpi.first.wpilibj.trajectory.constraint.TrajectoryConstraint.MinMax;
 
 public class SwerveDriveVoltageConstraintTest {
 
-
     private final SwerveDriveVoltageConstraint constraint = new SwerveDriveVoltageConstraint(
         new SimpleMotorFeedforward(1, 1, 1),
         new SwerveDriveKinematics(
