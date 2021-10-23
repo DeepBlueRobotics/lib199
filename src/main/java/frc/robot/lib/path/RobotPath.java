@@ -114,25 +114,24 @@ public class RobotPath {
     }
 
     /**
-     * Configures trajectory
+     * Retrieves the TrajectoryConfig object for this path, creating it if it does
+     * not already exist
      * 
-     * @param configFunc TrajectoryConfig object
+     * @return the TrajectoryConfig object
      */
     public TrajectoryConfig getTrajectoryConfig() {
+        if (config == null) {
+            createConfig();
+        }
         return config;
     }
 
-    /**
-     * Creates a TrajectoryConfig object
-     * 
-     * @return TrajectoryConfig object
-     */
-    public RobotPath createConfig() {
+    private void createConfig() {
         config = new TrajectoryConfig(this.getMaxSpeedMps(), this.getMaxAccelMps2());
+        dt.configureAutoPath(this);
         if (isInverted) {
             config.setReversed(true);
         }
-        return this;
     }
 
     /**
