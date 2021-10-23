@@ -126,8 +126,8 @@ public class RobotPath {
         return this;
     }
     /**
-     * 
-     * @return
+     * Inverts the robot path
+     * @return inverted robot path
      */
     public RobotPath reversed() {
         List<Pose2d> newPoses = new ArrayList<>(poses);
@@ -218,8 +218,7 @@ public class RobotPath {
         this.maxSpeedMps = maxSpeedMps;
         return this;
     }
-
-    public void checkConfig(String varName){
+    private void checkConfig(String varName){
         if (config != null){
             System.out.println("Warning: Config has already been created. The changes to " + varName + " will not affect it");
         }
