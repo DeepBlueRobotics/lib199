@@ -84,8 +84,7 @@ public class RobotPath {
         // the current heading
         Rotation2d heading = Rotation2d.fromDegrees(dt.getHeadingDeg());
         Supplier<Rotation2d> desiredHeading = (!faceInPathDirection) ? () -> heading : () -> hs.sample();
-        Command command = new InstantCommand(this::initializeDrivetrainPosition)
-                .andThen(dt.createAutoCommand(trajectory, desiredHeading));
+        Command command = dt.createAutoCommand(trajectory, desiredHeading);
         if (stopAtEnd) {
             command = command.andThen(new InstantCommand(dt::stop, dt));
         }
@@ -93,11 +92,8 @@ public class RobotPath {
     }
 
     /**
-     * Assumes that the robot is at the starting position of this path and calls
-     * {@link DrivetrainInterface#setOdometry(Rotation2d, Pose2d)} with the
-     * parameters to initialize an odometry for that state. It is up to the
-     * {@link DrivetrainInterface}'s implementation to determine how to interpret
-     * this call.
+     * Tells the drivetrain to assume that the robot is at the starting position of
+     * this path.
      */
     public void initializeDrivetrainPosition() {
         if (trajectory == null) {
