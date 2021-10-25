@@ -13,10 +13,6 @@ import edu.wpi.first.wpilibj.trajectory.constraint.TrajectoryConstraint.MinMax;
 
 public class SwerveDriveVoltageConstraintTest {
 
-    public static void main(String[] args) {
-        new SwerveDriveVoltageConstraintTest().testMinMaxAcceleration();
-    }
-    
     private final SwerveDriveVoltageConstraint constraint = new SwerveDriveVoltageConstraint(
         new SimpleMotorFeedforward(1, 1, 1),
         new SwerveDriveKinematics(
@@ -64,7 +60,7 @@ public class SwerveDriveVoltageConstraintTest {
     private void assertMinMaxAccelerationTest(double px, double py, double pt, double c, double v, double min, double max) {
         assertMinMaxEquals(min, max, constraint.getMinMaxAccelerationMetersPerSecondSq(pose(px, py, pt), c, v));
     }
-    
+
     private Pose2d pose(double x, double y, double deg) {
         return new Pose2d(x, y, Rotation2d.fromDegrees(deg));
     }
