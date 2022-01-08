@@ -1,7 +1,7 @@
 package frc.robot.lib.swerve;
 
-import edu.wpi.first.wpilibj.geometry.Rotation2d;
-import edu.wpi.first.wpilibj.kinematics.SwerveModuleState;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.SwerveModuleState;
 
 /**
  * Class for SwerveMath - Team 199's custom implementation of methods for calculating the 

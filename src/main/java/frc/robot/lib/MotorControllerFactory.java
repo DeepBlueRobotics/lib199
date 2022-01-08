@@ -10,11 +10,11 @@ package frc.robot.lib;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
-import com.revrobotics.CANPIDController;
 import com.revrobotics.CANSparkMax;
-import com.revrobotics.CANSparkMaxLowLevel;
 import com.revrobotics.CANSparkMax.ExternalFollower;
 import com.revrobotics.CANSparkMax.IdleMode;
+import com.revrobotics.CANSparkMaxLowLevel;
+import com.revrobotics.SparkMaxPIDController;
 
 import edu.wpi.first.wpilibj.RobotBase;
 import frc.robot.lib.sim.MockSparkMax;
@@ -94,7 +94,7 @@ public class MotorControllerFactory {
 
     MotorErrors.checkSparkMaxErrors(spark);
 
-    CANPIDController controller = spark.getPIDController();
+    SparkMaxPIDController controller = spark.getPIDController();
     MotorErrors.reportError(controller.setOutputRange(-1, 1));
     MotorErrors.reportError(controller.setP(0));
     MotorErrors.reportError(controller.setI(0));

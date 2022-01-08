@@ -11,7 +11,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-import edu.wpi.first.wpilibj.SpeedController;
+import edu.wpi.first.wpilibj.motorcontrol.MotorController;
 import edu.wpi.first.wpilibj.simulation.PWMSim;
 import frc.robot.lib.Mocks;
 import frc.robot.lib.testUtils.SafelyClosable;
@@ -81,11 +81,11 @@ public abstract class MockPheonixControllerTest {
         });
     }
 
-    private void assertSet(double speed, SpeedController controller, PWMSim sim) {
+    private void assertSet(double speed, MotorController controller, PWMSim sim) {
         assertSet(speed, controller, controller, sim);
     }
 
-    private void assertSet(double speed, SpeedController setController, SpeedController getController, PWMSim sim) {
+    private void assertSet(double speed, MotorController setController, MotorController getController, PWMSim sim) {
         setController.set(speed);
         assertEquals(speed, getController.get(), 0.01);
         assertEquals(speed, sim.getSpeed(), 0.01);
@@ -115,12 +115,12 @@ public abstract class MockPheonixControllerTest {
         try(SafelyClosable controller = createSafeController(port)) {
             PWMSim sim = new PWMSim(port);
             assertTrue(sim.getInitialized());
-            func.test((BaseMotorController)controller, (SpeedController)controller, sim);
+            func.test((BaseMotorController)controller, (MotorController)controller, sim);
         }
     }
 
     private interface ControllerTest {
-        public void test(BaseMotorController controller, SpeedController sController, PWMSim sim);
+        public void test(BaseMotorController controller, MotorController sController, PWMSim sim);
     }
 
 }

@@ -2,7 +2,7 @@ package frc.robot.lib.sim;
 
 import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
 
-import edu.wpi.first.wpilibj.VictorSP;
+import edu.wpi.first.wpilibj.motorcontrol.VictorSP;
 import frc.robot.lib.ErrorCodeAnswer;
 import frc.robot.lib.Mocks;
 

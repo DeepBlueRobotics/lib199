@@ -6,16 +6,16 @@ import java.util.HashMap;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.IMotorController;
 
-import edu.wpi.first.wpilibj.PWMSpeedController;
+import edu.wpi.first.wpilibj.motorcontrol.PWMMotorController;
 
 abstract class MockPhoenixController implements AutoCloseable {
     private final int portPWM;
     private boolean isInverted;
     // Assign the CAN port to a PWM port so it works with the simulator. Not a fan of this solution though
     // CAN ports should be separate from PWM ports
-    protected PWMSpeedController motorPWM;
+    protected PWMMotorController motorPWM;
     // Since we need to keep a record of all the motor's followers
-    protected static HashMap<Integer, ArrayList<PWMSpeedController>> followMap = new HashMap<>();
+    protected static HashMap<Integer, ArrayList<PWMMotorController>> followMap = new HashMap<>();
 
     public MockPhoenixController(int portPWM) {
         this.portPWM = portPWM;
@@ -26,7 +26,7 @@ abstract class MockPhoenixController implements AutoCloseable {
         speed = (getInverted() ? -1.0 : 1.0) * speed;
         motorPWM.set(speed);
         if (followMap.containsKey(getDeviceID())) {
-            for (PWMSpeedController motor : followMap.get(getDeviceID())) motor.set(speed);
+            for (PWMMotorController motor : followMap.get(getDeviceID())) motor.set(speed);
         }
     }
 
@@ -36,7 +36,7 @@ abstract class MockPhoenixController implements AutoCloseable {
 
     public void follow(IMotorController leader) {
         if (!followMap.containsKey(leader.getDeviceID())) {
-            ArrayList<PWMSpeedController> arr = new ArrayList<PWMSpeedController>();
+            ArrayList<PWMMotorController> arr = new ArrayList<PWMMotorController>();
             arr.add(motorPWM);
             followMap.put(leader.getDeviceID(), arr);
         } else {

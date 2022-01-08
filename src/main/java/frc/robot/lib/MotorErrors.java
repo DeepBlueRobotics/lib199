@@ -5,9 +5,9 @@ import java.util.Arrays;
 import java.util.HashMap;
 
 import com.ctre.phoenix.ErrorCode;
-import com.revrobotics.CANError;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMax.FaultID;
+import com.revrobotics.REVLibError;
 
 import org.mockito.Mockito;
 
@@ -28,8 +28,8 @@ public final class MotorErrors {
         reportError("CTRE", error, ErrorCode.OK);
     }
 
-    public static void reportError(CANError error) {
-        reportError("REV Robotics", error, CANError.kOk);
+    public static void reportError(REVLibError error) {
+        reportError("REV Robotics", error, REVLibError.kOk);
     }
     
     public static void reportErrors(ErrorCode... errors) {
@@ -38,8 +38,8 @@ public final class MotorErrors {
         }
     }
 
-    public static void reportErrors(CANError... errors) {
-        for(CANError error: errors) {
+    public static void reportErrors(REVLibError... errors) {
+        for(REVLibError error: errors) {
             reportError(error);
         }
     }
