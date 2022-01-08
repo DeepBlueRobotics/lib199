@@ -8,6 +8,8 @@ plugins {
 sourceCompatibility = JavaVersion.VERSION_11
 targetCompatibility = JavaVersion.VERSION_11
 
+group 'org.carlmontrobotics'
+
 def ROBOT_MAIN_CLASS = ""
 
 // Define my targets (RoboRIO) and artifacts (deployable files)
