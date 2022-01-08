@@ -4,15 +4,19 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
-import edu.wpi.first.wpilibj.controller.SimpleMotorFeedforward;
-import edu.wpi.first.wpilibj.geometry.Pose2d;
-import edu.wpi.first.wpilibj.geometry.Rotation2d;
-import edu.wpi.first.wpilibj.geometry.Translation2d;
-import edu.wpi.first.wpilibj.kinematics.SwerveDriveKinematics;
-import edu.wpi.first.wpilibj.trajectory.constraint.TrajectoryConstraint.MinMax;
+import edu.wpi.first.math.controller.SimpleMotorFeedforward;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
+import edu.wpi.first.math.trajectory.constraint.TrajectoryConstraint.MinMax;
 
 public class SwerveDriveVoltageConstraintTest {
 
+    public static void main(String[] args) {
+        new SwerveDriveVoltageConstraintTest().testMinMaxAcceleration();
+    }
+    
     private final SwerveDriveVoltageConstraint constraint = new SwerveDriveVoltageConstraint(
         new SimpleMotorFeedforward(1, 1, 1),
         new SwerveDriveKinematics(
@@ -60,7 +64,7 @@ public class SwerveDriveVoltageConstraintTest {
     private void assertMinMaxAccelerationTest(double px, double py, double pt, double c, double v, double min, double max) {
         assertMinMaxEquals(min, max, constraint.getMinMaxAccelerationMetersPerSecondSq(pose(px, py, pt), c, v));
     }
-
+    
     private Pose2d pose(double x, double y, double deg) {
         return new Pose2d(x, y, Rotation2d.fromDegrees(deg));
     }

@@ -3,9 +3,9 @@ package frc.robot.lib.sim;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import com.revrobotics.CANEncoder;
-import com.revrobotics.CANError;
-import com.revrobotics.CANPIDController;
+import com.revrobotics.REVLibError;
+import com.revrobotics.RelativeEncoder;
+import com.revrobotics.SparkMaxPIDController;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMax.ExternalFollower;
 import com.revrobotics.CANSparkMax.IdleMode;
@@ -14,18 +14,19 @@ import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 import edu.wpi.first.hal.SimDevice;
 import edu.wpi.first.hal.SimDouble;
 import edu.wpi.first.hal.SimDevice.Direction;
-import frc.robot.lib.CANErrorAnswer;
+import frc.robot.lib.REVLibErrorAnswer;
 import frc.robot.lib.DummySparkMaxAnswer;
 import frc.robot.lib.Mocks;
 
 public class MockSparkMax {
-    // Assign the CAN port to a PWM port so it works with the simulator. Not a fan of this solution though
+    // Assign the CAN port to a PWM port so it works with the simulator. Not a fan
+    // of this solution though
     // CAN ports should be separate from PWM ports
     private final int port;
     private final SimDevice motor;
     private final SimDouble speed;
-    private CANEncoder encoder;
-    private CANPIDController pidController;
+    private RelativeEncoder encoder;
+    private SparkMaxPIDController pidController;
     private boolean isInverted;
     // Since we need to keep a record of all the motor's followers
     private static HashMap<Integer, ArrayList<SimDouble>> followMap = new HashMap<>();
@@ -34,8 +35,8 @@ public class MockSparkMax {
         this.port = port;
         motor = SimDevice.create("SparkMax", port);
         speed = motor.createDouble("Motor Output", Direction.kOutput, 0);
-        encoder = Mocks.createMock(CANEncoder.class, new MockedSparkEncoder(port), new CANErrorAnswer());
-        pidController = Mocks.createMock(CANPIDController.class, new MockedCANPIDController(), new CANErrorAnswer());
+        encoder = Mocks.createMock(RelativeEncoder.class, new MockedSparkEncoder(port), new REVLibErrorAnswer());
+        pidController = Mocks.createMock(SparkMaxPIDController.class, new MockedSparkMaxPIDController(), new REVLibErrorAnswer());
         isInverted = false;
     }
 
@@ -51,24 +52,24 @@ public class MockSparkMax {
         }
     }
 
-    public CANError follow(CANSparkMax leader) {
+    public REVLibError follow(CANSparkMax leader) {
         return follow(leader, false);
     }
 
-    public CANError follow(CANSparkMax leader, boolean invert) {
+    public REVLibError follow(CANSparkMax leader, boolean invert) {
 		return follow(ExternalFollower.kFollowerSparkMax, leader.getDeviceId(), invert);
 	}
     
-    public CANError follow(ExternalFollower leader, int deviceID) {
+    public REVLibError follow(ExternalFollower leader, int deviceID) {
         return follow(leader, deviceID, false);
     }
 
-    public CANError follow(ExternalFollower leader, int deviceID, boolean invert) {
+    public REVLibError follow(ExternalFollower leader, int deviceID, boolean invert) {
         if (!followMap.containsKey(deviceID)) {
             followMap.put(deviceID, new ArrayList<SimDouble>());
         }
         followMap.get(deviceID).add(speed);
-        return CANError.kOk;
+        return REVLibError.kOk;
     }
     
     public double get() {
@@ -79,7 +80,7 @@ public class MockSparkMax {
         return port;
     }
 
-    public CANEncoder getEncoder() {
+    public RelativeEncoder getEncoder() {
         return encoder;
     }
 
@@ -87,27 +88,27 @@ public class MockSparkMax {
         isInverted = inverted;
     }
 
-    public CANError restoreFactoryDefaults() {
-        return CANError.kOk;
+    public REVLibError restoreFactoryDefaults() {
+        return REVLibError.kOk;
     }
 
-    public CANError setIdleMode(IdleMode mode) {
-        return CANError.kOk;
+    public REVLibError setIdleMode(IdleMode mode) {
+        return REVLibError.kOk;
     }
 
-    public CANError enableVoltageCompensation(double nominalVoltage) {
-		return CANError.kOk;
+    public REVLibError enableVoltageCompensation(double nominalVoltage) {
+		return REVLibError.kOk;
 	}
 
-	public CANError disableVoltageCompensation() {
-		return CANError.kOk;
+	public REVLibError disableVoltageCompensation() {
+		return REVLibError.kOk;
     }
     
-    public CANError setSmartCurrentLimit(int limit) {
-        return CANError.kOk;
+    public REVLibError setSmartCurrentLimit(int limit) {
+        return REVLibError.kOk;
     }
 
-    public CANPIDController getPIDController() {
+    public SparkMaxPIDController getPIDController() {
         return pidController;
     }
 }

@@ -4,7 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
 import com.ctre.phoenix.ErrorCode;
-import com.revrobotics.CANError;
+import com.revrobotics.REVLibError;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMax.FaultID;
 
@@ -41,7 +41,7 @@ public class MotorErrorsTest extends ErrStreamTest {
         public void setTemperature(double temperature);
         public int getSmartCurrentLimit();
         public double getMotorTemperature();
-        public CANError setSmartCurrentLimit(int limit);
+        public REVLibError setSmartCurrentLimit(int limit);
 
         public static class Instance {
 
@@ -65,9 +65,9 @@ public class MotorErrorsTest extends ErrStreamTest {
 	        	return temperature;
             }
 
-            public CANError setSmartCurrentLimit(int limit) {
+            public REVLibError setSmartCurrentLimit(int limit) {
                 smartCurrentLimit = limit;
-    		    return CANError.kOk;
+    		    return REVLibError.kOk;
             }
             
             public int getDeviceId() {
@@ -83,21 +83,21 @@ public class MotorErrorsTest extends ErrStreamTest {
         // Null Status
         MotorErrors.reportError((ErrorCode)null);
         assertEquals(0, errStream.toByteArray().length);
-        MotorErrors.reportError((CANError)null);
+        MotorErrors.reportError((REVLibError)null);
         assertEquals(0, errStream.toByteArray().length);
         MotorErrors.reportErrors((ErrorCode)null, null);
         assertEquals(0, errStream.toByteArray().length);
-        MotorErrors.reportErrors((CANError)null, null);
+        MotorErrors.reportErrors((REVLibError)null, null);
         assertEquals(0, errStream.toByteArray().length);
         
         // Ok Status
         MotorErrors.reportError(ErrorCode.OK);
         assertEquals(0, errStream.toByteArray().length);
-        MotorErrors.reportError(CANError.kOk);
+        MotorErrors.reportError(REVLibError.kOk);
         assertEquals(0, errStream.toByteArray().length);
         MotorErrors.reportErrors(ErrorCode.OK, ErrorCode.OK);
         assertEquals(0, errStream.toByteArray().length);
-        MotorErrors.reportErrors(CANError.kOk, CANError.kOk);
+        MotorErrors.reportErrors(REVLibError.kOk, REVLibError.kOk);
         assertEquals(0, errStream.toByteArray().length);
     }
 
@@ -114,12 +114,12 @@ public class MotorErrorsTest extends ErrStreamTest {
                 errStream.reset();
             }
         }
-        for(CANError code: CANError.values()) {
-            if(code != CANError.kOk) {
+        for(REVLibError code: REVLibError.values()) {
+            if(code != REVLibError.kOk) {
                 MotorErrors.reportError(code);
                 assertNotEquals(0, errStream.toByteArray().length);
                 errStream.reset();
-                MotorErrors.reportErrors(CANError.kOk, code);
+                MotorErrors.reportErrors(REVLibError.kOk, code);
                 assertNotEquals(0, errStream.toByteArray().length);
                 errStream.reset();
             }

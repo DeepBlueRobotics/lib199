@@ -7,8 +7,8 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.stream.Stream;
 
-import com.revrobotics.CANEncoder;
-import com.revrobotics.CANError;
+import com.revrobotics.REVLibError;
+import com.revrobotics.RelativeEncoder;
 
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -16,7 +16,7 @@ import org.junit.Test;
 
 import edu.wpi.first.hal.SimDouble;
 import edu.wpi.first.wpilibj.simulation.SimDeviceSim;
-import frc.robot.lib.CANErrorAnswer;
+import frc.robot.lib.REVLibErrorAnswer;
 import frc.robot.lib.Mocks;
 import frc.robot.lib.testUtils.SafelyClosable;
 import frc.robot.lib.testUtils.SimDeviceTestRule;
@@ -58,9 +58,9 @@ public class MockedSparkEncoderTest {
         });
     }
 
-    private void testFunctionalityWithPositionConversionFactor(double factor, CANEncoder enc, SimDouble dpp,
+    private void testFunctionalityWithPositionConversionFactor(double factor, RelativeEncoder enc, SimDouble dpp,
             SimDouble count) {
-        assertEquals(CANError.kOk, enc.setPositionConversionFactor(factor));
+        assertEquals(REVLibError.kOk, enc.setPositionConversionFactor(factor));
         assertEquals(factor/4096, dpp.get(), 0.01);
         assertEquals(factor, enc.getPositionConversionFactor(), 0.01);
         testCount(10, enc, dpp, count);
@@ -68,11 +68,11 @@ public class MockedSparkEncoderTest {
         testCount(-10, enc, dpp, count);
     }
 
-    private void testCount(double position, CANEncoder enc, SimDouble dpp, SimDouble count) {
+    private void testCount(double position, RelativeEncoder enc, SimDouble dpp, SimDouble count) {
         // This test fails with a delta of 0.01
-        assertEquals(CANError.kOk, enc.setPosition(position));
+        assertEquals(REVLibError.kOk, enc.setPosition(position));
         assertEquals(position, enc.getPosition(), 0.02);
-        assertEquals(CANError.kOk, enc.setPosition(0));
+        assertEquals(REVLibError.kOk, enc.setPosition(0));
         assertEquals(0, enc.getPosition(), 0.02);
         count.set(position/dpp.get());
         assertEquals(position, enc.getPosition(), 0.02);
@@ -88,9 +88,9 @@ public class MockedSparkEncoderTest {
 
     private SafelyClosable createEncoder(int deviceId) {
         return (SafelyClosable)Mocks.createMock(
-            CANEncoder.class,
+            RelativeEncoder.class,
             new MockedSparkEncoder(deviceId),
-            new CANErrorAnswer(),
+            new REVLibErrorAnswer(),
             SafelyClosable.class);
     }
 
@@ -107,12 +107,12 @@ public class MockedSparkEncoderTest {
             SimDouble count = sim.getDouble("count");
             assertNotNull(dpp);
             assertNotNull(count);
-            func.test((CANEncoder)encoder, sim, dpp, count);
+            func.test((RelativeEncoder)encoder, sim, dpp, count);
         }
     }
 
     private interface EncoderTest {
-        public void test(CANEncoder encoder, SimDeviceSim sim, SimDouble dpp, SimDouble count);
+        public void test(RelativeEncoder encoder, SimDeviceSim sim, SimDouble dpp, SimDouble count);
     }
     
 }

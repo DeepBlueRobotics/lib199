@@ -1,6 +1,6 @@
 package frc.robot.lib.sim;
 
-import com.revrobotics.CANError;
+import com.revrobotics.REVLibError;
 
 import edu.wpi.first.hal.SimDevice;
 import edu.wpi.first.hal.SimDouble;
@@ -25,17 +25,17 @@ public class MockedSparkEncoder implements AutoCloseable {
         return dpp.get() * count.get();
     }
 
-    public CANError setPositionConversionFactor(double positionConversionFactor) {
+    public REVLibError setPositionConversionFactor(double positionConversionFactor) {
         // Assume positionConversionFactor = units/rev
         // distancePerPulse (actually distance per count) = units/rev * rev/count
         dpp.set(positionConversionFactor / countsPerRevolution);
-        return CANError.kOk;
+        return REVLibError.kOk;
     }
 
-    public CANError setPosition(double position) {
+    public REVLibError setPosition(double position) {
         double revolutions = position / getPositionConversionFactor();
         count.set((int) Math.floor(revolutions * countsPerRevolution));
-        return CANError.kOk;
+        return REVLibError.kOk;
     }
 
     public double getPositionConversionFactor() {

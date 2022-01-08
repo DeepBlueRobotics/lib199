@@ -2,7 +2,7 @@ package frc.robot.lib.sim;
 
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 
-import edu.wpi.first.wpilibj.Talon;
+import edu.wpi.first.wpilibj.motorcontrol.Talon;
 import frc.robot.lib.ErrorCodeAnswer;
 import frc.robot.lib.Mocks;
 

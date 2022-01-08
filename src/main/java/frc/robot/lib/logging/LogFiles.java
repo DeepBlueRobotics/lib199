@@ -153,13 +153,12 @@ final class LogFiles {
     }
 
     private static String getLogTitle(LocalDateTime currentTime) {
-        DriverStation ds = DriverStation.getInstance();
-        DriverStation.MatchType type = ds.getMatchType();
+        DriverStation.MatchType type = DriverStation.getMatchType();
         String time = currentTime.format(GlobalLogInfo.dateTimeFormat);
         if(type == DriverStation.MatchType.None) {
             return time;
         }
-        return time + " " + type.toString() + " " + ds.getMatchNumber() + "-" + ds.getReplayNumber();
+        return time + " " + type.toString() + " " + DriverStation.getMatchNumber() + "-" + DriverStation.getReplayNumber();
     }
 
     private LogFiles() {}

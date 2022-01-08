@@ -3,11 +3,13 @@ package frc.robot.lib;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-import com.revrobotics.CANError;
-import com.revrobotics.CANPIDController.AccelStrategy;
+import com.revrobotics.REVLibError;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
+import com.revrobotics.SparkMaxAnalogSensor.Mode;
+import com.revrobotics.SparkMaxLimitSwitch.Type;
+import com.revrobotics.SparkMaxPIDController.AccelStrategy;
 
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -27,9 +29,9 @@ public class DummySparkMaxAnswerTest {
         spark.set(0);
 
         // Check that all REV specific objects are non-null
-        assertNotNull(spark.getAnalog(null));
+        assertNotNull(spark.getAnalog((Mode) null));
         assertNotNull(spark.getEncoder());
-        assertNotNull(spark.getForwardLimitSwitch(null));
+        assertNotNull(spark.getForwardLimitSwitch((Type) null));
         assertNotNull(spark.getPIDController());
 
         // Check that all REV specific objects return "null" values
@@ -38,10 +40,10 @@ public class DummySparkMaxAnswerTest {
         assertEquals(IdleMode.kBrake, spark.getIdleMode());
         assertEquals(MotorType.kBrushless, spark.getMotorType());
         assertEquals(AccelStrategy.kTrapezoidal, spark.getPIDController().getSmartMotionAccelStrategy(0));
-        assertEquals(CANError.kOk, spark.getLastError());
-        assertEquals(CANError.kOk, spark.getPIDController().setP(0, 0));
-        assertEquals(CANError.kOk, spark.getEncoder().setAverageDepth(0));
-        assertEquals(CANError.kOk, spark.getAnalog(null).setInverted(false));
+        assertEquals(REVLibError.kOk, spark.getLastError());
+        assertEquals(REVLibError.kOk, spark.getPIDController().setP(0, 0));
+        assertEquals(REVLibError.kOk, spark.getEncoder().setAverageDepth(0));
+        assertEquals(REVLibError.kOk, spark.getAnalog((Mode) null).setInverted(false));
     }
 
     @Test

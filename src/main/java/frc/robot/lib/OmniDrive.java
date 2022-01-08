@@ -2,13 +2,13 @@ package frc.robot.lib;
 
 import java.util.StringJoiner;
 
-import edu.wpi.first.wpilibj.Sendable;
-import edu.wpi.first.wpilibj.SpeedController;
+import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.util.sendable.Sendable;
+import edu.wpi.first.util.sendable.SendableBuilder;
+import edu.wpi.first.util.sendable.SendableRegistry;
 import edu.wpi.first.wpilibj.drive.RobotDriveBase;
 import edu.wpi.first.wpilibj.drive.Vector2d;
-import edu.wpi.first.wpilibj.smartdashboard.SendableBuilder;
-import edu.wpi.first.wpilibj.smartdashboard.SendableRegistry;
-import edu.wpi.first.wpiutil.math.MathUtil;
+import edu.wpi.first.wpilibj.motorcontrol.MotorController;
 
 /**
  * Modified from {@link edu.wpi.first.wpilibj.drive.KilloughDrive}
@@ -21,10 +21,10 @@ public class OmniDrive extends RobotDriveBase implements Sendable, AutoCloseable
 
   private static int instances;
 
-  private SpeedController m_frontLeftMotor;
-  private SpeedController m_frontRightMotor;
-  private SpeedController m_backLeftMotor;
-  private SpeedController m_backRightMotor;
+  private MotorController m_frontLeftMotor;
+  private MotorController m_frontRightMotor;
+  private MotorController m_backLeftMotor;
+  private MotorController m_backRightMotor;
 
   private Vector2d m_frontLeftVec;
   private Vector2d m_frontRightVec;
@@ -43,8 +43,8 @@ public class OmniDrive extends RobotDriveBase implements Sendable, AutoCloseable
    * @param backLeftMotor The motor on the back left corner.
    * @param backRightMotor  The motor on the back right corner.
    */
-  public OmniDrive(SpeedController frontLeftMotor, SpeedController frontRightMotor, SpeedController backLeftMotor,
-                       SpeedController backRightMotor) {
+  public OmniDrive(MotorController frontLeftMotor, MotorController frontRightMotor, MotorController backLeftMotor,
+                       MotorController backRightMotor) {
     this(frontLeftMotor, frontRightMotor, backLeftMotor, backRightMotor, kDefaultFrontLeftMotorAngle,
       kDefaultFrontRightMotorAngle, kDefaultBackLeftMotorAngle, kDefaultBackRightMotorAngle);
   }
@@ -63,8 +63,8 @@ public class OmniDrive extends RobotDriveBase implements Sendable, AutoCloseable
    * @param backLeftMotorAngle The angle of the back left wheel's forward direction of travel.
    * @param backRightMotorAngle  The angle of the back right wheel's forward direction of travel.
    */
-  public OmniDrive(SpeedController frontLeftMotor,SpeedController frontRightMotor, SpeedController backLeftMotor,
-                       SpeedController backRightMotor, double frontLeftMotorAngle, double frontRightMotorAngle,
+  public OmniDrive(MotorController frontLeftMotor,MotorController frontRightMotor, MotorController backLeftMotor,
+                       MotorController backRightMotor, double frontLeftMotorAngle, double frontRightMotorAngle,
                        double backLeftMotorAngle, double backRightMotorAngle) {
     verify(frontLeftMotor, frontRightMotor, backLeftMotor, backRightMotor);
     m_frontLeftMotor = frontLeftMotor;
@@ -101,8 +101,8 @@ public class OmniDrive extends RobotDriveBase implements Sendable, AutoCloseable
    * @throws NullPointerException if any of the given motors are null
    */
   @SuppressWarnings("PMD.AvoidThrowingNullPointerException")
-  private void verify(SpeedController frontLeftMotor, SpeedController frontRightMotor, SpeedController backLeftMotor,
-                      SpeedController backRightMotor) {
+  private void verify(MotorController frontLeftMotor, MotorController frontRightMotor, MotorController backLeftMotor,
+                      MotorController backRightMotor) {
     if (frontLeftMotor != null && frontRightMotor != null && backLeftMotor != null && backRightMotor != null) {
       return;
     }
@@ -156,10 +156,10 @@ public class OmniDrive extends RobotDriveBase implements Sendable, AutoCloseable
                              double gyroAngle) {
 
     ySpeed = MathUtil.clamp(ySpeed, -1.0, 1.0);
-    ySpeed = applyDeadband(ySpeed, m_deadband);
+    ySpeed = MathUtil.applyDeadband(ySpeed, m_deadband);
 
     xSpeed = MathUtil.clamp(xSpeed, -1.0, 1.0);
-    xSpeed = applyDeadband(xSpeed, m_deadband);
+    xSpeed = MathUtil.applyDeadband(xSpeed, m_deadband);
 
     // Compensate for gyro angle.
     Vector2d input = new Vector2d(ySpeed, xSpeed);

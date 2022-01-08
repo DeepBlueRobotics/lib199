@@ -1,22 +1,22 @@
 package frc.robot.lib.sim;
 
-import com.revrobotics.CANError;
+import com.revrobotics.REVLibError;
 
-import edu.wpi.first.wpilibj.controller.PIDController;
+import edu.wpi.first.math.controller.PIDController;
 
-public class MockedCANPIDController {
+public class MockedSparkMaxPIDController {
     private PIDController pidController;
 
-    public MockedCANPIDController() {
+    public MockedSparkMaxPIDController() {
         pidController = new PIDController(0.0, 0.0, 0.0);
     }
 
-    public CANError setP(double gain) {
+    public REVLibError setP(double gain) {
         pidController.setP(gain);
-        return CANError.kOk;
+        return REVLibError.kOk;
     }
 
-    public CANError setP(double gain, int slotID) {
+    public REVLibError setP(double gain, int slotID) {
         return setP(gain);
     }
 
@@ -28,12 +28,12 @@ public class MockedCANPIDController {
         return getP();
     }
 
-    public CANError setI(double gain) {
+    public REVLibError setI(double gain) {
         pidController.setI(gain);
-        return CANError.kOk;
+        return REVLibError.kOk;
     }
 
-    public CANError setI(double gain, int slotID) {
+    public REVLibError setI(double gain, int slotID) {
         return setI(gain);
     }
 
@@ -45,12 +45,12 @@ public class MockedCANPIDController {
         return getI();
     }
 
-    public CANError setD(double gain) {
+    public REVLibError setD(double gain) {
         pidController.setD(gain);
-        return CANError.kOk;
+        return REVLibError.kOk;
     }
 
-    public CANError setD(double gain, int slotID) {
+    public REVLibError setD(double gain, int slotID) {
         return setD(gain);
     }
 
