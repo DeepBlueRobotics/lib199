@@ -1,12 +1,13 @@
 package frc.robot.lib;
 
 public final class SwerveConfig {
-    
-    public double wheelDiameterMeters, driveGearing, mu, g, autoCentripetalAccel;
-    public double[] kForwardVolts, kForwardVels, kForwardAccels, kBackwardVolts, kBackwardVels, kBackwardAccels, drivekP, drivekI, drivekD, turnkP, turnkI, turnkD, turnkS, turnkV, turnkA, turnZero;
+
+    public double wheelDiameterMeters, driveGearing, mu, autoCentripetalAccel;
+    public double[] kForwardVolts, kForwardVels, kForwardAccels, kBackwardVolts, kBackwardVels, kBackwardAccels,
+            drivekP, drivekI, drivekD, turnkP, turnkI, turnkD, turnkS, turnkV, turnkA, turnZero;
     public boolean[] driveInversion, reversed;
 
-    public SwerveConfig(double wheelDiameterMeters, double driveGearing, double mu, double g,
+    public SwerveConfig(double wheelDiameterMeters, double driveGearing, double mu,
             double autoCentripetalAccel, double[] kForwardVolts, double[] kForwardVels, double[] kForwardAccels,
             double[] kBackwardVolts, double[] kBackwardVels, double[] kBackwardAccels, double[] drivekP,
             double[] drivekI, double[] drivekD, double[] turnkP, double[] turnkI, double[] turnkD, double[] turnkS,
@@ -14,7 +15,6 @@ public final class SwerveConfig {
         this.wheelDiameterMeters = wheelDiameterMeters;
         this.driveGearing = driveGearing;
         this.mu = mu;
-        this.g = g;
         this.autoCentripetalAccel = autoCentripetalAccel;
         this.kForwardVolts = kForwardVolts;
         this.kForwardVels = kForwardVels;

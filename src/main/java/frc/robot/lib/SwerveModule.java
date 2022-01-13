@@ -178,8 +178,9 @@ public class SwerveModule {
         double moduleAngle = getModuleAngle() * Math.PI / 180; // In Radians
         double moduleRollComponent = Math.sin(moduleAngle);
         double modulePitchComponent = Math.cos(moduleAngle);
+        double g = 9.81; //meters per second squared
         // gravitationalA is estimated to work for small angles, not 100% accurate at large angles
-        double antiGravitationalA = config.g * (modulePitchComponent * Math.sin(Math.PI * gyroPitchDeg / 180) - moduleRollComponent * Math.sin(Math.PI * gyroRollDeg / 180));
+        double antiGravitationalA = g * (modulePitchComponent * Math.sin(Math.PI * gyroPitchDeg / 180) - moduleRollComponent * Math.sin(Math.PI * gyroRollDeg / 180));
         SmartDashboard.putNumber("AntiGravitational accelration", antiGravitationalA);
         return antiGravitationalA;
     }
