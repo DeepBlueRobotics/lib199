@@ -281,7 +281,7 @@ public class SwerveModule {
 
     public void coast() {
         drive.setIdleMode(IdleMode.kCoast);
-        turn.setIdleMode(IdleMode.kBrake);
+        turn.setIdleMode(IdleMode.kCoast);
     }
 
     public void setMaxTurnVelocity(double maxVel) {
