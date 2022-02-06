@@ -270,16 +270,18 @@ public class SwerveModule {
     }
     
     public void toggleMode() {
-        if (drive.getIdleMode() == IdleMode.kBrake) coast();
+        if (drive.getIdleMode() == IdleMode.kBrake && turn.getIdleMode() == IdleMode.kCoast) coast();
         else brake();
     }
 
     public void brake() {
         drive.setIdleMode(IdleMode.kBrake);
+        turn.setIdleMode(IdleMode.kBrake);
     }
 
     public void coast() {
         drive.setIdleMode(IdleMode.kCoast);
+        turn.setIdleMode(IdleMode.kCoast);
     }
 
     public void setMaxTurnVelocity(double maxVel) {
