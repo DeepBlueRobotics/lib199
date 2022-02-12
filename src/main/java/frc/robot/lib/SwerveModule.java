@@ -222,7 +222,7 @@ public class SwerveModule {
         double angleDiff = MathUtil.inputModulus(angle - lastAngle, -180, 180);
         SmartDashboard.putNumber(moduleString + " angleDiff (deg)", angleDiff);
 
-        turnPIDController.setGoal(new TrapezoidProfile.State(angle * (reversed ? -1 : 1), angleDiff * (reversed ? -1 : 1) / deltaTime));
+        turnPIDController.setGoal(new TrapezoidProfile.State(angle * (reversed ? -1 : 1), 0));
         lastAngle = angle;
     }
 
