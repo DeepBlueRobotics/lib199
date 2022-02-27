@@ -9,8 +9,6 @@ import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMax.FaultID;
 import com.revrobotics.REVLibError;
 
-import org.mockito.Mockito;
-
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public final class MotorErrors {
@@ -98,7 +96,7 @@ public final class MotorErrors {
     }
 
     public static CANSparkMax createDummySparkMax() {
-        return Mockito.mock(CANSparkMax.class, new DummySparkMaxAnswer());
+        return DummySparkMaxAnswer.DUMMY_SPARK_MAX;
     }
 
     public static void reportSparkMaxTemp(CANSparkMax spark) {
