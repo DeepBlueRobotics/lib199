@@ -23,7 +23,7 @@ public class DummySparkMaxAnswer extends REVLibErrorAnswer {
     public static final RelativeEncoder DUMMY_ENCODER = Mockito.mock(RelativeEncoder.class, REVLibErrorAnswer.ANSWER);
     public static final SparkMaxAnalogSensor DUMMY_ANALOG_SENSOR = Mockito.mock(SparkMaxAnalogSensor.class, REVLibErrorAnswer.ANSWER);
     public static final SparkMaxLimitSwitch DUMMY_LIMIT_SWITCH = Mockito.mock(SparkMaxLimitSwitch.class, REVLibErrorAnswer.ANSWER);
-    public static final SparkMaxPIDController DUMMY_PID_CONTROLLER = Mockito.mock(SparkMaxPIDController.class, REVLibErrorAnswer.ANSWER);
+    public static final SparkMaxPIDController DUMMY_PID_CONTROLLER = Mockito.mock(SparkMaxPIDController.class, ANSWER);
 
     @Override
     public Object answer(InvocationOnMock invocation) throws Throwable {
