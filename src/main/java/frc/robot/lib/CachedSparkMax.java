@@ -11,18 +11,18 @@ public class CachedSparkMax extends CANSparkMax {
 
     public CachedSparkMax(int deviceId, MotorType type) {
         super(deviceId, type);
-        this.encoder = super.getEncoder();
-        this.pidController = super.getPIDController();
+        this.encoder = null;
+        this.pidController = null;
     }
 
     @Override
     public RelativeEncoder getEncoder() {
-        return encoder;
+        return encoder == null ? (encoder = super.getEncoder()) : encoder;
     }
 
     @Override
     public SparkMaxPIDController getPIDController() {
-        return pidController;
+        return pidController == null ? (pidController = super.getPIDController()) : pidController;
     }
 
 }
