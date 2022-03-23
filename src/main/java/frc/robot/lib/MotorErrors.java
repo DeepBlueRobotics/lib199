@@ -109,7 +109,7 @@ public final class MotorErrors {
             double temp = spark.getMotorTemperature();
             SmartDashboard.putNumber("Port " + port + " Spark Max Temp", temp);
             // Check if temperature exceeds the setpoint or if the contoller has already overheated to prevent other code from resetting the current limit after the controller has cooled
-            if(temp >= 100 || overheatedSparks.contains(port)) {
+            if(temp >= 40 || overheatedSparks.contains(port)) {
                 if(!overheatedSparks.contains(port)) {
                     overheatedSparks.add(port);
                     System.err.println("Port " + port + " spark max is operating at " + temp + " degrees Celsius! It will be disabled until the robot code is restarted.");
