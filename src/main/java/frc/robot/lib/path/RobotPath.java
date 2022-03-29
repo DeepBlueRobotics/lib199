@@ -66,7 +66,9 @@ public class RobotPath {
         this.maxAccelMps2 = dt.getMaxAccelMps2();
         this.maxSpeedMps = dt.getMaxSpeedMps();
     }
-
+    public Rotation2d getRotation2d(int index){
+        return poses.get(index).getRotation();
+    }
     /**
      * Gets a path command for the given path
      * 
