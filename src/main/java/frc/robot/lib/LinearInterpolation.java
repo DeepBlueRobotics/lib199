@@ -3,12 +3,15 @@ package frc.robot.lib;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
+
+import edu.wpi.first.wpilibj.Filesystem;
 
 public class LinearInterpolation {
     public double[] xs, ys;
@@ -19,7 +22,7 @@ public class LinearInterpolation {
     // Performs linear interpolation for a strictly monotonically increasing function.
     public LinearInterpolation(String filename) {
         try {
-            CSVParser csvParser = CSVFormat.DEFAULT.parse(new FileReader(filename));
+            CSVParser csvParser = CSVFormat.DEFAULT.parse(new FileReader(Filesystem.getDeployDirectory().toPath().resolve(Paths.get(filename)).toFile()));
             List<CSVRecord> records = csvParser.getRecords();
             numPoints = records.size() - 1;  // Subtract 1 because of the labels.
             // Set the size of the arrays
