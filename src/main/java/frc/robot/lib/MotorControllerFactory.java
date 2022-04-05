@@ -17,6 +17,7 @@ import com.revrobotics.CANSparkMaxLowLevel;
 import com.revrobotics.SparkMaxPIDController;
 
 import edu.wpi.first.wpilibj.RobotBase;
+import frc.robot.lib.MotorErrors.TemperatureLimit;
 import frc.robot.lib.sim.MockSparkMax;
 import frc.robot.lib.sim.MockTalonSRX;
 import frc.robot.lib.sim.MockVictorSPX;
@@ -71,7 +72,11 @@ public class MotorControllerFactory {
 
   //checks for spark max errors
 
-  public static CANSparkMax createSparkMax(int id) {
+  public static CANSparkMax createSparkMax(int id, TemperatureLimit temperatureLimit) {
+    return createSparkMax(id, temperatureLimit.limit);
+  }
+
+  public static CANSparkMax createSparkMax(int id, int temperatureLimit) {
     CANSparkMax spark;
     if (RobotBase.isReal()) {
       spark = new CachedSparkMax(id, CANSparkMaxLowLevel.MotorType.kBrushless);
@@ -84,7 +89,7 @@ public class MotorControllerFactory {
         spark = MockSparkMax.createMockSparkMax(id, CANSparkMaxLowLevel.MotorType.kBrushless);
     }
 
-    MotorErrors.reportSparkMaxTemp(spark);
+    MotorErrors.reportSparkMaxTemp(spark, temperatureLimit);
 
     MotorErrors.reportError(spark.restoreFactoryDefaults());
     MotorErrors.reportError(spark.follow(ExternalFollower.kFollowerDisabled, 0));
