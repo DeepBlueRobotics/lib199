@@ -12,12 +12,11 @@ import com.revrobotics.SparkMaxLimitSwitch.Type;
 import com.revrobotics.SparkMaxPIDController.AccelStrategy;
 
 import org.junit.Test;
-import org.mockito.Mockito;
 
 public class DummySparkMaxAnswerTest {
     
     public CANSparkMax createMockedSparkMax() {
-        return Mockito.mock(CANSparkMax.class, new DummySparkMaxAnswer());
+        return Mocks.mock(CANSparkMax.class, new DummySparkMaxAnswer());
     }
 
     public static void assertTestResponses(CANSparkMax spark) {
