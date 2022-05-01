@@ -10,6 +10,7 @@ package frc.robot.lib;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
+import com.ctre.phoenix.sensors.CANCoder;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMax.ExternalFollower;
 import com.revrobotics.CANSparkMax.IdleMode;
@@ -21,6 +22,7 @@ import frc.robot.lib.MotorErrors.TemperatureLimit;
 import frc.robot.lib.sim.MockSparkMax;
 import frc.robot.lib.sim.MockTalonSRX;
 import frc.robot.lib.sim.MockVictorSPX;
+import frc.robot.lib.sim.MockedCANCoder;
 
 /**
  * Add your docs here.
@@ -107,5 +109,11 @@ public class MotorControllerFactory {
     MotorErrors.reportError(controller.setFF(0));
 
     return spark;
+  }
+
+  public static CANCoder createCANCoder(int port) {
+    CANCoder canCoder = new CANCoder(port);
+    if(RobotBase.isSimulation()) new MockedCANCoder(canCoder);
+    return canCoder;
   }
 }
