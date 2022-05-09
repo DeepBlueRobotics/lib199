@@ -17,6 +17,9 @@ import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel;
 import com.revrobotics.SparkMaxPIDController;
 
+import edu.wpi.first.cameraserver.CameraServer;
+import edu.wpi.first.cscore.UsbCamera;
+import edu.wpi.first.cscore.VideoSource.ConnectionStrategy;
 import edu.wpi.first.wpilibj.RobotBase;
 import frc.robot.lib.MotorErrors.TemperatureLimit;
 import frc.robot.lib.sim.MockSparkMax;
@@ -115,5 +118,33 @@ public class MotorControllerFactory {
     CANCoder canCoder = new CANCoder(port);
     if(RobotBase.isSimulation()) new MockedCANCoder(canCoder);
     return canCoder;
+  }
+
+  /**
+   * Configures a USB Camera.
+   * See {@link CameraServer#startAutomaticCapture} for more details.
+   * This MUST be called AFTER AHRS initialization or the code will be unable to connect to the gyro.
+   *
+   * @return The configured camera
+   */
+  public static UsbCamera configureCamera() {
+    UsbCamera camera = CameraServer.startAutomaticCapture();
+    camera.setConnectionStrategy(ConnectionStrategy.kKeepOpen);
+    CameraServer.getServer().setSource(camera);
+    return camera;
+  }
+
+  /**
+   * This method is equivilent to calling {@link #configureCamera()} {@link numCameras} times.
+   * The last camera will be set as the primary Camera feed.
+   * To change it, call {@code CameraServer.getServer().setSource()}.
+   *
+   * @param numCameras The number of cameras to configure
+   * @return The configured cameras.
+   */
+  public static UsbCamera[] configureCameras(int numCameras) {
+    UsbCamera[] cameras = new UsbCamera[numCameras];
+    for(int i = 0; i < numCameras; i++) cameras[i] = configureCamera();
+    return cameras;
   }
 }
