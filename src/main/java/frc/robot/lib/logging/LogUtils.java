@@ -4,7 +4,9 @@ import static frc.robot.lib.logging.GlobalLogInfo.*;
 
 /**
  * Various utility methods utilized by the logging code
+ * @deprecated Instead use <a href="https://docs.wpilib.org/en/stable/docs/software/telemetry/datalog.html">WPILib's Logging API</a>
  */
+@Deprecated
 final class LogUtils {
 
     /**

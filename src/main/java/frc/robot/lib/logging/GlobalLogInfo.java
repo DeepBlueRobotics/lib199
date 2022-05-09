@@ -7,7 +7,9 @@ import org.apache.commons.csv.CSVPrinter;
 
 /**
  * Stores global information about the state of the logging code
+ * @deprecated Instead use <a href="https://docs.wpilib.org/en/stable/docs/software/telemetry/datalog.html">WPILib's Logging API</a>
  */
+@Deprecated
 public final class GlobalLogInfo {
 
     private static boolean isInit, areEventsDisabled, isDataDisabled;
