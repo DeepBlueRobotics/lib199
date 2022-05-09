@@ -12,7 +12,9 @@ import edu.wpi.first.wpilibj.RobotController;
 
 /**
  * Provides an interface through which to access the logging code
+ * @deprecated Instead use <a href="https://docs.wpilib.org/en/stable/docs/software/telemetry/datalog.html">WPILib's Logging API</a>
  */
+@Deprecated
 public final class Log {
 
     private static int step = 0, interval = 1;

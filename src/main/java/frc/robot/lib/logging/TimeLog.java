@@ -6,7 +6,9 @@ import edu.wpi.first.wpilibj.RobotController;
 
 /**
  * Keeps track of the time spent on different sections of the logging code
+ * @deprecated Instead use <a href="https://docs.wpilib.org/en/stable/docs/software/telemetry/datalog.html">WPILib's Logging API</a>
  */
+@Deprecated
 public final class TimeLog {
 
     private static long eventStart, dataFetchStart, dataLogStart;

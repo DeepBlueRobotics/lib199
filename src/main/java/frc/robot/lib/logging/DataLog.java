@@ -13,7 +13,9 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 /**
  * Handles data logging code
+ * @deprecated Instead use <a href="https://docs.wpilib.org/en/stable/docs/software/telemetry/datalog.html">WPILib's Logging API</a>
  */
+@Deprecated
 final class DataLog {
 
     private static Object[] dataExportBuffer = null;
