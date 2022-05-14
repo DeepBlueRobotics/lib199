@@ -41,6 +41,8 @@ public class Limelight {
     // Mounting angle is the angle of the limelight (angled up = +, angled down = -)
     private double mountingAngleDeg;
 
+    private TurnDirection idleTurnDirection = TurnDirection.CW;
+
     private PIDController pidController;
     private boolean newPIDLoop = false;
     public Limelight(){
@@ -146,7 +148,7 @@ public class Limelight {
         } else {
             newPIDLoop = false;
             pidController.reset();
-            adjustment = Math.copySign(config.steeringFactor, prev_txDeg);
+            adjustment = Math.copySign(config.steeringFactor, idleTurnDirection.sign);
         }
 
         adjustment = Math.copySign(Math.min(Math.abs(adjustment), config.maxSteeringAdjustment), txDeg);
@@ -171,6 +173,14 @@ public class Limelight {
     }
     public void putValue(String valueName, double value){
       SmartDashboard.putNumber("Limelight("+ config.ntName + "), (" + valueName + ")", value);
+    }
+
+    public TurnDirection getIdleTurnDirection() {
+        return idleTurnDirection;
+    }
+
+    public void setIdleTurnDirection(TurnDirection direction) {
+        idleTurnDirection = direction;
     }
     
     public static class Config {
@@ -206,5 +216,15 @@ public class Limelight {
        * Proportional value for PID control for distance assist
        */
       public double kP = 0.225;
+    }
+
+    public static enum TurnDirection {
+        CW(-1), CCW(+1);
+
+        public final int sign;
+
+        private TurnDirection(int sign) {
+            this.sign = sign;
+        }
     }
 }
