@@ -145,13 +145,13 @@ public class Limelight {
                 newPIDLoop = true;
                 pidController.setSetpoint(Math.signum(prev_txDeg) * config.backlashSteeringOffsetDegs);
             }
+
+            adjustment = Math.copySign(Math.min(Math.abs(adjustment), config.maxSteeringAdjustment), txDeg);
         } else {
             newPIDLoop = false;
             pidController.reset();
             adjustment = Math.copySign(config.steeringFactor, idleTurnDirection.sign);
         }
-
-        adjustment = Math.copySign(Math.min(Math.abs(adjustment), config.maxSteeringAdjustment), txDeg);
         putValue("adjustment", adjustment);
         return adjustment;
     }
