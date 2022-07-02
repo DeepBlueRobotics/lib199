@@ -6,6 +6,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -15,15 +16,14 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 
-import edu.wpi.first.wpilibj.Filesystem;
-import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.math.trajectory.TrajectoryConfig;
 import edu.wpi.first.math.trajectory.TrajectoryGenerator;
+import edu.wpi.first.wpilibj.Filesystem;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 
@@ -68,9 +68,23 @@ public class RobotPath {
         this.maxAccelMps2 = dt.getMaxAccelMps2();
         this.maxSpeedMps = dt.getMaxSpeedMps();
     }
+
+    public RobotPath(List<Pose2d> poses, Trajectory trajectory, TrajectoryConfig config, DrivetrainInterface dt,
+            HeadingSupplier hs, double maxAccelMps2, double maxSpeedMps, boolean isInverted) {
+        this.poses = poses;
+        this.trajectory = trajectory;
+        this.config = config;
+        this.dt = dt;
+        this.hs = hs;
+        this.maxAccelMps2 = maxAccelMps2;
+        this.maxSpeedMps = maxSpeedMps;
+        this.isInverted = isInverted;
+    }
+
     public Rotation2d getRotation2d(int index){
         return poses.get(index).getRotation();
     }
+
     /**
      * Gets a path command for the given path
      * 
@@ -99,6 +113,34 @@ public class RobotPath {
         return command;
     }
 
+    public Command getSwervePathCommand(boolean stopBetweenWaypoints, boolean stopAtEnd) {
+        if(config == null) createConfig();
+
+        Command command = new InstantCommand();
+
+        for(int i = 0; i < poses.size() - 1; i++) {
+            Pose2d initialPose = poses.get(i);
+            Pose2d finalPose = poses.get(i + 1);
+
+            Translation2d initialTranslation = initialPose.getTranslation();
+            Translation2d finalTranslation = finalPose.getTranslation();
+            Rotation2d initialRotation = initialPose.getRotation();
+            Rotation2d finalRotatation = finalPose.getRotation();
+
+            Rotation2d driveAngle = new Rotation2d(Math.atan2(finalTranslation.getY() - initialTranslation.getY(), finalTranslation.getX() - initialTranslation.getX()));
+
+            List<Pose2d> newPoses = Arrays.asList(new Pose2d(initialTranslation, driveAngle), new Pose2d(finalTranslation, driveAngle));
+
+            Trajectory newTrajectory = trajectory.concatenate(TrajectoryGenerator.generateTrajectory(newPoses, config));
+
+            InterpolatingHeadingSupplier headingSupplier = new InterpolatingHeadingSupplier(initialRotation, finalRotatation, newTrajectory.getTotalTimeSeconds());
+
+            command.andThen(new RobotPath(newPoses, newTrajectory, config, dt, headingSupplier, maxAccelMps2, maxSpeedMps, isInverted).getPathCommand(true, i == poses.size() - 1 ? stopAtEnd : stopBetweenWaypoints));
+        }
+
+        return command;
+    }
+
     /**
      * Tells the drivetrain to assume that the robot is at the starting position of
      * this path.
@@ -118,7 +160,7 @@ public class RobotPath {
             createConfig();
         }
         trajectory = TrajectoryGenerator.generateTrajectory(poses, config);
-        hs = new HeadingSupplier(trajectory);
+        hs = new TrajectoryHeadingSupplier(trajectory);
     }
 
     /**
@@ -278,44 +320,4 @@ public class RobotPath {
                     Rotation2d.fromDegrees(dt.getHeadingDeg());
     }
 
-    private static class HeadingSupplier {
-        private Trajectory trajectory;
-        private Timer timer;
-        private boolean timerStarted;
-
-        /**
-         * Constructs a HeadingSupplier object
-         * 
-         * @param trajectory Represents a time-parameterized trajectory. The trajectory
-         *                   contains of various States that represent the pose,
-         *                   curvature, time elapsed, velocity, and acceleration at that
-         *                   point.
-         */
-        public HeadingSupplier(Trajectory trajectory) {
-            this.trajectory = trajectory;
-            timer = new Timer();
-            timerStarted = false;
-        }
-
-        /**
-         * Gets the trajectory rotation at current point in time
-         * 
-         * @return current trajectory rotation at current point in time
-         */
-        public Rotation2d sample() {
-            if (!timerStarted) {
-                timerStarted = true;
-                timer.start();
-            }
-            return trajectory.sample(timer.get()).poseMeters.getRotation();
-        }
-
-        /**
-         * Reset the timer
-         */
-        public void reset() {
-            timerStarted = false;
-            timer.reset();
-        }
-    }
 }
