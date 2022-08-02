@@ -112,4 +112,8 @@ public class MockSparkMax {
     public SparkMaxPIDController getPIDController() {
         return pidController;
     }
+
+    public void setVoltage(double outputVolts) {
+        set(outputVolts / 12);
+    }
 }

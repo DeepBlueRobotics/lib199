@@ -18,7 +18,9 @@ import edu.wpi.first.wpilibj.DriverStation;
 
 /**
  * Creates the required log files and initializes logging code
+ * @deprecated Instead use <a href="https://docs.wpilib.org/en/stable/docs/software/telemetry/datalog.html">WPILib's Logging API</a>
  */
+@Deprecated
 final class LogFiles {
     
     private static int logId;

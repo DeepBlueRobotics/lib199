@@ -162,7 +162,7 @@ public class MotorErrorsTest extends ErrStreamTest {
 
     private void doTestReportSparkMaxTemp(int id) {
         TemperatureSparkMax spark = (TemperatureSparkMax)Mocks.createMock(CANSparkMax.class, new TemperatureSparkMax.Instance(id), TemperatureSparkMax.class);
-        MotorErrors.reportSparkMaxTemp((CANSparkMax)spark);
+        MotorErrors.reportSparkMaxTemp((CANSparkMax)spark, 40);
         spark.setSmartCurrentLimit(50);
         spark.setTemperature(20);
         CommandScheduler.getInstance().run();

@@ -9,7 +9,6 @@ import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 import com.revrobotics.SparkMaxPIDController.AccelStrategy;
 
-import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 
 public class DummySparkMaxAnswer extends REVLibErrorAnswer {
@@ -18,12 +17,12 @@ public class DummySparkMaxAnswer extends REVLibErrorAnswer {
 
     public static final DummySparkMaxAnswer ANSWER = new DummySparkMaxAnswer();
 
-    public static final CANSparkMax DUMMY_SPARK_MAX = Mockito.mock(CANSparkMax.class, ANSWER);
+    public static final CANSparkMax DUMMY_SPARK_MAX = Mocks.mock(CANSparkMax.class, ANSWER);
 
-    public static final RelativeEncoder DUMMY_ENCODER = Mockito.mock(RelativeEncoder.class, REVLibErrorAnswer.ANSWER);
-    public static final SparkMaxAnalogSensor DUMMY_ANALOG_SENSOR = Mockito.mock(SparkMaxAnalogSensor.class, REVLibErrorAnswer.ANSWER);
-    public static final SparkMaxLimitSwitch DUMMY_LIMIT_SWITCH = Mockito.mock(SparkMaxLimitSwitch.class, REVLibErrorAnswer.ANSWER);
-    public static final SparkMaxPIDController DUMMY_PID_CONTROLLER = Mockito.mock(SparkMaxPIDController.class, ANSWER);
+    public static final RelativeEncoder DUMMY_ENCODER = Mocks.mock(RelativeEncoder.class, REVLibErrorAnswer.ANSWER);
+    public static final SparkMaxAnalogSensor DUMMY_ANALOG_SENSOR = Mocks.mock(SparkMaxAnalogSensor.class, REVLibErrorAnswer.ANSWER);
+    public static final SparkMaxLimitSwitch DUMMY_LIMIT_SWITCH = Mocks.mock(SparkMaxLimitSwitch.class, REVLibErrorAnswer.ANSWER);
+    public static final SparkMaxPIDController DUMMY_PID_CONTROLLER = Mocks.mock(SparkMaxPIDController.class, ANSWER);
 
     @Override
     public Object answer(InvocationOnMock invocation) throws Throwable {

@@ -1,20 +1,44 @@
 package org.carlmontrobotics.lib199;
 
+import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import org.mockito.MockSettings;
 
+import org.mockito.MockSettings;
 import org.mockito.Mockito;
 import org.mockito.internal.stubbing.defaultanswers.ReturnsSmartNulls;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 public final class Mocks {
+
+    private static final List<WeakReference<Object>> MOCKS = Collections.synchronizedList(new ArrayList<>());
+    private static final Predicate<WeakReference<?>> IS_REFERENCE_CLEARED = reference -> reference.get() == null;
+    private static final Consumer<WeakReference<Object>> CLEAR_INVOCATIONS_ON_REFERENCED_MOCK = reference -> Mockito.clearInvocations(reference.get());
+    private static final Predicate<WeakReference<Object>> CLEAR_INVOCATIONS_ON_REFERENCED_MOCK_IF_REFERNCE_NOT_CLEARED = reference -> {
+        if(IS_REFERENCE_CLEARED.test(reference)) return true;
+        CLEAR_INVOCATIONS_ON_REFERENCED_MOCK.accept(reference);
+        return false;
+    };
+
+    static {
+        // Use a single predicate so that clearing references and invocations is an atomic operation
+        // Otherwise, we could (rarely) run into:
+        // 1) Mock is added
+        // 2) Garbage collected references are removed
+        // 3) Mock is garbage collected
+        // 4) Mock invocations are cleared -> throws NullPointerException
+        Lib199Subsystem.registerPeriodic(() -> MOCKS.removeIf(CLEAR_INVOCATIONS_ON_REFERENCED_MOCK_IF_REFERNCE_NOT_CLEARED));
+    }
     
     /**
      * Attempts to create an instance of a class in which some or all of the classes methods are replaced with a mocked implementation
@@ -77,7 +101,7 @@ public final class Mocks {
             settings = Mockito.withSettings().extraInterfaces(interfaces);
         }
         settings = settings.defaultAnswer(new MockAnswer<>(methods, implClass, defaultAnswer));
-        T mock = Mockito.mock(classToMock, settings);
+        T mock = mock(classToMock, settings);
         return mock;
     }
     
@@ -86,6 +110,55 @@ public final class Mocks {
         out.addAll(Arrays.asList(base.getMethods()));
         out.addAll(Arrays.stream(interfaces).map(Class::getMethods).flatMap(Arrays::stream).collect(Collectors.toList()));
         return out.toArray(Method[]::new);
+    }
+
+    /**
+     * A wrapper for the underlying Mockito method which automatically calls {@link Mockito#clearInvocations(Object...)} to prevent memory leaks
+     * 
+     * @see Mockito#mock(Class)
+     */
+    public static <T> T mock(Class<T> classToMock) {
+        return reportMock(Mockito.mock(classToMock));
+    }
+
+    /**
+     * A wrapper for the underlying Mockito method which automatically calls {@link Mockito#clearInvocations(Object...)} to prevent memory leaks
+     * 
+     * @see Mockito#mock(Class, String)
+     */
+    public static <T> T mock(Class<T> classToMock, String name) {
+        return reportMock(Mockito.mock(classToMock, name));
+    }
+
+    /**
+     * A wrapper for the underlying Mockito method which automatically calls {@link Mockito#clearInvocations(Object...)} to prevent memory leaks
+     * 
+     * @see Mockito#mock(Class, Answer)
+     */
+    public static <T> T mock(Class<T> classToMock, Answer<?> defaultAnswer) {
+        return reportMock(Mockito.mock(classToMock, defaultAnswer));
+    }
+
+    /**
+     * A wrapper for the underlying Mockito method which automatically calls {@link Mockito#clearInvocations(Object...)} to prevent memory leaks
+     * 
+     * @see Mockito#mock(Class, MockSettings)
+     */
+    public static <T> T mock(Class<T> classToMock, MockSettings mockSettings) {
+        return reportMock(Mockito.mock(classToMock, mockSettings));
+    }
+
+    /**
+     * Registers a Mockito mock and periodically calls {@link Mockito#clearInvocations(Object...)} on it to prevent memory leaks
+     * 
+     * @param <T> The type of the mock
+     * @param t The mock
+     * @return The mock
+     */
+    public static <T> T reportMock(T t) {
+        // Wrap in a WeakReference to prevent memory leaks on objects with no more references
+        if(Mockito.mockingDetails(t).isMock()) MOCKS.add(new WeakReference<Object>(t));
+        return t;
     }
 
     private Mocks() {}

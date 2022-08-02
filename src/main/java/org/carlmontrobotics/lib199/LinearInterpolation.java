@@ -3,12 +3,16 @@ package org.carlmontrobotics.lib199;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
+
+import edu.wpi.first.wpilibj.Filesystem;
 
 public class LinearInterpolation {
     public double[] xs, ys;
@@ -16,10 +20,10 @@ public class LinearInterpolation {
     public double minX, maxX;
     public int numPoints = 0;
 
-    // Performs linear interpolation for a strictly monotonically increasing function.
+    // Performs linear interpolation (Pass a filename relative to the src/main/deploy directory File extensions are not assumed)
     public LinearInterpolation(String filename) {
         try {
-            CSVParser csvParser = CSVFormat.DEFAULT.parse(new FileReader(filename));
+            CSVParser csvParser = CSVFormat.DEFAULT.parse(new FileReader(Filesystem.getDeployDirectory().toPath().resolve(Paths.get(filename)).toFile()));
             List<CSVRecord> records = csvParser.getRecords();
             numPoints = records.size() - 1;  // Subtract 1 because of the labels.
             // Set the size of the arrays
@@ -36,10 +40,9 @@ public class LinearInterpolation {
                 }
             }
             csvParser.close();
-            Arrays.sort(xs);
+            sortData();
             minX = xs[0];
             maxX = xs[xs.length - 1];
-            Arrays.sort(ys);
             for (int i = 1; i < numPoints; i++) {
                 // Linear interpolation (y = mx + b)
                 slopes[i - 1] = (ys[i] - ys[i - 1]) / (xs[i] - xs[i - 1]);
@@ -66,6 +69,17 @@ public class LinearInterpolation {
         } else {
             System.out.println("Input data is not in the domain.");
             return 0.0;
+        }
+    }
+
+    private void sortData() {
+        HashMap<Double, Double> points = new HashMap<>();
+        for(int i = 0; i < numPoints; i++) {
+            points.put(xs[i], ys[i]);
+        }
+        Arrays.sort(xs);
+        for(int i = 0; i < xs.length; i++) {
+            ys[i] = points.get(xs[i]);
         }
     }
 }

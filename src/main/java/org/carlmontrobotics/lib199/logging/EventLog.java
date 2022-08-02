@@ -15,7 +15,9 @@ import java.util.logging.SimpleFormatter;
 
 /**
  * Handles event logging code
+ * @deprecated Instead use <a href="https://docs.wpilib.org/en/stable/docs/software/telemetry/datalog.html">WPILib's Logging API</a>
  */
+@Deprecated
 final class EventLog {
 
     private static Logger logger;

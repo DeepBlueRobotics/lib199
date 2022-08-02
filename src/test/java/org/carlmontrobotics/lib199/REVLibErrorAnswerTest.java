@@ -6,13 +6,12 @@ import com.revrobotics.REVLibError;
 import com.revrobotics.RelativeEncoder;
 
 import org.junit.Test;
-import org.mockito.Mockito;
 
 public class REVLibErrorAnswerTest {
 
     @Test
     public void testResponses() throws Exception {
-        RelativeEncoder enc = Mockito.mock(RelativeEncoder.class, new REVLibErrorAnswer());
+        RelativeEncoder enc = Mocks.mock(RelativeEncoder.class, new REVLibErrorAnswer());
         
         // Check that primative types return "null"
         assertEquals(0, enc.getPosition(), 0.01);

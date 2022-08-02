@@ -10,17 +10,22 @@ package org.carlmontrobotics.lib199;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
+import com.ctre.phoenix.sensors.CANCoder;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMax.ExternalFollower;
 import com.revrobotics.CANSparkMax.IdleMode;
-
-import org.carlmontrobotics.lib199.sim.MockSparkMax;
-import org.carlmontrobotics.lib199.sim.MockTalonSRX;
-import org.carlmontrobotics.lib199.sim.MockVictorSPX;
-
 import com.revrobotics.CANSparkMaxLowLevel;
 import com.revrobotics.SparkMaxPIDController;
 
+import org.carlmontrobotics.lib199.MotorErrors.TemperatureLimit;
+import org.carlmontrobotics.lib199.sim.MockSparkMax;
+import org.carlmontrobotics.lib199.sim.MockTalonSRX;
+import org.carlmontrobotics.lib199.sim.MockVictorSPX;
+import org.carlmontrobotics.lib199.sim.MockedCANCoder;
+
+import edu.wpi.first.cameraserver.CameraServer;
+import edu.wpi.first.cscore.UsbCamera;
+import edu.wpi.first.cscore.VideoSource.ConnectionStrategy;
 import edu.wpi.first.wpilibj.RobotBase;
 
 /**
@@ -73,7 +78,11 @@ public class MotorControllerFactory {
 
   //checks for spark max errors
 
-  public static CANSparkMax createSparkMax(int id) {
+  public static CANSparkMax createSparkMax(int id, TemperatureLimit temperatureLimit) {
+    return createSparkMax(id, temperatureLimit.limit);
+  }
+
+  public static CANSparkMax createSparkMax(int id, int temperatureLimit) {
     CANSparkMax spark;
     if (RobotBase.isReal()) {
       spark = new CachedSparkMax(id, CANSparkMaxLowLevel.MotorType.kBrushless);
@@ -86,7 +95,7 @@ public class MotorControllerFactory {
         spark = MockSparkMax.createMockSparkMax(id, CANSparkMaxLowLevel.MotorType.kBrushless);
     }
 
-    MotorErrors.reportSparkMaxTemp(spark);
+    MotorErrors.reportSparkMaxTemp(spark, temperatureLimit);
 
     MotorErrors.reportError(spark.restoreFactoryDefaults());
     MotorErrors.reportError(spark.follow(ExternalFollower.kFollowerDisabled, 0));
@@ -104,5 +113,39 @@ public class MotorControllerFactory {
     MotorErrors.reportError(controller.setFF(0));
 
     return spark;
+  }
+
+  public static CANCoder createCANCoder(int port) {
+    CANCoder canCoder = new CANCoder(port);
+    if(RobotBase.isSimulation()) new MockedCANCoder(canCoder);
+    return canCoder;
+  }
+
+  /**
+   * Configures a USB Camera.
+   * See {@link CameraServer#startAutomaticCapture} for more details.
+   * This MUST be called AFTER AHRS initialization or the code will be unable to connect to the gyro.
+   *
+   * @return The configured camera
+   */
+  public static UsbCamera configureCamera() {
+    UsbCamera camera = CameraServer.startAutomaticCapture();
+    camera.setConnectionStrategy(ConnectionStrategy.kKeepOpen);
+    CameraServer.getServer().setSource(camera);
+    return camera;
+  }
+
+  /**
+   * This method is equivilent to calling {@link #configureCamera()} {@link numCameras} times.
+   * The last camera will be set as the primary Camera feed.
+   * To change it, call {@code CameraServer.getServer().setSource()}.
+   *
+   * @param numCameras The number of cameras to configure
+   * @return The configured cameras.
+   */
+  public static UsbCamera[] configureCameras(int numCameras) {
+    UsbCamera[] cameras = new UsbCamera[numCameras];
+    for(int i = 0; i < numCameras; i++) cameras[i] = configureCamera();
+    return cameras;
   }
 }
