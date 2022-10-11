@@ -1,6 +1,10 @@
 package org.carlmontrobotics.lib199.path;
 
+import java.util.HashMap;
 import java.util.function.Supplier;
+
+import com.pathplanner.lib.PathPlannerTrajectory;
+import com.pathplanner.lib.commands.PPSwerveControllerCommand;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
@@ -57,6 +61,7 @@ public interface SwerveDriveInterface extends DrivetrainInterface {
 
     /**
      * Configures the constants for generating a trajectory
+     * WARNING: THIS METHOD IS NOT CALLED IF USING PPRobotPath!
      * 
      * @param path The configuration for generating a trajectory
      */
@@ -92,6 +97,31 @@ public interface SwerveDriveInterface extends DrivetrainInterface {
                 // when the command is run
                 () -> getOdometry().getPoseMeters(), getKinematics(), xController, yController, thetaController,
                 desiredHeading, this::drive, this);
+    }
+
+    /**
+     * Constructs a new PPSwerveControllerCommand that, when executed, will follow the
+     * provided trajectory.
+     * 
+     * @param trajectory The trajectory to follow.
+     * @param eventMap   Map of event marker names to the commands that should run when reaching that marker.
+     *                   This SHOULD NOT contain any commands requiring Drivetrain, or it will be interrupted
+     * @return PPSwerveControllerCommand
+     */
+    public default Command createPPAutoCommand(PathPlannerTrajectory trajectory, HashMap<String, Command> eventMap) {
+        double[][] pidConstants = getPIDConstants();
+        double[] xPID = pidConstants[0];
+        PIDController xController = new PIDController(xPID[0], xPID[1], xPID[2]);
+        double[] yPID = pidConstants[1];
+        PIDController yController = new PIDController(yPID[0], yPID[1], yPID[2]);
+        double[] thetaPID = pidConstants[2];
+        PIDController thetaController = new PIDController(thetaPID[0], thetaPID[1], thetaPID[2]);
+        thetaController.enableContinuousInput(-Math.PI, Math.PI);
+        return new PPSwerveControllerCommand(trajectory,
+                // Call getOdometry in the supplier because the odometry object may be reset
+                // when the command is run
+                () -> getOdometry().getPoseMeters(), getKinematics(), xController, yController, thetaController,
+                this::drive, eventMap, this);
     }
 
     /**
