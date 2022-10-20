@@ -1,14 +1,16 @@
 package org.carlmontrobotics.lib199;
 
 import com.revrobotics.CANSparkMax;
+import com.revrobotics.CANSparkMax.ControlType;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.SparkMaxPIDController;
-import com.revrobotics.CANSparkMax.ControlType;
 
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.util.sendable.Sendable;
+import edu.wpi.first.util.sendable.SendableBuilder;
 
-public class SparkVelocityPIDController {
+public class SparkVelocityPIDController implements Sendable {
 
+    @SuppressWarnings("unused")
     private final CANSparkMax spark;
     private final SparkMaxPIDController pidController;
     private final RelativeEncoder encoder;
@@ -29,36 +31,7 @@ public class SparkVelocityPIDController {
         this.kS = kS;
         this.kV = kV;
 
-        SmartDashboard.putNumber(name + ": P", currentP);
-        SmartDashboard.putNumber(name + ": I", currentI);
-        SmartDashboard.putNumber(name + ": D", currentD);
-        SmartDashboard.putNumber(name + ": Target Speed", targetSpeed);
-        SmartDashboard.putNumber(name + ": Tolerance", tolerance);
-
         pidController.setReference(targetSpeed, ControlType.kVelocity, 0, calculateFF(targetSpeed));
-    }
-
-    public void periodic() {
-        double p = SmartDashboard.getNumber(name + ": P", currentP);
-        double i = SmartDashboard.getNumber(name + ": I", currentI);
-        double d = SmartDashboard.getNumber(name + ": D", currentD);
-
-        if(p != currentP) {
-            pidController.setP(p);
-            currentP = p;
-        }
-        if(i != currentI) {
-            pidController.setI(i);
-            currentI = i;
-        }
-        if(d != currentD) {
-            pidController.setD(d);
-            currentD = d;
-        }
-
-        setTargetSpeed(SmartDashboard.getNumber(name + ": Target Speed", targetSpeed));
-        setTolerance(SmartDashboard.getNumber(name + ": Tolerance", tolerance));
-        SmartDashboard.putNumber(name + ": Current Speed", encoder.getVelocity());
     }
 
     public RelativeEncoder getEncoder() {
@@ -79,7 +52,6 @@ public class SparkVelocityPIDController {
 
     public void setTargetSpeed(double targetSpeed) {
         if(targetSpeed == this.targetSpeed) return;
-        SmartDashboard.putNumber(name + ": Target Speed", targetSpeed);
         this.targetSpeed = targetSpeed;
         pidController.setReference(targetSpeed, ControlType.kVelocity, 0, calculateFF(targetSpeed));
     }
@@ -89,12 +61,36 @@ public class SparkVelocityPIDController {
     }
 
     public void setTolerance(double tolerance) {
-        SmartDashboard.putNumber(name + ": Tolerance", tolerance);
         this.tolerance = tolerance;
     }
 
     public double calculateFF(double velocity) {
         return kS * Math.signum(velocity) + kV * velocity;
+    }
+
+    @Override
+    public void initSendable(SendableBuilder builder) {
+        builder.setActuator(true);
+        builder.setSmartDashboardType("SparkVelocityPIDController");
+        builder.addDoubleProperty("P", () -> currentP, p -> {
+            pidController.setP(p);
+            currentP = p;
+        });
+        builder.addDoubleProperty("I", () -> currentI, i -> {
+            pidController.setI(i);
+            currentI = i;
+        });
+        builder.addDoubleProperty("D", () -> currentD, d -> {
+            pidController.setD(d);
+            currentD = d;
+        });
+        builder.addDoubleProperty("Target Speed", () -> targetSpeed, newSpeed -> {
+            if(newSpeed == targetSpeed) return;
+            pidController.setReference(newSpeed, ControlType.kVelocity, 0, calculateFF(newSpeed));
+            targetSpeed = newSpeed;
+        });
+        builder.addDoubleProperty("Tolerance", () -> tolerance, newTolerance -> tolerance = newTolerance);
+        builder.addDoubleProperty("Current Speed", encoder::getVelocity, null);
     }
 
 }
