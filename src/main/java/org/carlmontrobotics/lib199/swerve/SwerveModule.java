@@ -118,6 +118,10 @@ public class SwerveModule implements Sendable {
         SendableRegistry.addLW(this, "SweverModule", type.toString());
     }
 
+    public ModuleType getType() {
+        return type;
+    }
+
     private double prevTurnVelocity = 0;
     public void periodic() {
         double measuredAngleDegs = getModuleAngle();
