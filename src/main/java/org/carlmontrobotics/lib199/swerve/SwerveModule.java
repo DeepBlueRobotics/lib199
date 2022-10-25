@@ -16,6 +16,7 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
+import edu.wpi.first.util.sendable.SendableRegistry;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
@@ -113,6 +114,8 @@ public class SwerveModule implements Sendable {
 
         this.rollDegSupplier = rollDegSupplier;
         this.pitchDegSupplier = pitchDegSupplier;
+
+        SendableRegistry.addLW(this, "SweverModule", type.toString());
     }
 
     private double prevTurnVelocity = 0;
@@ -120,7 +123,7 @@ public class SwerveModule implements Sendable {
         double measuredAngleDegs = getModuleAngle();
         TrapezoidProfile.State goal = turnPIDController.getGoal();
         goal = new TrapezoidProfile.State(goal.position, goal.velocity);
-        
+
         double period = turnPIDController.getPeriod();
         double optimalTurnVelocityDps = Math.abs(MathUtil.inputModulus(goal.position-measuredAngleDegs, -180, 180))/period;
         setMaxTurnVelocity(Math.min(maxAchievableTurnVelocityDps, optimalTurnVelocityDps));

@@ -7,6 +7,7 @@ import com.revrobotics.SparkMaxPIDController;
 
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
+import edu.wpi.first.util.sendable.SendableRegistry;
 
 public class SparkVelocityPIDController implements Sendable {
 
@@ -32,6 +33,8 @@ public class SparkVelocityPIDController implements Sendable {
         this.kV = kV;
 
         pidController.setReference(targetSpeed, ControlType.kVelocity, 0, calculateFF(targetSpeed));
+
+        SendableRegistry.addLW(this, "SparkVelocityPIDController", spark.getDeviceId());
     }
 
     public RelativeEncoder getEncoder() {
