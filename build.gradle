@@ -73,26 +73,6 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     implementation 'org.mockito:mockito-core:3.6.0'
     implementation group: 'org.apache.commons', name: 'commons-csv', version: '1.6'
-    implementation files('pathplannerlib-beta.jar', 'pathplannerlib-beta-javadoc.jar', 'pathplannerlib-beta-sources.jar')
-}
-
-// Enable source viewing of pathplanner libraries (This won't be necessary when the push the latest version to their maven repo)
-apply plugin: 'eclipse'
-import org.gradle.plugins.ide.eclipse.model.*
-
-eclipse {
-    classpath {
-        file {
-            whenMerged { Classpath classpath ->
-                classpath.entries.each { ClasspathEntry entry ->
-                    if (entry instanceof AbstractLibrary && entry.library.file == file("pathplannerlib-beta.jar")) {
-                        entry.javadocPath = fileReferenceFactory.fromFile(file("pathplannerlib-beta-javadoc.jar"))
-                        entry.sourcePath = fileReferenceFactory.fromFile(file("pathplannerlib-beta-sources.jar"))
-                    }
-                }
-            }
-        }
-    }
 }
 
 // Simulation configuration (e.g. environment variables).
