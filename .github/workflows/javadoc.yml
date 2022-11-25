@@ -1,0 +1,37 @@
+name: Deploy Javadoc
+
+on: [push]
+  # push:
+  #   branches:
+  #     - master
+
+jobs:
+  build-javadoc:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: 'recursive'
+    - name: Set up JDK 11
+      uses: actions/setup-java@v1
+      with:
+        java-version: 11
+    - name: Generate Javadoc
+      run: ./gradlew javadoc
+    - name: Build Artifact
+      uses: actions/upload-pages-artifact@v1.0.5
+      with:
+        path: /build/docs/javadoc
+  deploy-javadoc:
+    needs: build-javadoc
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v1.2.3
