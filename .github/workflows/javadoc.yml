@@ -21,7 +21,7 @@ jobs:
     - name: Build Artifact
       uses: actions/upload-pages-artifact@v1.0.5
       with:
-        path: /build/docs/javadoc
+        path: ./build/docs/javadoc
   deploy-javadoc:
     needs: build-javadoc
     permissions:
