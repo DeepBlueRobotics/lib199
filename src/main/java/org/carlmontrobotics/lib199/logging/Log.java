@@ -9,6 +9,7 @@ import java.util.logging.Level;
 import org.apache.commons.csv.CSVFormat;
 
 import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 /**
  * Provides an interface through which to access the logging code
@@ -336,8 +337,8 @@ public final class Log {
 
     /**
      * Logs data to the data file or returns if determined by the data logging interval where each interval unit represents one logData call
-     * @see #getDataLoginterval()
-     * @see #setDataLoginterval(int)
+     * @see #getDataLogInterval()
+     * @see #setDataLogInterval(int)
      */
     public static void logData() {
         if(GlobalLogInfo.isDataDisabled()) {
