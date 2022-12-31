@@ -36,11 +36,11 @@ public class MockedSparkEncoderTest {
     }
 
     private void assertTestDeviceCreation(int id) {
-        String deviceName = String.format("CANEncoder_SparkMax[%d]", id);
+        String deviceName = String.format("RelativeEncoder[%d]", id);
         assertFalse(simDeviceExists(deviceName));
         try(SafelyClosable closableEncoder = createEncoder(id)) {
             assertTrue(simDeviceExists(deviceName));
-            SimDeviceSim sim = new SimDeviceSim("CANEncoder_SparkMax", id);
+            SimDeviceSim sim = new SimDeviceSim("RelativeEncoder", id);
             assertEquals(2, Stream.of(sim.enumerateValues())
                 .map(info -> info.name)
                 .distinct()
@@ -102,7 +102,7 @@ public class MockedSparkEncoderTest {
 
     private void withEncoder(int id, EncoderTest func) {
         try(SafelyClosable encoder = createEncoder(id)) {
-            SimDeviceSim sim = new SimDeviceSim("CANEncoder_SparkMax", id);
+            SimDeviceSim sim = new SimDeviceSim("RelativeEncoder", id);
             SimDouble dpp = sim.getDouble("distancePerPulse");
             SimDouble count = sim.getDouble("count");
             assertNotNull(dpp);
