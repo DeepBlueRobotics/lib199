@@ -30,7 +30,7 @@ public class MockedCANCoder {
         device = SimDevice.create("CANCoder", port);
         position = device.createDouble("count", Direction.kInput, 0);
         motorId = device.createDouble("motorId", Direction.kOutput, -1);
-        motorType = device.createDouble("motor", Direction.kOutput, MotorType.NONE.id);
+        motorType = device.createDouble("motorType", Direction.kOutput, MotorType.NONE.id);
         gearing = device.createDouble("gearing", Direction.kOutput, 1);
         sim = canCoder.getSimCollection();
         Lib199Subsystem.registerPeriodic(this::update);

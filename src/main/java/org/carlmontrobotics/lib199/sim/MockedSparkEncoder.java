@@ -1,5 +1,7 @@
 package org.carlmontrobotics.lib199.sim;
 
+import java.util.HashMap;
+
 import com.revrobotics.REVLibError;
 
 import edu.wpi.first.hal.SimDevice;
@@ -7,18 +9,22 @@ import edu.wpi.first.hal.SimDouble;
 import edu.wpi.first.hal.SimDevice.Direction;
 
 public class MockedSparkEncoder implements AutoCloseable {
+
+    private static final HashMap<Integer, MockedSparkEncoder> sims = new HashMap<>();
+
     private SimDevice device;
     private SimDouble dpp;
     private SimDouble count;
+    private SimDouble gearing;
     // Default value for a CANEncoder
     private final int countsPerRevolution = 4096;
 
     public MockedSparkEncoder(int id) {
-        // Match motor on CAN 0 with channels [0, 1], CAN 1 to channels [2, 3], etc.
-        // Probably not the best way to do it but it works
         device = SimDevice.create("CANEncoder_SparkMax", id);
         dpp = device.createDouble("distancePerPulse", Direction.kOutput, 1);
         count = device.createDouble("count", Direction.kInput, 0);
+        gearing = device.createDouble("gearing", Direction.kOutput, 1);
+        sims.put(id, this);
     }
 
     public double getPosition() {
@@ -46,4 +52,13 @@ public class MockedSparkEncoder implements AutoCloseable {
     public void close() {
         device.close();
     }
+
+    public void setGearing(double gearing) {
+        this.gearing.set(gearing);
+    }
+
+    public void setGearing(int port, double gearing) {
+        if(sims.containsKey(port)) sims.get(port).setGearing(gearing);
+    }
+
 }
