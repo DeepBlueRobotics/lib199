@@ -57,7 +57,7 @@ public class MockedSparkEncoder implements AutoCloseable {
         this.gearing.set(gearing);
     }
 
-    public void setGearing(int port, double gearing) {
+    public static void setGearing(int port, double gearing) {
         if(sims.containsKey(port)) sims.get(port).setGearing(gearing);
     }
 
