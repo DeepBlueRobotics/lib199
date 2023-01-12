@@ -1,4 +1,4 @@
-package org.carlmontrobotics.lib199;
+package org.carlmontrobotics.lib199.swerve;
 
 public final class SwerveConfig {
 

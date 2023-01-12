@@ -39,46 +39,49 @@ public final class Mocks {
         // 4) Mock invocations are cleared -> throws NullPointerException
         Lib199Subsystem.registerPeriodic(() -> MOCKS.removeIf(CLEAR_INVOCATIONS_ON_REFERENCED_MOCK_IF_REFERNCE_NOT_CLEARED));
     }
-    
+
     /**
      * Attempts to create an instance of a class in which some or all of the classes methods are replaced with a mocked implementation
-     * @param T the class type which will be mocked
-     * @param U the class type which will be used to provide method implementations
+     * @param <T> the class type which will be mocked
+     * @param <U> the class type which will be used to provide method implementations
      * @param classToMock the class type which will be mocked
      * @param implClass the object to which to try to forward method calls
      * @param interfaces a list of interfaces which the mocked object should extend
      * @return an instance of <code>T</code> in which some or all of the classes methods are replaced with a mocked implementation from <code>U</code>
-     * @see #createMock(java.lang.Class, java.lang.Object, java.lang.Class...) 
+     * @see #createMock(Class, Object, boolean, Class...)
+     * @see #createMock(Class, Object, Answer, Class...)
      */
     public static <T, U> T createMock(Class<T> classToMock, U implClass, Class<?>... interfaces) {
         return createMock(classToMock, implClass, true, interfaces);
     }
-    
+
     /**
      * Attempts to create an instance of a class in which some or all of the classes methods are replaced with a mocked implementation
-     * @param T the class type which will be mocked
-     * @param U the class type which will be used to provide method implementations
+     * @param <T> the class type which will be mocked
+     * @param <U> the class type which will be used to provide method implementations
      * @param classToMock the class type which will be mocked
      * @param implClass the object to which to try to forward method calls
      * @param forwardUnknownCalls whether methods which are not overriden will call their real methods
      * @param interfaces a list of interfaces which the mocked object should extend
      * @return an instance of <code>T</code> in which some or all of the classes methods are replaced with a mocked implementation from <code>U</code>
-     * @see #createMock(java.lang.Class, java.lang.Object) 
+     * @see #createMock(Class, Object, Class...)
+     * @see #createMock(Class, Object, Answer, Class...)
      */
     public static <T, U> T createMock(Class<T> classToMock, U implClass, boolean forwardUnknownCalls, Class<?>... interfaces) {
         return createMock(classToMock, implClass, forwardUnknownCalls ? InvocationOnMock::callRealMethod : new ReturnsSmartNulls(), interfaces);
     }
-    
+
     /**
      * Attempts to create an instance of a class in which some or all of the classes methods are replaced with a mocked implementation
-     * @param T the class type which will be mocked
-     * @param U the class type which will be used to provide method implementations
+     * @param <T> the class type which will be mocked
+     * @param <U> the class type which will be used to provide method implementations
      * @param classToMock the class type which will be mocked
      * @param implClass the object to which to try to forward method calls
      * @param defaultAnswer The answer to use when no overriden implementation is found
      * @param interfaces a list of interfaces which the mocked object should extend
      * @return an instance of <code>T</code> in which some or all of the classes methods are replaced with a mocked implementation from <code>U</code>
-     * @see #createMock(java.lang.Class, java.lang.Object) 
+     * @see #createMock(Class, Object, Class...)
+     * @see #createMock(Class, Object, boolean, Class...)
      */
     public static <T, U> T createMock(Class<T> classToMock, U implClass, Answer<Object> defaultAnswer, Class<?>... interfaces) {
         HashMap<Method, InvokableMethod> methods = new HashMap<>();
@@ -104,7 +107,13 @@ public final class Mocks {
         T mock = mock(classToMock, settings);
         return mock;
     }
-    
+
+    /**
+     * Lists all of the methods available in the provided base class and interface classes
+     * @param base The base class to search
+     * @param interfaces Additional interface classes to search
+     * @return An array of all the detected methods
+     */
     public static Method[] listMethods(Class<?> base, Class<?>... interfaces) {
         ArrayList<Method> out = new ArrayList<>();
         out.addAll(Arrays.asList(base.getMethods()));
@@ -114,7 +123,7 @@ public final class Mocks {
 
     /**
      * A wrapper for the underlying Mockito method which automatically calls {@link Mockito#clearInvocations(Object...)} to prevent memory leaks
-     * 
+     *
      * @see Mockito#mock(Class)
      */
     public static <T> T mock(Class<T> classToMock) {
@@ -187,6 +196,6 @@ public final class Mocks {
 
     private static interface InvokableMethod {
         public Object invoke(Object object, Object[] args) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException;
-    } 
+    }
 
 }
