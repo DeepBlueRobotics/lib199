@@ -61,6 +61,16 @@ public interface DifferentialDriveInterface extends DrivetrainInterface {
     public void setOdometry(DifferentialDriveOdometry odometry);
 
     /**
+     * @return The left encoder position in meters
+     */
+    public double getLeftEncoderPosition();
+
+    /**
+     * @return The right encoder position in meters
+     */
+    public double getRightEncoderPosition();
+
+    /**
      * Creates Ramsete Controller
      * 
      * @return Ramsete Controller
@@ -105,14 +115,13 @@ public interface DifferentialDriveInterface extends DrivetrainInterface {
     }
 
     /**
-     * Sets odometry based on current gyro angle and pose
+     * Sets odometry to the specified pose
      * 
-     * @param gyroAngle   The angle reported by the gyroscope.
      * @param initialPose The starting position of the robot on the field.
      */
     @Override
-    public default void setOdometry(Rotation2d gyroAngle, Pose2d initialPose) {
-        setOdometry(new DifferentialDriveOdometry(gyroAngle, initialPose));
+    public default void setOdometry(Pose2d initialPose) {
+        setOdometry(new DifferentialDriveOdometry(Rotation2d.fromDegrees(getHeadingDeg()), getLeftEncoderPosition(), getRightEncoderPosition(), initialPose));
     }
 
 }
