@@ -1,5 +1,6 @@
 package org.carlmontrobotics.lib199.path;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.function.Supplier;
 
@@ -19,6 +20,7 @@ import edu.wpi.first.math.trajectory.TrajectoryConfig;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
 import edu.wpi.first.math.trajectory.constraint.SwerveDriveKinematicsConstraint;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
 
 public interface SwerveDriveInterface extends DrivetrainInterface {
@@ -115,19 +117,15 @@ public interface SwerveDriveInterface extends DrivetrainInterface {
      * @return PPSwerveControllerCommand
      */
     public default Command createPPAutoCommand(PathPlannerTrajectory trajectory, HashMap<String, Command> eventMap) {
-        double[][] pidConstants = getPIDConstants();
-        double[] xPID = pidConstants[0];
-        PIDController xController = new PIDController(xPID[0], xPID[1], xPID[2]);
-        double[] yPID = pidConstants[1];
-        PIDController yController = new PIDController(yPID[0], yPID[1], yPID[2]);
-        double[] thetaPID = pidConstants[2];
-        PIDController thetaController = new PIDController(thetaPID[0], thetaPID[1], thetaPID[2]);
-        thetaController.enableContinuousInput(-Math.PI, Math.PI);
-        return new PPSwerveControllerCommand(trajectory,
-                // Call getOdometry in the supplier because the odometry object may be reset
-                // when the command is run
-                () -> getOdometry().getPoseMeters(), getKinematics(), xController, yController, thetaController,
-                this::drive, eventMap, this);
+        Subsystem[] requirements = eventMap.values().stream().flatMap(command -> command.getRequirements().stream())
+                .toArray(Subsystem[]::new);
+        requirements = Arrays.copyOf(requirements, requirements.length + 1);
+        requirements[requirements.length - 1] = this;
+        requirements = Arrays.stream(requirements).distinct().toArray(Subsystem[]::new);
+        PIDController[] pidControllers = Arrays.stream(getPIDConstants()).map(constants -> new PIDController(constants[0], constants[1], constants[2])).toArray(PIDController[]::new);
+        pidControllers[2].enableContinuousInput(-Math.PI, Math.PI);
+        // Call getOdometry in the supplier because the odometry object may be reset when the command is run
+        return new PPSwerveControllerCommand(trajectory, () -> getOdometry().getPoseMeters(), getKinematics(), pidControllers[0], pidControllers[1], pidControllers[2], this::drive, requirements);
     }
 
     /**

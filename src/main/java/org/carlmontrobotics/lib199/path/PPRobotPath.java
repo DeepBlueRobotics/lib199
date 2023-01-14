@@ -6,7 +6,6 @@ import java.util.Map;
 import com.pathplanner.lib.PathPlanner;
 import com.pathplanner.lib.PathPlannerTrajectory;
 
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 
@@ -55,7 +54,7 @@ public class PPRobotPath {
      * this path.
      */
     public void initializeDrivetrainPosition() {
-        dt.setOdometry(Rotation2d.fromDegrees(dt.getHeadingDeg()), trajectory.getInitialPose());
+        dt.setOdometry(trajectory.getInitialPose());
     }
 
     /**
