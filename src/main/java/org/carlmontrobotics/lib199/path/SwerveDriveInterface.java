@@ -8,6 +8,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
+import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.math.trajectory.TrajectoryConfig;
@@ -56,6 +57,11 @@ public interface SwerveDriveInterface extends DrivetrainInterface {
     public void setOdometry(SwerveDriveOdometry odometry);
 
     /**
+     * @return The current positions of the swerve modules
+     */
+    public SwerveModulePosition[] getModulePositions();
+
+    /**
      * Configures the constants for generating a trajectory
      * 
      * @param path The configuration for generating a trajectory
@@ -95,14 +101,13 @@ public interface SwerveDriveInterface extends DrivetrainInterface {
     }
 
     /**
-     * Sets odometry based on current kinematics, gyro angle, and pose
+     * Sets odometry to the specified pose
      * 
-     * @param gyroAngle   The angle reported by the gyroscope.
      * @param initialPose The starting position of the robot on the field.
      */
     @Override
-    public default void setOdometry(Rotation2d gyroAngle, Pose2d initialPose) {
-        setOdometry(new SwerveDriveOdometry(getKinematics(), gyroAngle, initialPose));
+    public default void setOdometry(Pose2d initialPose) {
+        setOdometry(new SwerveDriveOdometry(getKinematics(), Rotation2d.fromDegrees(getHeadingDeg()), getModulePositions(), initialPose));
     }
 
 }

@@ -12,6 +12,7 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.util.sendable.Sendable;
@@ -229,6 +230,18 @@ public class SwerveModule implements Sendable {
      */
     public SwerveModuleState getCurrentState() {
         return new SwerveModuleState(getCurrentSpeed(), Rotation2d.fromDegrees(getModuleAngle()));
+    }
+
+    /**
+     * Gets the current position (distance and angle) of this module.
+     * @return A SwerveModulePosition object representing the distance and angle of the module.
+     */
+    public SwerveModulePosition getCurrentPosition() {
+        return new SwerveModulePosition(getCurrentDistance(), Rotation2d.fromDegrees(getModuleAngle()));
+    }
+
+    public double getCurrentDistance() {
+        return drive.getEncoder().getPosition();
     }
 
     public double getCurrentSpeed() {
