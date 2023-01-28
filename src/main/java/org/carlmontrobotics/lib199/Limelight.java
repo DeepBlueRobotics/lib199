@@ -7,11 +7,17 @@
 
 package org.carlmontrobotics.lib199;
 
-import edu.wpi.first.networktables.NetworkTableInstance;
+import java.net.URL;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class Limelight {
+
+    public static final ObjectMapper JSON_MAPPER = new ObjectMapper();
 
     public enum Mode {
         DIST, STEER, TARGET
@@ -182,7 +188,16 @@ public class Limelight {
     public void setIdleTurnDirection(TurnDirection direction) {
         idleTurnDirection = direction;
     }
-    
+
+    public LimelightJsonDump getJsonDump() {
+        try {
+            return new ObjectMapper().readValue(new ObjectMapper().readTree(new URL("http://" + config.ntName + ".local:5807/results")).elements().next().toString(), LimelightJsonDump.class);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     public static class Config {
       /**
        * Limelight name (if using more than one Limelight)
