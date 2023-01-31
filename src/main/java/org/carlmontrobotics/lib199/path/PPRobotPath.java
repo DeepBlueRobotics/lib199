@@ -26,7 +26,23 @@ public class PPRobotPath {
      *                   This SHOULD NOT contain any commands requiring the same subsystems as this command, or it will be interrupted
      */
     public PPRobotPath(String pathName, SwerveDriveInterface dt, boolean reversed, HashMap<String, Command> eventMap) {
-        this.trajectory = PathPlanner.loadPath(pathName, dt.getMaxSpeedMps(), dt.getMaxAccelMps2(), reversed);
+        this(
+            PathPlanner.loadPath(pathName, dt.getMaxSpeedMps(), dt.getMaxAccelMps2(), reversed),
+            dt,
+            eventMap
+        );
+    }
+
+    /**
+     * Constructs a RobotPath Object
+     * 
+     * @param trajectory The trajectory to follow
+     * @param dt         Drivetrain object
+     * @param eventMap   Map of event marker names to the commands that should run when reaching that marker.
+     *                   This SHOULD NOT contain any commands requiring the same subsystems as this command, or it will be interrupted
+     */
+    public PPRobotPath(PathPlannerTrajectory trajectory, SwerveDriveInterface dt, HashMap<String, Command> eventMap) {
+        this.trajectory = trajectory;
         this.dt = dt;
         this.eventMap = eventMap;
     }
