@@ -2,13 +2,15 @@ package org.carlmontrobotics.lib199.sim;
 
 import java.util.HashMap;
 
+import org.carlmontrobotics.lib199.Lib199Subsystem;
+
 import com.revrobotics.REVLibError;
 
 import edu.wpi.first.hal.SimDevice;
 import edu.wpi.first.hal.SimDouble;
 import edu.wpi.first.hal.SimDevice.Direction;
 
-public class MockedSparkEncoder implements AutoCloseable {
+public class MockedSparkEncoder implements AutoCloseable, Runnable {
 
     private static final HashMap<Integer, MockedSparkEncoder> sims = new HashMap<>();
 
@@ -17,6 +19,7 @@ public class MockedSparkEncoder implements AutoCloseable {
     private SimDouble gearing;
     // Default value for a CANEncoder
     private final int countsPerRevolution = 4096;
+    private double velocity;
     private double positionConversionFactor = 1;
     private double velocityConversionFactor = 1;
     private double lastCount = 0;
@@ -27,6 +30,7 @@ public class MockedSparkEncoder implements AutoCloseable {
         count = device.createDouble("count", Direction.kBidir, 0);
         gearing = device.createDouble("gearing", Direction.kOutput, 1);
         sims.put(id, this);
+        Lib199Subsystem.registerPeriodic(this);
     }
 
     public double getPosition() {
@@ -49,13 +53,7 @@ public class MockedSparkEncoder implements AutoCloseable {
     }
 
     public double getVelocity() {
-        double t = System.currentTimeMillis() / 1000D;
-        double dt = t - lastTime;
-        double curCount = count.get();
-        double dCount = curCount - lastCount;
-        lastTime = t;
-        lastCount = curCount;
-        return velocityConversionFactor * ( dCount / dt ) / countsPerRevolution;
+        return velocity;
     }
 
     public REVLibError setVelocityConversionFactor(double velocityConversionFactor) {
@@ -65,6 +63,18 @@ public class MockedSparkEncoder implements AutoCloseable {
 
     public double getVelocityConversionFactor() {
         return velocityConversionFactor;
+    }
+
+    @Override
+    public void run() {
+        double t = System.currentTimeMillis() / 1000D;
+        double dt = t - lastTime;
+        double curCount = count.get();
+        double dCount = curCount - lastCount;
+        lastTime = t;
+        lastCount = curCount;
+        double newVelocity = velocityConversionFactor * ( dCount / dt ) / countsPerRevolution;
+        velocity = Double.isNaN(newVelocity) ? 0 : newVelocity;
     }
 
     @Override
