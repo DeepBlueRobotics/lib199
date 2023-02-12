@@ -13,28 +13,28 @@ public class MockedSparkEncoder implements AutoCloseable {
     private static final HashMap<Integer, MockedSparkEncoder> sims = new HashMap<>();
 
     private SimDevice device;
-    private SimDouble dpp;
     private SimDouble count;
     private SimDouble gearing;
     // Default value for a CANEncoder
     private final int countsPerRevolution = 4096;
+    private double positionConversionFactor = 1;
+    private double velocityConversionFactor = 1;
+    private double lastCount = 0;
+    private double lastTime = 0;
 
     public MockedSparkEncoder(int id) {
         device = SimDevice.create("RelativeEncoder", id);
-        dpp = device.createDouble("distancePerPulse", Direction.kOutput, 1);
         count = device.createDouble("count", Direction.kInput, 0);
         gearing = device.createDouble("gearing", Direction.kOutput, 1);
         sims.put(id, this);
     }
 
     public double getPosition() {
-        return dpp.get() * count.get();
+        return positionConversionFactor * count.get() / countsPerRevolution;
     }
 
     public REVLibError setPositionConversionFactor(double positionConversionFactor) {
-        // Assume positionConversionFactor = units/rev
-        // distancePerPulse (actually distance per count) = units/rev * rev/count
-        dpp.set(positionConversionFactor / countsPerRevolution);
+        this.positionConversionFactor = positionConversionFactor;
         return REVLibError.kOk;
     }
 
@@ -45,7 +45,26 @@ public class MockedSparkEncoder implements AutoCloseable {
     }
 
     public double getPositionConversionFactor() {
-        return dpp.get() * countsPerRevolution;
+        return positionConversionFactor;
+    }
+
+    public double getVelocity() {
+        double t = System.currentTimeMillis() / 1000;
+        double dt = t - lastTime;
+        double curCount = count.get();
+        double dCount = curCount - lastCount;
+        lastTime = t;
+        lastCount = curCount;
+        return velocityConversionFactor * ( dCount / dt ) / countsPerRevolution;
+    }
+
+    public REVLibError setVelocityConversionFactor(double velocityConversionFactor) {
+        this.velocityConversionFactor = velocityConversionFactor;
+        return REVLibError.kOk;
+    }
+
+    public double getVelocityConversionFactor() {
+        return velocityConversionFactor;
     }
 
     @Override
