@@ -73,7 +73,7 @@ public class PPRobotPath {
      * this path.
      */
     public void initializeDrivetrainPosition() {
-        dt.setOdometry(getInitialPose());
+        dt.setPose(getInitialPose());
     }
 
     /**

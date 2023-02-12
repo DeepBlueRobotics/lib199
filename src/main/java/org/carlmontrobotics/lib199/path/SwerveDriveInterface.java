@@ -9,7 +9,6 @@ import com.pathplanner.lib.commands.PPSwerveControllerCommand;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
-import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
@@ -38,13 +37,6 @@ public interface SwerveDriveInterface extends DrivetrainInterface {
      * @return kinematics
      */
     public SwerveDriveKinematics getKinematics();
-
-    /**
-     * Gets Swerve Drive odometry
-     * 
-     * @return odometry
-     */
-    public SwerveDriveOdometry getOdometry();
 
     /**
      * Retrieves the PID constants which will be used for path following in the form
@@ -100,11 +92,7 @@ public interface SwerveDriveInterface extends DrivetrainInterface {
         ProfiledPIDController thetaController = new ProfiledPIDController(thetaPID[0], thetaPID[1], thetaPID[2],
                 new Constraints(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY));
         thetaController.enableContinuousInput(-Math.PI, Math.PI);
-        return new SwerveControllerCommand(trajectory,
-                // Call getOdometry in the supplier because the odometry object may be reset
-                // when the command is run
-                () -> getOdometry().getPoseMeters(), getKinematics(), xController, yController, thetaController,
-                desiredHeading, this::drive, this);
+        return new SwerveControllerCommand(trajectory, this::getPose, getKinematics(), xController, yController, thetaController, desiredHeading, this::drive, this);
     }
 
     /**
@@ -124,18 +112,7 @@ public interface SwerveDriveInterface extends DrivetrainInterface {
         requirements = Arrays.stream(requirements).distinct().toArray(Subsystem[]::new);
         PIDController[] pidControllers = Arrays.stream(getPIDConstants()).map(constants -> new PIDController(constants[0], constants[1], constants[2])).toArray(PIDController[]::new);
         pidControllers[2].enableContinuousInput(-Math.PI, Math.PI);
-        // Call getOdometry in the supplier because the odometry object may be reset when the command is run
-        return new PPSwerveControllerCommand(trajectory, () -> getOdometry().getPoseMeters(), getKinematics(), pidControllers[0], pidControllers[1], pidControllers[2], this::drive, true, requirements);
-    }
-
-    /**
-     * Sets odometry to the specified pose
-     * 
-     * @param initialPose The starting position of the robot on the field.
-     */
-    @Override
-    public default void setOdometry(Pose2d initialPose) {
-        setOdometry(new SwerveDriveOdometry(getKinematics(), Rotation2d.fromDegrees(getHeadingDeg()), getModulePositions(), initialPose));
+        return new PPSwerveControllerCommand(trajectory, this::getPose, getKinematics(), pidControllers[0], pidControllers[1], pidControllers[2], this::drive, true, requirements);
     }
 
 }

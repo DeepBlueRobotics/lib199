@@ -50,11 +50,16 @@ public interface DrivetrainInterface extends Subsystem {
     public double getHeadingDeg();
 
     /**
+     * @return The current position of the robot
+     */
+    public Pose2d getPose();
+
+    /**
      * Sets odometry to the specified pose
      * 
      * @param initialPose The starting position of the robot on the field.
      */
-    public void setOdometry(Pose2d initialPose);
+    public void setPose(Pose2d initialPose);
 
     /**
      * Stops the drivetrain
