@@ -49,7 +49,7 @@ public class MockedSparkEncoder implements AutoCloseable {
     }
 
     public double getVelocity() {
-        double t = System.currentTimeMillis() / 1000;
+        double t = System.currentTimeMillis() / 1000D;
         double dt = t - lastTime;
         double curCount = count.get();
         double dCount = curCount - lastCount;
