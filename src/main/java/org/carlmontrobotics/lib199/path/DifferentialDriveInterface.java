@@ -7,7 +7,6 @@ import edu.wpi.first.math.controller.RamseteController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
-import edu.wpi.first.math.kinematics.DifferentialDriveOdometry;
 import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.math.trajectory.TrajectoryConfig;
 import edu.wpi.first.math.trajectory.constraint.DifferentialDriveVoltageConstraint;
@@ -44,13 +43,6 @@ public interface DifferentialDriveInterface extends DrivetrainInterface {
      * @return characterization values in the form { kVolts, kVels, kAccels }
      */
     public double[][] getCharacterizationValues();
-
-    /**
-     * Sets odometry
-     * 
-     * @param odometry Odometry that will be set
-     */
-    public void setOdometry(DifferentialDriveOdometry odometry);
 
     /**
      * @return The left encoder position in meters

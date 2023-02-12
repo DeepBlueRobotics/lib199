@@ -11,7 +11,6 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
-import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.trajectory.Trajectory;
@@ -46,13 +45,6 @@ public interface SwerveDriveInterface extends DrivetrainInterface {
      * @return PID constnants
      */
     public double[][] getPIDConstants();
-
-    /**
-     * Sets odometry based on current kinematics, gyro angle, pose
-     * 
-     * @param odometry current kinematics, gyro angle, pose
-     */
-    public void setOdometry(SwerveDriveOdometry odometry);
 
     /**
      * @return The current positions of the swerve modules
