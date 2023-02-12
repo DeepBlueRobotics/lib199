@@ -27,7 +27,7 @@ public class MockedSparkEncoder implements AutoCloseable, Runnable {
 
     public MockedSparkEncoder(int id) {
         device = SimDevice.create("RelativeEncoder", id);
-        count = device.createDouble("count", Direction.kBidir, 0);
+        count = device.createDouble("count", Direction.kInput, 0);
         gearing = device.createDouble("gearing", Direction.kOutput, 1);
         sims.put(id, this);
         Lib199Subsystem.registerPeriodic(this);
