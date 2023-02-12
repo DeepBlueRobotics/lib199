@@ -5,7 +5,9 @@ import java.util.Map;
 
 import com.pathplanner.lib.PathPlanner;
 import com.pathplanner.lib.PathPlannerTrajectory;
+import com.pathplanner.lib.PathPlannerTrajectory.PathPlannerState;
 
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
@@ -71,7 +73,17 @@ public class PPRobotPath {
      * this path.
      */
     public void initializeDrivetrainPosition() {
-        dt.setOdometry(PathPlannerTrajectory.transformTrajectoryForAlliance(trajectory, DriverStation.getAlliance()).getInitialPose());
+        dt.setOdometry(getInitialPose());
+    }
+
+    /**
+     * Gets the initial pose of the path
+     *
+     * @return Initial pose
+     */
+    public Pose2d getInitialPose() {
+        PathPlannerState state = PathPlannerTrajectory.transformTrajectoryForAlliance(trajectory, DriverStation.getAlliance()).getInitialState();
+        return new Pose2d(state.poseMeters.getTranslation(), state.holonomicRotation);
     }
 
     /**
