@@ -125,7 +125,7 @@ public interface SwerveDriveInterface extends DrivetrainInterface {
         PIDController[] pidControllers = Arrays.stream(getPIDConstants()).map(constants -> new PIDController(constants[0], constants[1], constants[2])).toArray(PIDController[]::new);
         pidControllers[2].enableContinuousInput(-Math.PI, Math.PI);
         // Call getOdometry in the supplier because the odometry object may be reset when the command is run
-        return new PPSwerveControllerCommand(trajectory, () -> getOdometry().getPoseMeters(), getKinematics(), pidControllers[0], pidControllers[1], pidControllers[2], this::drive, requirements);
+        return new PPSwerveControllerCommand(trajectory, () -> getOdometry().getPoseMeters(), getKinematics(), pidControllers[0], pidControllers[1], pidControllers[2], this::drive, true, requirements);
     }
 
     /**
