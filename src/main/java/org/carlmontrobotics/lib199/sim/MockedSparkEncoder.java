@@ -2,39 +2,43 @@ package org.carlmontrobotics.lib199.sim;
 
 import java.util.HashMap;
 
+import org.carlmontrobotics.lib199.Lib199Subsystem;
+
 import com.revrobotics.REVLibError;
 
 import edu.wpi.first.hal.SimDevice;
 import edu.wpi.first.hal.SimDouble;
 import edu.wpi.first.hal.SimDevice.Direction;
 
-public class MockedSparkEncoder implements AutoCloseable {
+public class MockedSparkEncoder implements AutoCloseable, Runnable {
 
     private static final HashMap<Integer, MockedSparkEncoder> sims = new HashMap<>();
 
     private SimDevice device;
-    private SimDouble dpp;
     private SimDouble count;
     private SimDouble gearing;
     // Default value for a CANEncoder
     private final int countsPerRevolution = 4096;
+    private double velocity;
+    private double positionConversionFactor = 1;
+    private double velocityConversionFactor = 1;
+    private double lastCount = 0;
+    private double lastTime = 0;
 
     public MockedSparkEncoder(int id) {
         device = SimDevice.create("RelativeEncoder", id);
-        dpp = device.createDouble("distancePerPulse", Direction.kOutput, 1);
         count = device.createDouble("count", Direction.kInput, 0);
         gearing = device.createDouble("gearing", Direction.kOutput, 1);
         sims.put(id, this);
+        Lib199Subsystem.registerPeriodic(this);
     }
 
     public double getPosition() {
-        return dpp.get() * count.get();
+        return positionConversionFactor * count.get() / countsPerRevolution;
     }
 
     public REVLibError setPositionConversionFactor(double positionConversionFactor) {
-        // Assume positionConversionFactor = units/rev
-        // distancePerPulse (actually distance per count) = units/rev * rev/count
-        dpp.set(positionConversionFactor / countsPerRevolution);
+        this.positionConversionFactor = positionConversionFactor;
         return REVLibError.kOk;
     }
 
@@ -45,7 +49,32 @@ public class MockedSparkEncoder implements AutoCloseable {
     }
 
     public double getPositionConversionFactor() {
-        return dpp.get() * countsPerRevolution;
+        return positionConversionFactor;
+    }
+
+    public double getVelocity() {
+        return velocity;
+    }
+
+    public REVLibError setVelocityConversionFactor(double velocityConversionFactor) {
+        this.velocityConversionFactor = velocityConversionFactor;
+        return REVLibError.kOk;
+    }
+
+    public double getVelocityConversionFactor() {
+        return velocityConversionFactor;
+    }
+
+    @Override
+    public void run() {
+        double t = System.currentTimeMillis() / 1000D;
+        double dt = t - lastTime;
+        double curCount = count.get();
+        double dCount = curCount - lastCount;
+        lastTime = t;
+        lastCount = curCount;
+        double newVelocity = velocityConversionFactor * ( dCount / dt ) / countsPerRevolution;
+        velocity = Double.isNaN(newVelocity) ? 0 : newVelocity;
     }
 
     @Override
