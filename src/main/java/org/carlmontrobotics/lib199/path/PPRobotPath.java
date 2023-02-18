@@ -48,6 +48,19 @@ public class PPRobotPath {
     }
 
     /**
+     * Constructs a RobotPath Object
+     * 
+     * @param initializeDrivetrainPosition
+     * @param stopAtEnd
+     * @return
+     */
+    public PPRobotPath(String pathName, SwerveDriveInterface dt, double maxVel, double maxAccel, boolean reversed, HashMap<String, Command> eventMap) {
+        this.trajectory = PathPlanner.loadPath(pathName, maxVel, maxAccel, reversed);
+        this.dt = dt;
+        this.eventMap = eventMap;
+    }
+
+    /**
      * Gets a path command for the given path
      * 
      * @param initializeDrivetrainPosition whether the robot should assume it is currently at the start of the path
