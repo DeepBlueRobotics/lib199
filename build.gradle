@@ -1,6 +1,6 @@
 plugins {
     id "java"
-    id "edu.wpi.first.GradleRIO" version "2023.2.1"
+    id "edu.wpi.first.GradleRIO" version "2023.4.2"
     id "maven-publish"
 }
 
@@ -92,7 +92,7 @@ publishing {
         gpr(MavenPublication) {
             groupId = 'org.carlmontrobotics'
             artifactId = 'lib199'
-            version = '3.0.0'
+            version = '3.1.0'
 
             from components.java
         }
