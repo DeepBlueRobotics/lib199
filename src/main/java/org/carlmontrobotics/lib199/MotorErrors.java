@@ -99,6 +99,7 @@ public final class MotorErrors {
         return DummySparkMaxAnswer.DUMMY_SPARK_MAX;
     }
 
+    @Deprecated
     public static void reportSparkMaxTemp(CANSparkMax spark, TemperatureLimit temperatureLimit) {
         reportSparkMaxTemp(spark, temperatureLimit.limit);
     }
@@ -126,6 +127,7 @@ public final class MotorErrors {
 
     private MotorErrors() {}
 
+    @Deprecated
     public static enum TemperatureLimit {
         NEO(70), NEO_550(40);
 
