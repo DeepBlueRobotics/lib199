@@ -2,9 +2,11 @@ package org.carlmontrobotics.lib199.path;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.function.Supplier;
 
 import com.pathplanner.lib.PathPlannerTrajectory;
+import com.pathplanner.lib.auto.SwerveAutoBuilder;
 import com.pathplanner.lib.commands.PPSwerveControllerCommand;
 
 import edu.wpi.first.math.controller.PIDController;
@@ -18,6 +20,7 @@ import edu.wpi.first.math.trajectory.TrajectoryConfig;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
 import edu.wpi.first.math.trajectory.constraint.SwerveDriveKinematicsConstraint;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandBase;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
 
@@ -97,6 +100,19 @@ public interface SwerveDriveInterface extends DrivetrainInterface {
      * @return PPSwerveControllerCommand
      */
     public default Command createPPAutoCommand(PathPlannerTrajectory trajectory, HashMap<String, Command> eventMap) {
+        return createPPAutoCommand(Arrays.asList(trajectory), eventMap);
+    }
+
+    /**
+     * Constructs a new PPSwerveControllerCommand that, when executed, will follow the
+     * provided trajectory.
+     * 
+     * @param trajectory The trajectory to follow.
+     * @param eventMap   Map of event marker names to the commands that should run when reaching that marker.
+     *                   This SHOULD NOT contain any commands requiring Drivetrain, or it will be interrupted
+     * @return PPSwerveControllerCommand
+     */
+    public default Command createPPAutoCommand(List<PathPlannerTrajectory> trajectory, HashMap<String, Command> eventMap) {
         Subsystem[] requirements = eventMap.values().stream().flatMap(command -> command.getRequirements().stream())
                 .toArray(Subsystem[]::new);
         requirements = Arrays.copyOf(requirements, requirements.length + 1);
@@ -104,7 +120,14 @@ public interface SwerveDriveInterface extends DrivetrainInterface {
         requirements = Arrays.stream(requirements).distinct().toArray(Subsystem[]::new);
         PIDController[] pidControllers = Arrays.stream(getPIDConstants()).map(constants -> new PIDController(constants[0], constants[1], constants[2])).toArray(PIDController[]::new);
         pidControllers[2].enableContinuousInput(-Math.PI, Math.PI);
-        return new PPSwerveControllerCommand(trajectory, this::getPose, getKinematics(), pidControllers[0], pidControllers[1], pidControllers[2], this::drive, true, requirements);
+        // Use SwerveAutoBuilder because required argument for base auto builder "DrivetrainType" is protected
+        return new SwerveAutoBuilder(this::getPose, this::setPose, null, null, null, null, eventMap, true) {
+            @Override
+            public CommandBase followPath(PathPlannerTrajectory trajectory) {
+                // AutoBuilder will convert this to work with events
+                return new PPSwerveControllerCommand(trajectory, poseSupplier, getKinematics(), pidControllers[0], pidControllers[1], pidControllers[2], SwerveDriveInterface.this::drive, true, SwerveDriveInterface.this);
+            };
+        }.followPathGroupWithEvents(trajectory);
     }
 
 }

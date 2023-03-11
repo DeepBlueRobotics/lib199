@@ -1,6 +1,8 @@
 package org.carlmontrobotics.lib199.path;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.pathplanner.lib.PathPlanner;
@@ -15,7 +17,7 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 //Findd Me
 public class PPRobotPath {
 
-    private PathPlannerTrajectory trajectory;
+    private List<PathPlannerTrajectory> trajectory;
     private SwerveDriveInterface dt;
     private HashMap<String, Command> eventMap;
 
@@ -30,7 +32,7 @@ public class PPRobotPath {
      */
     public PPRobotPath(String pathName, SwerveDriveInterface dt, boolean reversed, HashMap<String, Command> eventMap) {
         this(
-            PathPlanner.loadPath(pathName, dt.getMaxSpeedMps(), dt.getMaxAccelMps2(), reversed),
+            PathPlanner.loadPathGroup(pathName, dt.getMaxSpeedMps(), dt.getMaxAccelMps2(), reversed),
             dt,
             eventMap
         );
@@ -45,6 +47,18 @@ public class PPRobotPath {
      *                   This SHOULD NOT contain any commands requiring the same subsystems as this command, or it will be interrupted
      */
     public PPRobotPath(PathPlannerTrajectory trajectory, SwerveDriveInterface dt, HashMap<String, Command> eventMap) {
+        this(Arrays.asList(trajectory), dt, eventMap);
+    }
+
+    /**
+     * Constructs a RobotPath Object
+     * 
+     * @param trajectory The trajectory to follow
+     * @param dt         Drivetrain object
+     * @param eventMap   Map of event marker names to the commands that should run when reaching that marker.
+     *                   This SHOULD NOT contain any commands requiring the same subsystems as this command, or it will be interrupted
+     */
+    public PPRobotPath(List<PathPlannerTrajectory> trajectory, SwerveDriveInterface dt, HashMap<String, Command> eventMap) {
         this.trajectory = trajectory;
         this.dt = dt;
         this.eventMap = eventMap;
@@ -58,7 +72,7 @@ public class PPRobotPath {
      * @return
      */
     public PPRobotPath(String pathName, SwerveDriveInterface dt, double maxVel, double maxAccel, boolean reversed, HashMap<String, Command> eventMap) {
-        this.trajectory = PathPlanner.loadPath(pathName, maxVel, maxAccel, reversed);
+        this.trajectory = PathPlanner.loadPathGroup(pathName, maxVel, maxAccel, reversed);
         this.dt = dt;
         this.eventMap = eventMap;
     }
@@ -95,7 +109,7 @@ public class PPRobotPath {
      * @return Initial pose
      */
     public Pose2d getInitialPose() {
-        PathPlannerState state = PathPlannerTrajectory.transformTrajectoryForAlliance(trajectory, DriverStation.getAlliance()).getInitialState();
+        PathPlannerState state = PathPlannerTrajectory.transformTrajectoryForAlliance(trajectory.get(0), DriverStation.getAlliance()).getInitialState();
         return new Pose2d(state.poseMeters.getTranslation(), state.holonomicRotation);
     }
 
