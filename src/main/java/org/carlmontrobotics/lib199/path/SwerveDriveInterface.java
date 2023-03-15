@@ -118,6 +118,7 @@ public interface SwerveDriveInterface extends DrivetrainInterface {
         requirements = Arrays.copyOf(requirements, requirements.length + 1);
         requirements[requirements.length - 1] = this;
         requirements = Arrays.stream(requirements).distinct().toArray(Subsystem[]::new);
+        final Subsystem[] finalRequirements = requirements; // Make this final so it can be used in the anonymous inner class
         PIDController[] pidControllers = Arrays.stream(getPIDConstants()).map(constants -> new PIDController(constants[0], constants[1], constants[2])).toArray(PIDController[]::new);
         pidControllers[2].enableContinuousInput(-Math.PI, Math.PI);
         // Use SwerveAutoBuilder because required argument for base auto builder "DrivetrainType" is protected
@@ -125,7 +126,7 @@ public interface SwerveDriveInterface extends DrivetrainInterface {
             @Override
             public CommandBase followPath(PathPlannerTrajectory trajectory) {
                 // AutoBuilder will convert this to work with events
-                return new PPSwerveControllerCommand(trajectory, poseSupplier, getKinematics(), pidControllers[0], pidControllers[1], pidControllers[2], SwerveDriveInterface.this::drive, true, SwerveDriveInterface.this);
+                return new PPSwerveControllerCommand(trajectory, poseSupplier, getKinematics(), pidControllers[0], pidControllers[1], pidControllers[2], SwerveDriveInterface.this::drive, true, finalRequirements /* This will propagate the requirements to the final command via SequentialCommandGroup */);
             };
         }.followPathGroupWithEvents(trajectory);
     }
