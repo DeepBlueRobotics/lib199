@@ -7,11 +7,20 @@
 
 package org.carlmontrobotics.lib199;
 
-import edu.wpi.first.networktables.NetworkTableInstance;
+import java.util.function.Consumer;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.networktables.NetworkTableEntry;
+import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class Limelight {
+
+    public static final ObjectMapper JSON_MAPPER = new ObjectMapper();
 
     public enum Mode {
         DIST, STEER, TARGET
@@ -70,7 +79,7 @@ public class Limelight {
      */
     public double determineMountingAngle(double distance, double cameraHeight, double objectHeight) {
         // NOTE: ty may be negative.
-        tyDeg = NetworkTableInstance.getDefault().getTable(config.ntName).getEntry("ty").getDouble(0.0);
+        tyDeg = getNTEntry("ty").getDouble(0.0);
         mountingAngleDeg = Math.atan((cameraHeight - objectHeight) / distance) * 180 / Math.PI - tyDeg;
         return mountingAngleDeg;
     }
@@ -84,9 +93,9 @@ public class Limelight {
      */
     public double[] determineObjectDist(double cameraHeight, double objectHeight, double cameraAngle) {
         // angle b/t where limelight is looking, and target in x direction
-        txDeg = NetworkTableInstance.getDefault().getTable(config.ntName).getEntry("tx").getDouble(0.0);
+        txDeg = getNTEntry("tx").getDouble(0.0);
         // angle b/t where limelight is looking, and target in y direction
-        tyDeg = NetworkTableInstance.getDefault().getTable(config.ntName).getEntry("ty").getDouble(0.0);
+        tyDeg = getNTEntry("ty").getDouble(0.0);
         // angle b/t limelight's looking line and flat
         mountingAngleDeg = cameraAngle;
         // diff b/t height of camera and height of target
@@ -108,8 +117,8 @@ public class Limelight {
     // Adjusts the distance between a vision target and the robot. Uses basic PID
     // with the ty value from the network table.
     public double distanceAssist() {
-        tv = NetworkTableInstance.getDefault().getTable(config.ntName).getEntry("tv").getDouble(0.0);
-        ta = NetworkTableInstance.getDefault().getTable(config.ntName).getEntry("ta").getDouble(0.0);
+        tv = getNTEntry("tv").getDouble(0.0);
+        ta = getNTEntry("ta").getDouble(0.0);
         putValue("tyDeg", tyDeg);
         double adjustment = 0.0;
         double area_threshold = config.areaThresholdPercentage;
@@ -125,9 +134,9 @@ public class Limelight {
     // Adjusts the angle facing a vision target. Uses basic PID with the tx value
     // from the network table.
     public double steeringAssist() {
-        tv = NetworkTableInstance.getDefault().getTable(config.ntName).getEntry("tv").getDouble(0.0);
-        txDeg = NetworkTableInstance.getDefault().getTable(config.ntName).getEntry("tx").getDouble(0.0);
-        ta = NetworkTableInstance.getDefault().getTable(config.ntName).getEntry("ta").getDouble(0.0);
+        tv = getNTEntry("tv").getDouble(0.0);
+        txDeg = getNTEntry("tx").getDouble(0.0);
+        ta = getNTEntry("ta").getDouble(0.0);
         putValue("txDeg", txDeg);
         putValue("tv", tv);
 
@@ -182,7 +191,37 @@ public class Limelight {
     public void setIdleTurnDirection(TurnDirection direction) {
         idleTurnDirection = direction;
     }
-    
+
+    /**
+     * Get the JSON dump from the limelight. This method returns via a callback because of the high latency observed in JSON parsing.
+     * Keep in mind that the callback will be called asynchronously.
+     * 
+     * @param onSuccess The callback to run if the JSON dump is successful
+     * @param onFailure  The callback to run if an error occurs
+     */
+    public void getJsonDump(Consumer<LimelightJsonDump> onSuccess, Consumer<Exception> onFailure) {
+        new Thread(() -> {
+            try {
+                onSuccess.accept(JSON_MAPPER.readValue(JSON_MAPPER.readTree(getNTEntry("json").getString(null)).elements().next().toString(), LimelightJsonDump.class));
+            } catch (Exception e) {
+                onFailure.accept(e);
+            }
+        }).start();
+    }
+
+    public Pose3d getTransform(Transform transform) {
+        double[] rawData = getNTEntry(transform.name().toLowerCase()).getDoubleArray(new double[6]);
+        return new Pose3d(rawData[0], rawData[1], rawData[2], new Rotation3d(Math.toRadians(rawData[3]), Math.toRadians(rawData[4]), Math.toRadians(rawData[5])));
+    }
+
+    public NetworkTableEntry getNTEntry(String key) {
+        return NetworkTableInstance.getDefault().getTable(config.ntName).getEntry(key);
+    }
+
+    public boolean hasTarget() {
+        return getNTEntry("tv").getDouble(0.0) == 1.0;
+    }
+
     public static class Config {
       /**
        * Limelight name (if using more than one Limelight)
@@ -226,5 +265,9 @@ public class Limelight {
         private TurnDirection(int sign) {
             this.sign = sign;
         }
+    }
+
+    public static enum Transform {
+        BOTPOSE, BOTPOSE_WPIBLUE, BOTPOSE_WPIRED, CAMERAPOSE_TARGETSPACE, TARGETPOSE_CAMERASPACE, TARGETPOSE_ROBOTSPACE, BOTPOSE_TARGETSPACE;
     }
 }

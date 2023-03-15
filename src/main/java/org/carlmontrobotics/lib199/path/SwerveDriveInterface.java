@@ -2,17 +2,17 @@ package org.carlmontrobotics.lib199.path;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.function.Supplier;
 
 import com.pathplanner.lib.PathPlannerTrajectory;
+import com.pathplanner.lib.auto.SwerveAutoBuilder;
 import com.pathplanner.lib.commands.PPSwerveControllerCommand;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
-import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
-import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.trajectory.Trajectory;
@@ -20,6 +20,7 @@ import edu.wpi.first.math.trajectory.TrajectoryConfig;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
 import edu.wpi.first.math.trajectory.constraint.SwerveDriveKinematicsConstraint;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandBase;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
 
@@ -40,13 +41,6 @@ public interface SwerveDriveInterface extends DrivetrainInterface {
     public SwerveDriveKinematics getKinematics();
 
     /**
-     * Gets Swerve Drive odometry
-     * 
-     * @return odometry
-     */
-    public SwerveDriveOdometry getOdometry();
-
-    /**
      * Retrieves the PID constants which will be used for path following in the form
      * { xPID, yPID, zPID } The values in these arrays will be read as P, I, D All
      * three xPID, yPID, zPID and P, I, D values must be included
@@ -54,13 +48,6 @@ public interface SwerveDriveInterface extends DrivetrainInterface {
      * @return PID constnants
      */
     public double[][] getPIDConstants();
-
-    /**
-     * Sets odometry based on current kinematics, gyro angle, pose
-     * 
-     * @param odometry current kinematics, gyro angle, pose
-     */
-    public void setOdometry(SwerveDriveOdometry odometry);
 
     /**
      * @return The current positions of the swerve modules
@@ -100,11 +87,7 @@ public interface SwerveDriveInterface extends DrivetrainInterface {
         ProfiledPIDController thetaController = new ProfiledPIDController(thetaPID[0], thetaPID[1], thetaPID[2],
                 new Constraints(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY));
         thetaController.enableContinuousInput(-Math.PI, Math.PI);
-        return new SwerveControllerCommand(trajectory,
-                // Call getOdometry in the supplier because the odometry object may be reset
-                // when the command is run
-                () -> getOdometry().getPoseMeters(), getKinematics(), xController, yController, thetaController,
-                desiredHeading, this::drive, this);
+        return new SwerveControllerCommand(trajectory, this::getPose, getKinematics(), xController, yController, thetaController, desiredHeading, this::drive, this);
     }
 
     /**
@@ -117,25 +100,35 @@ public interface SwerveDriveInterface extends DrivetrainInterface {
      * @return PPSwerveControllerCommand
      */
     public default Command createPPAutoCommand(PathPlannerTrajectory trajectory, HashMap<String, Command> eventMap) {
+        return createPPAutoCommand(Arrays.asList(trajectory), eventMap);
+    }
+
+    /**
+     * Constructs a new PPSwerveControllerCommand that, when executed, will follow the
+     * provided trajectory.
+     * 
+     * @param trajectory The trajectory to follow.
+     * @param eventMap   Map of event marker names to the commands that should run when reaching that marker.
+     *                   This SHOULD NOT contain any commands requiring Drivetrain, or it will be interrupted
+     * @return PPSwerveControllerCommand
+     */
+    public default Command createPPAutoCommand(List<PathPlannerTrajectory> trajectory, HashMap<String, Command> eventMap) {
         Subsystem[] requirements = eventMap.values().stream().flatMap(command -> command.getRequirements().stream())
                 .toArray(Subsystem[]::new);
         requirements = Arrays.copyOf(requirements, requirements.length + 1);
         requirements[requirements.length - 1] = this;
         requirements = Arrays.stream(requirements).distinct().toArray(Subsystem[]::new);
+        final Subsystem[] finalRequirements = requirements; // Make this final so it can be used in the anonymous inner class
         PIDController[] pidControllers = Arrays.stream(getPIDConstants()).map(constants -> new PIDController(constants[0], constants[1], constants[2])).toArray(PIDController[]::new);
         pidControllers[2].enableContinuousInput(-Math.PI, Math.PI);
-        // Call getOdometry in the supplier because the odometry object may be reset when the command is run
-        return new PPSwerveControllerCommand(trajectory, () -> getOdometry().getPoseMeters(), getKinematics(), pidControllers[0], pidControllers[1], pidControllers[2], this::drive, requirements);
-    }
-
-    /**
-     * Sets odometry to the specified pose
-     * 
-     * @param initialPose The starting position of the robot on the field.
-     */
-    @Override
-    public default void setOdometry(Pose2d initialPose) {
-        setOdometry(new SwerveDriveOdometry(getKinematics(), Rotation2d.fromDegrees(getHeadingDeg()), getModulePositions(), initialPose));
+        // Use SwerveAutoBuilder because required argument for base auto builder "DrivetrainType" is protected
+        return new SwerveAutoBuilder(this::getPose, this::setPose, null, null, null, null, eventMap, true) {
+            @Override
+            public CommandBase followPath(PathPlannerTrajectory trajectory) {
+                // AutoBuilder will convert this to work with events
+                return new PPSwerveControllerCommand(trajectory, poseSupplier, getKinematics(), pidControllers[0], pidControllers[1], pidControllers[2], SwerveDriveInterface.this::drive, true, finalRequirements /* This will propagate the requirements to the final command via SequentialCommandGroup */);
+            };
+        }.followPathGroupWithEvents(trajectory);
     }
 
 }
