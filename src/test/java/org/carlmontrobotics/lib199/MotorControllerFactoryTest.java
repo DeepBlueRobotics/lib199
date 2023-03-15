@@ -2,6 +2,7 @@ package org.carlmontrobotics.lib199;
 
 import static org.junit.Assert.assertEquals;
 
+import org.carlmontrobotics.MotorConfig;
 import org.carlmontrobotics.lib199.testUtils.ErrStreamTest;
 import org.carlmontrobotics.lib199.testUtils.SimDeviceTestRule;
 import org.junit.ClassRule;
@@ -21,7 +22,7 @@ public class MotorControllerFactoryTest extends ErrStreamTest {
         // Call close to free PWM ports
         ((AutoCloseable)MotorControllerFactory.createTalon(0)).close();
         ((AutoCloseable)MotorControllerFactory.createVictor(1)).close();
-        MotorControllerFactory.createSparkMax(2, 40);
+        MotorControllerFactory.createSparkMax(2, MotorConfig.NEO);
         assertEquals(0, errStream.toByteArray().length);
     }
 

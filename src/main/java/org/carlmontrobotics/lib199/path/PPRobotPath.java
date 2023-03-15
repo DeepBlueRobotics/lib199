@@ -67,9 +67,13 @@ public class PPRobotPath {
     /**
      * Constructs a RobotPath Object
      * 
-     * @param initializeDrivetrainPosition
-     * @param stopAtEnd
-     * @return
+     * @param pathName   Name of the path
+     * @param dt         Drivetrain object
+     * @param maxVel     Maximum velocity of the robot
+     * @param maxAccel   Maximum acceleration of the robot
+     * @param reversed   Whether the path should be reversed
+     * @param eventMap   Map of event marker names to the commands that should run when reaching that marker.
+     *                   This SHOULD NOT contain any commands requiring the same subsystems as this command, or it will be interrupted
      */
     public PPRobotPath(String pathName, SwerveDriveInterface dt, double maxVel, double maxAccel, boolean reversed, HashMap<String, Command> eventMap) {
         this.trajectory = PathPlanner.loadPathGroup(pathName, maxVel, maxAccel, reversed);

@@ -1,9 +1,6 @@
 name: Deploy Javadoc
 
-on:
-  push:
-    branches:
-      - master
+on: [push]
 
 jobs:
   build-javadoc:
@@ -24,6 +21,7 @@ jobs:
         path: ./build/docs/javadoc
   deploy-javadoc:
     needs: build-javadoc
+    if: github.ref == 'refs/heads/master'
     permissions:
       pages: write
       id-token: write
