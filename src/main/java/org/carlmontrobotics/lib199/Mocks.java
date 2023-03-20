@@ -24,7 +24,7 @@ public final class Mocks {
     private static final List<WeakReference<Object>> MOCKS = Collections.synchronizedList(new ArrayList<>());
     private static final Predicate<WeakReference<?>> IS_REFERENCE_CLEARED = reference -> reference.get() == null;
     private static final Consumer<WeakReference<Object>> CLEAR_INVOCATIONS_ON_REFERENCED_MOCK = reference -> Mockito.clearInvocations(reference.get());
-    private static final Predicate<WeakReference<Object>> CLEAR_INVOCATIONS_ON_REFERENCED_MOCK_IF_REFERNCE_NOT_CLEARED = reference -> {
+    private static final Predicate<WeakReference<Object>> CLEAR_INVOCATIONS_ON_REFERENCED_MOCK_IF_REFERENCE_NOT_CLEARED = reference -> {
         if(IS_REFERENCE_CLEARED.test(reference)) return true;
         CLEAR_INVOCATIONS_ON_REFERENCED_MOCK.accept(reference);
         return false;
@@ -37,7 +37,7 @@ public final class Mocks {
         // 2) Garbage collected references are removed
         // 3) Mock is garbage collected
         // 4) Mock invocations are cleared -> throws NullPointerException
-        Lib199Subsystem.registerPeriodic(() -> MOCKS.removeIf(CLEAR_INVOCATIONS_ON_REFERENCED_MOCK_IF_REFERNCE_NOT_CLEARED));
+        Lib199Subsystem.registerAsyncPeriodic(() -> MOCKS.removeIf(CLEAR_INVOCATIONS_ON_REFERENCED_MOCK_IF_REFERENCE_NOT_CLEARED));
     }
 
     /**

@@ -20,7 +20,7 @@ public final class MotorErrors {
     private static final HashMap<CANSparkMax, Short> stickyFlags = new HashMap<>();
 
     static {
-        Lib199Subsystem.registerPeriodic(MotorErrors::doReportSparkMaxTemp);
+        Lib199Subsystem.registerAsyncPeriodic(MotorErrors::doReportSparkMaxTemp);
     }
 
     public static void reportError(ErrorCode error) {
