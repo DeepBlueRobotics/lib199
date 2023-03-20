@@ -15,12 +15,15 @@ public final class MotorErrors {
 
     private static final HashMap<Integer, CANSparkMax> temperatureSparks = new HashMap<>();
     private static final HashMap<Integer, Integer> sparkTemperatureLimits = new HashMap<>();
-    private static final ArrayList<Integer> overheatedSparks = new ArrayList<>();
+    private static final HashMap<Integer, Integer> overheatedSparks = new HashMap<>();
     private static final HashMap<CANSparkMax, Short> flags = new HashMap<>();
     private static final HashMap<CANSparkMax, Short> stickyFlags = new HashMap<>();
 
+    public static final int kOverheatTripCount = 5;
+
     static {
         Lib199Subsystem.registerPeriodic(MotorErrors::doReportSparkMaxTemp);
+        Lib199Subsystem.registerPeriodic(MotorErrors::printSparkMaxErrorMessages);
     }
 
     public static void reportError(ErrorCode error) {
@@ -108,6 +111,7 @@ public final class MotorErrors {
         int id = spark.getDeviceId();
         temperatureSparks.put(id, spark);
         sparkTemperatureLimits.put(id, temperatureLimit);
+        overheatedSparks.put(id, 0);
     }
 
     public static void doReportSparkMaxTemp() {
@@ -115,12 +119,12 @@ public final class MotorErrors {
             double temp = spark.getMotorTemperature();
             SmartDashboard.putNumber("Port " + port + " Spark Max Temp", temp);
             // Check if temperature exceeds the setpoint or if the contoller has already overheated to prevent other code from resetting the current limit after the controller has cooled
-            if(temp >= sparkTemperatureLimits.get(port) || overheatedSparks.contains(port)) {
-                if(!overheatedSparks.contains(port)) {
-                    overheatedSparks.add(port);
+            if(temp >= sparkTemperatureLimits.get(port) || overheatedSparks.get(port) >= kOverheatTripCount) {
+                if(overheatedSparks.get(port) < kOverheatTripCount + 1) {
+                    overheatedSparks.put(port, kOverheatTripCount + 1);
                     System.err.println("Port " + port + " spark max is operating at " + temp + " degrees Celsius! It will be disabled until the robot code is restarted.");
                 }
-                spark.setSmartCurrentLimit(1);
+                // spark.setSmartCurrentLimit(1);
             }
         });
     }
