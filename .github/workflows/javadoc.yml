@@ -14,6 +14,7 @@ jobs:
       with:
         distribution: 'temurin'
         java-version: 17
+    - name: Generate Javadoc
       run: ./gradlew javadoc
     - name: Build Artifact
       uses: actions/upload-pages-artifact@v1
