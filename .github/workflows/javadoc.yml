@@ -16,7 +16,7 @@ jobs:
         java-version: 17
       run: ./gradlew javadoc
     - name: Build Artifact
-      uses: actions/upload-pages-artifact@v1.0.5
+      uses: actions/upload-pages-artifact@v1
       with:
         path: ./build/docs/javadoc
   deploy-javadoc:
