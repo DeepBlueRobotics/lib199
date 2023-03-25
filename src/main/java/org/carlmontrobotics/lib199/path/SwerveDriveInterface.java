@@ -121,7 +121,7 @@ public interface SwerveDriveInterface extends DrivetrainInterface {
                 // AutoBuilder will convert this to work with events
                 return new PPSwerveControllerCommand(trajectory, poseSupplier, getKinematics(), pidControllers[0], pidControllers[1], pidControllers[2], SwerveDriveInterface.this::drive, true, SwerveDriveInterface.this);
             };
-        }.followPathGroupWithEvents(trajectory);
+        }.fullAuto(trajectory);
     }
 
 }
