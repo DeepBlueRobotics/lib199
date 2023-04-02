@@ -120,12 +120,12 @@ public final class MotorErrors {
             int numTrips = overheatedSparks.get(port);
             SmartDashboard.putNumber("Port " + port + " Spark Max Temp", temp);
 
-            if(temp > limit) {
-                if(numTrips < kOverheatTripCount) {
+            if(numTrips < kOverheatTripCount) {
+                if(temp > limit) {
                     overheatedSparks.put(port, ++numTrips);
+                } else {
+                    overheatedSparks.put(port, 0);
                 }
-            } else if(numTrips < kOverheatTripCount) {
-                overheatedSparks.put(port, 0);
             }
 
             // Check if temperature exceeds the setpoint or if the contoller has already overheated to prevent other code from resetting the current limit after the controller has cooled
