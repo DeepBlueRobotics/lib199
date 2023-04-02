@@ -124,7 +124,7 @@ public final class MotorErrors {
                 if(numTrips < kOverheatTripCount) {
                     overheatedSparks.put(port, ++numTrips);
                 }
-            } else {
+            } else if(numTrips < kOverheatTripCount) {
                 overheatedSparks.put(port, 0);
             }
 
