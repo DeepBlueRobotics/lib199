@@ -1,4 +1,4 @@
-package org.carlmontrobotics;
+package org.carlmontrobotics.lib199;
 
 public class MotorConfig {
 

@@ -174,7 +174,7 @@ public class SwerveModule implements Sendable {
         double g = 9.81; //meters per second squared
         // gravitationalA is estimated to work for small angles, not 100% accurate at large angles
         double antiGravitationalA = g * (modulePitchComponent * Math.sin(Math.PI * gyroPitchDeg / 180) - moduleRollComponent * Math.sin(Math.PI * gyroRollDeg / 180));
-        SmartDashboard.putNumber("AntiGravitational accelration", antiGravitationalA);
+        SmartDashboard.putNumber("AntiGravitational acceleration", antiGravitationalA);
         return antiGravitationalA;
     }
     /**

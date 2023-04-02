@@ -2,6 +2,7 @@ package org.carlmontrobotics.lib199;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
 
 import com.ctre.phoenix.ErrorCode;
 import com.revrobotics.REVLibError;
@@ -45,7 +46,7 @@ public class MotorErrorsTest extends ErrStreamTest {
 
         public static class Instance {
 
-            private int smartCurrentLimit = 50;
+            private int smartCurrentLimit = MotorConfig.NEO.currentLimit;
             private double temperature = 30;
             private final int id;
 
@@ -155,7 +156,8 @@ public class MotorErrorsTest extends ErrStreamTest {
 
     @Test
     public void testReportSparkMaxTemp() {
-        if(true) return;
+        assertTrue(MotorErrors.kOverheatTripCount > 0);
+
         doTestReportSparkMaxTemp(0);
         doTestReportSparkMaxTemp(1);
         doTestReportSparkMaxTemp(2);
@@ -163,32 +165,56 @@ public class MotorErrorsTest extends ErrStreamTest {
 
     private void doTestReportSparkMaxTemp(int id) {
         TemperatureSparkMax spark = (TemperatureSparkMax)Mocks.createMock(CANSparkMax.class, new TemperatureSparkMax.Instance(id), TemperatureSparkMax.class);
+        String smartDashboardKey = "Port " + id + " Spark Max Temp";
         MotorErrors.reportSparkMaxTemp((CANSparkMax)spark, 40);
         spark.setSmartCurrentLimit(50);
-        spark.setTemperature(20);
-        CommandScheduler.getInstance().run();
-        String smartDashboardKey = "Port " + id + " Spark Max Temp";
-        assertEquals(20, SmartDashboard.getNumber(smartDashboardKey, 0), 0.01);
-        assertEquals(50, spark.getSmartCurrentLimit());
+
         spark.setTemperature(20);
         CommandScheduler.getInstance().run();
         assertEquals(20, SmartDashboard.getNumber(smartDashboardKey, 0), 0.01);
         assertEquals(50, spark.getSmartCurrentLimit());
+
+        spark.setTemperature(20);
+        CommandScheduler.getInstance().run();
+        assertEquals(20, SmartDashboard.getNumber(smartDashboardKey, 0), 0.01);
+        assertEquals(50, spark.getSmartCurrentLimit());
+
+        if(MotorErrors.kOverheatTripCount > 1) {
+            spark.setTemperature(51);
+            CommandScheduler.getInstance().run();
+            assertEquals(51, SmartDashboard.getNumber(smartDashboardKey, 0), 0.01);
+            assertEquals(50, spark.getSmartCurrentLimit());
+
+            spark.setTemperature(20);
+            CommandScheduler.getInstance().run();
+            assertEquals(20, SmartDashboard.getNumber(smartDashboardKey, 0), 0.01);
+            assertEquals(50, spark.getSmartCurrentLimit());
+        }
+
         assertEquals(0, errStream.size());
-        spark.setTemperature(40);
-        CommandScheduler.getInstance().run();
-        assertEquals(40, SmartDashboard.getNumber(smartDashboardKey, 0), 0.01);
-        assertEquals(1, spark.getSmartCurrentLimit());
+
+        for(int i = 0; i < MotorErrors.kOverheatTripCount; i++) {
+            assertEquals(50, spark.getSmartCurrentLimit());
+            assertEquals(0, errStream.size());
+
+            spark.setTemperature(51);
+            CommandScheduler.getInstance().run();
+            assertEquals(51, SmartDashboard.getNumber(smartDashboardKey, 0), 0.01);
+        }
+
         assertNotEquals(0, errStream.size());
         errStream.reset();
-        spark.setTemperature(50);
+
+        spark.setTemperature(51);
         CommandScheduler.getInstance().run();
-        assertEquals(50, SmartDashboard.getNumber(smartDashboardKey, 0), 0.01);
+        assertEquals(51, SmartDashboard.getNumber(smartDashboardKey, 0), 0.01);
         assertEquals(1, spark.getSmartCurrentLimit());
+
         spark.setTemperature(20);
         CommandScheduler.getInstance().run();
         assertEquals(20, SmartDashboard.getNumber(smartDashboardKey, 0), 0.01);
         assertEquals(1, spark.getSmartCurrentLimit());
+
         assertEquals(0, errStream.size());
     }
 

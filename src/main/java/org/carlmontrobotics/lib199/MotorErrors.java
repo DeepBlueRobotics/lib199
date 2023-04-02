@@ -1,6 +1,5 @@
 package org.carlmontrobotics.lib199;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 
@@ -117,14 +116,25 @@ public final class MotorErrors {
     public static void doReportSparkMaxTemp() {
         temperatureSparks.forEach((port, spark) -> {
             double temp = spark.getMotorTemperature();
+            double limit = sparkTemperatureLimits.get(port);
+            int numTrips = overheatedSparks.get(port);
             SmartDashboard.putNumber("Port " + port + " Spark Max Temp", temp);
+
+            if(temp > limit) {
+                if(numTrips < kOverheatTripCount) {
+                    overheatedSparks.put(port, ++numTrips);
+                }
+            } else {
+                overheatedSparks.put(port, 0);
+            }
+
             // Check if temperature exceeds the setpoint or if the contoller has already overheated to prevent other code from resetting the current limit after the controller has cooled
-            if(temp >= sparkTemperatureLimits.get(port) || overheatedSparks.get(port) >= kOverheatTripCount) {
-                if(overheatedSparks.get(port) < kOverheatTripCount + 1) {
+            if(numTrips >= kOverheatTripCount) {
+                if(numTrips < kOverheatTripCount + 1) {
                     overheatedSparks.put(port, kOverheatTripCount + 1);
                     System.err.println("Port " + port + " spark max is operating at " + temp + " degrees Celsius! It will be disabled until the robot code is restarted.");
                 }
-                // spark.setSmartCurrentLimit(1);
+                spark.setSmartCurrentLimit(1);
             }
         });
     }
