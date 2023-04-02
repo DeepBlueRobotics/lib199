@@ -131,6 +131,8 @@ public final class MotorErrors {
             // Check if temperature exceeds the setpoint or if the contoller has already overheated to prevent other code from resetting the current limit after the controller has cooled
             if(numTrips >= kOverheatTripCount) {
                 if(numTrips < kOverheatTripCount + 1) {
+                    // Set trip count to kOverheatTripCount + 1 to flag that an error message has already been printed
+                    // This prevents the error message from being re-printed every time the periodic method is run
                     overheatedSparks.put(port, kOverheatTripCount + 1);
                     System.err.println("Port " + port + " spark max is operating at " + temp + " degrees Celsius! It will be disabled until the robot code is restarted.");
                 }
