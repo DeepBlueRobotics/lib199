@@ -1,23 +1,23 @@
 package org.carlmontrobotics.lib199.sim;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-
-import com.revrobotics.REVLibError;
-import com.revrobotics.RelativeEncoder;
-import com.revrobotics.SparkMaxPIDController;
-import com.revrobotics.CANSparkMax;
-import com.revrobotics.CANSparkMax.ExternalFollower;
-import com.revrobotics.CANSparkMax.IdleMode;
-import com.revrobotics.CANSparkMaxLowLevel.MotorType;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.carlmontrobotics.lib199.DummySparkMaxAnswer;
 import org.carlmontrobotics.lib199.Mocks;
 import org.carlmontrobotics.lib199.REVLibErrorAnswer;
 
+import com.revrobotics.CANSparkMax;
+import com.revrobotics.CANSparkMax.ExternalFollower;
+import com.revrobotics.CANSparkMax.IdleMode;
+import com.revrobotics.CANSparkMaxLowLevel.MotorType;
+import com.revrobotics.REVLibError;
+import com.revrobotics.RelativeEncoder;
+import com.revrobotics.SparkMaxPIDController;
+
 import edu.wpi.first.hal.SimDevice;
-import edu.wpi.first.hal.SimDouble;
 import edu.wpi.first.hal.SimDevice.Direction;
+import edu.wpi.first.hal.SimDouble;
 
 public class MockSparkMax {
     // Assign the CAN port to a PWM port so it works with the simulator. Not a fan
@@ -30,7 +30,7 @@ public class MockSparkMax {
     private SparkMaxPIDController pidController;
     private boolean isInverted;
     // Since we need to keep a record of all the motor's followers
-    private static HashMap<Integer, ArrayList<SimDouble>> followMap = new HashMap<>();
+    private static ConcurrentHashMap<Integer, CopyOnWriteArrayList<SimDouble>> followMap = new ConcurrentHashMap<>();
 
     public MockSparkMax(int port, MotorType type) {
         this.port = port;
@@ -67,7 +67,7 @@ public class MockSparkMax {
 
     public REVLibError follow(ExternalFollower leader, int deviceID, boolean invert) {
         if (!followMap.containsKey(deviceID)) {
-            followMap.put(deviceID, new ArrayList<SimDouble>());
+            followMap.put(deviceID, new CopyOnWriteArrayList<SimDouble>());
         }
         followMap.get(deviceID).add(speed);
         return REVLibError.kOk;

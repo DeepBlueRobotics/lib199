@@ -1,6 +1,5 @@
 package org.carlmontrobotics.lib199;
 
-import java.util.ArrayList;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
@@ -10,8 +9,8 @@ import edu.wpi.first.wpilibj2.command.Subsystem;
 public class Lib199Subsystem implements Subsystem {
 
     private static final Lib199Subsystem INSTANCE = new Lib199Subsystem();
-    private static final ArrayList<Runnable> periodicMethods = new ArrayList<>();
-    private static final ArrayList<Runnable> periodicSimulationMethods = new ArrayList<>();
+    private static final CopyOnWriteArrayList<Runnable> periodicMethods = new CopyOnWriteArrayList<>();
+    private static final CopyOnWriteArrayList<Runnable> periodicSimulationMethods = new CopyOnWriteArrayList<>();
     private static final CopyOnWriteArrayList<Runnable> asyncPeriodicMethods = new CopyOnWriteArrayList<>();
     private static final CopyOnWriteArrayList<Runnable> asyncPeriodicSimulationMethods = new CopyOnWriteArrayList<>();
     private static final Consumer<Runnable> RUN_RUNNABLE = Runnable::run;
