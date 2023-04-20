@@ -21,7 +21,6 @@ import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
 import edu.wpi.first.math.trajectory.constraint.SwerveDriveKinematicsConstraint;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandBase;
-import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
 
 public interface SwerveDriveInterface extends DrivetrainInterface {
@@ -113,12 +112,6 @@ public interface SwerveDriveInterface extends DrivetrainInterface {
      * @return PPSwerveControllerCommand
      */
     public default Command createPPAutoCommand(List<PathPlannerTrajectory> trajectory, HashMap<String, Command> eventMap) {
-        Subsystem[] requirements = eventMap.values().stream().flatMap(command -> command.getRequirements().stream())
-                .toArray(Subsystem[]::new);
-        requirements = Arrays.copyOf(requirements, requirements.length + 1);
-        requirements[requirements.length - 1] = this;
-        requirements = Arrays.stream(requirements).distinct().toArray(Subsystem[]::new);
-        final Subsystem[] finalRequirements = requirements; // Make this final so it can be used in the anonymous inner class
         PIDController[] pidControllers = Arrays.stream(getPIDConstants()).map(constants -> new PIDController(constants[0], constants[1], constants[2])).toArray(PIDController[]::new);
         pidControllers[2].enableContinuousInput(-Math.PI, Math.PI);
         // Use SwerveAutoBuilder because required argument for base auto builder "DrivetrainType" is protected
@@ -126,9 +119,9 @@ public interface SwerveDriveInterface extends DrivetrainInterface {
             @Override
             public CommandBase followPath(PathPlannerTrajectory trajectory) {
                 // AutoBuilder will convert this to work with events
-                return new PPSwerveControllerCommand(trajectory, poseSupplier, getKinematics(), pidControllers[0], pidControllers[1], pidControllers[2], SwerveDriveInterface.this::drive, true, finalRequirements /* This will propagate the requirements to the final command via SequentialCommandGroup */);
+                return new PPSwerveControllerCommand(trajectory, poseSupplier, getKinematics(), pidControllers[0], pidControllers[1], pidControllers[2], SwerveDriveInterface.this::drive, true, SwerveDriveInterface.this);
             };
-        }.followPathGroupWithEvents(trajectory);
+        }.fullAuto(trajectory);
     }
 
 }

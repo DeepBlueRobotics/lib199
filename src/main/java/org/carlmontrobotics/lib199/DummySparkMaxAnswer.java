@@ -2,6 +2,7 @@ package org.carlmontrobotics.lib199;
 
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.RelativeEncoder;
+import com.revrobotics.SparkMaxAbsoluteEncoder;
 import com.revrobotics.SparkMaxAnalogSensor;
 import com.revrobotics.SparkMaxLimitSwitch;
 import com.revrobotics.SparkMaxPIDController;
@@ -23,6 +24,8 @@ public class DummySparkMaxAnswer extends REVLibErrorAnswer {
     public static final SparkMaxAnalogSensor DUMMY_ANALOG_SENSOR = Mocks.mock(SparkMaxAnalogSensor.class, REVLibErrorAnswer.ANSWER);
     public static final SparkMaxLimitSwitch DUMMY_LIMIT_SWITCH = Mocks.mock(SparkMaxLimitSwitch.class, REVLibErrorAnswer.ANSWER);
     public static final SparkMaxPIDController DUMMY_PID_CONTROLLER = Mocks.mock(SparkMaxPIDController.class, ANSWER);
+    public static final SparkMaxAbsoluteEncoder DUMMY_ABSOLUTE_ENCODER = Mocks.mock(SparkMaxAbsoluteEncoder.class, ANSWER);
+
 
     @Override
     public Object answer(InvocationOnMock invocation) throws Throwable {
@@ -41,6 +44,8 @@ public class DummySparkMaxAnswer extends REVLibErrorAnswer {
             return IdleMode.kBrake;
         } else if(returnType == AccelStrategy.class) {
             return AccelStrategy.kTrapezoidal;
+        } else if(returnType == SparkMaxAbsoluteEncoder.class) {
+            return DUMMY_ABSOLUTE_ENCODER;
         }
         return super.answer(invocation);
     }
