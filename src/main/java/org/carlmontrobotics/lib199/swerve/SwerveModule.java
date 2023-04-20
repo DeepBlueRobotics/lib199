@@ -40,7 +40,7 @@ public class SwerveModule implements Sendable {
     private boolean reversed;
     private Timer timer;
     private SimpleMotorFeedforward forwardSimpleMotorFF, backwardSimpleMotorFF, turnSimpleMotorFeedforward;
-    private double lastAngle, maxAchievableTurnVelocityDps, maxAchievableTurnAccelerationMps2, turnToleranceDeg, angleDiff;
+    private double desiredSpeed, lastAngle, maxAchievableTurnVelocityDps, maxAchievableTurnAccelerationMps2, turnToleranceDeg, angleDiff;
 
     public SwerveModule(SwerveConfig config, ModuleType type, CANSparkMax drive, CANSparkMax turn, CANCoder turnEncoder,
                         int arrIndex, Supplier<Float> pitchDegSupplier, Supplier<Float> rollDegSupplier) {
@@ -126,23 +126,40 @@ public class SwerveModule implements Sendable {
 
     private double prevTurnVelocity = 0;
     public void periodic() {
-        double measuredAngleDegs = getModuleAngle();
-        TrapezoidProfile.State goal = turnPIDController.getGoal();
-        goal = new TrapezoidProfile.State(goal.position, goal.velocity);
 
-        double period = turnPIDController.getPeriod();
-        double optimalTurnVelocityDps = Math.abs(MathUtil.inputModulus(goal.position-measuredAngleDegs, -180, 180))/period;
-        setMaxTurnVelocity(Math.min(maxAchievableTurnVelocityDps, optimalTurnVelocityDps));
+        // Drive Control
+        {
+            double actualSpeed = getCurrentSpeed();
+            double targetVoltage = (actualSpeed >= 0 ? forwardSimpleMotorFF :
+                                    backwardSimpleMotorFF).calculate(desiredSpeed, calculateAntiGravitationalA(pitchDegSupplier.get(), rollDegSupplier.get()));//clippedAcceleration);
 
-        double turnSpeedCorrectionDps = turnPIDController.calculate(measuredAngleDegs) * turnSimpleMotorFeedforward.maxAchievableVelocity(12,0);
-        TrapezoidProfile.State state = turnPIDController.getSetpoint();
-        double turnVolts = turnSimpleMotorFeedforward.calculate(prevTurnVelocity+turnSpeedCorrectionDps, (state.velocity-prevTurnVelocity) / period);
-        if (!turnPIDController.atGoal()) {
-            turn.setVoltage(MathUtil.clamp(turnVolts, -12.0, 12.0));
-        } else {
-            turn.setVoltage(turnSimpleMotorFeedforward.calculate(goal.velocity));
+            // Use robot characterization as a simple physical model to account for internal resistance, frcition, etc.
+            // Add a PID adjustment for error correction (also "drives" the actual speed to the desired speed)
+            targetVoltage += drivePIDController.calculate(actualSpeed, desiredSpeed);
+            double appliedVoltage = MathUtil.clamp(targetVoltage, -12, 12);
+            drive.setVoltage(appliedVoltage);
         }
-        prevTurnVelocity = state.velocity;
+
+        // Turn Control
+        {
+            double measuredAngleDegs = getModuleAngle();
+            TrapezoidProfile.State goal = turnPIDController.getGoal();
+            goal = new TrapezoidProfile.State(goal.position, goal.velocity);
+
+            double period = turnPIDController.getPeriod();
+            double optimalTurnVelocityDps = Math.abs(MathUtil.inputModulus(goal.position-measuredAngleDegs, -180, 180))/period;
+            setMaxTurnVelocity(Math.min(maxAchievableTurnVelocityDps, optimalTurnVelocityDps));
+
+            double turnSpeedCorrectionDps = turnPIDController.calculate(measuredAngleDegs) * turnSimpleMotorFeedforward.maxAchievableVelocity(12,0);
+            TrapezoidProfile.State state = turnPIDController.getSetpoint();
+            double turnVolts = turnSimpleMotorFeedforward.calculate(prevTurnVelocity+turnSpeedCorrectionDps, (state.velocity-prevTurnVelocity) / period);
+            if (!turnPIDController.atGoal()) {
+                turn.setVoltage(MathUtil.clamp(turnVolts, -12.0, 12.0));
+            } else {
+                turn.setVoltage(turnSimpleMotorFeedforward.calculate(goal.velocity));
+            }
+            prevTurnVelocity = state.velocity;
+        }
     }
 
     /**
@@ -177,22 +194,13 @@ public class SwerveModule implements Sendable {
         SmartDashboard.putNumber("AntiGravitational acceleration", antiGravitationalA);
         return antiGravitationalA;
     }
+
     /**
      * Sets the speed for the drive motor controller.
      * @param speedMps     The desired speed in meters per second.
      */
     private void setSpeed(double speedMps) {
-        // Compute desired and actual speeds in m/s
-        double desiredSpeed = speedMps * driveModifier;
-        double actualSpeed = getCurrentSpeed();
-        double targetVoltage = (actualSpeed >= 0 ? forwardSimpleMotorFF :
-                                 backwardSimpleMotorFF).calculate(desiredSpeed, calculateAntiGravitationalA(pitchDegSupplier.get(), rollDegSupplier.get()));//clippedAcceleration);
-
-        // Use robot characterization as a simple physical model to account for internal resistance, frcition, etc.
-        // Add a PID adjustment for error correction (also "drives" the actual speed to the desired speed)
-        targetVoltage += drivePIDController.calculate(actualSpeed, desiredSpeed);
-        double appliedVoltage = MathUtil.clamp(targetVoltage, -12, 12);
-        drive.setVoltage(appliedVoltage);
+        desiredSpeed = speedMps * driveModifier;
     }
 
     /**
