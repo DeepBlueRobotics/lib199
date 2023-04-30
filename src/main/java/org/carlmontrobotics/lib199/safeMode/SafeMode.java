@@ -141,9 +141,17 @@ public class SafeMode {
         safeDisabledButtons.get(joystickPort).add(button);
     }
 
+    public static void disableButton(GenericHID joystick, int button) {
+        disableButton(joystick.getPort(), button);
+    }
+
     public static void disableAxis(int joystickPort, int axis) {
         safeDisabledAxes.putIfAbsent(joystickPort, createEmptyThreadSafeSet());
         safeDisabledAxes.get(joystickPort).add(axis);
+    }
+
+    public static void disableAxis(GenericHID joystick, int axis) {
+        disableAxis(joystick.getPort(), axis);
     }
 
     public static void scaleAxis(int joystickPort, int axis, double factor) {
@@ -151,14 +159,26 @@ public class SafeMode {
         safeScaledAxes.get(joystickPort).put(axis, factor);
     }
 
+    public static void scaleAxis(GenericHID joystick, int axis, double factor) {
+        scaleAxis(joystick.getPort(), axis, factor);
+    }
+
     public static void disablePOV(int joystickPort, int angle) {
         disablePOV(joystickPort, 0, angle);
+    }
+
+    public static void disablePOV(GenericHID joystick, int angle) {
+        disablePOV(joystick.getPort(), angle);
     }
 
     public static void disablePOV(int joystickPort, int pov, int angle) {
         safeDisabledPOVs.putIfAbsent(joystickPort, new ConcurrentHashMap<>());
         safeDisabledPOVs.get(joystickPort).putIfAbsent(angle, createEmptyThreadSafeSet());
         safeDisabledPOVs.get(joystickPort).get(angle).add(angle);
+    }
+
+    public static void disablePOV(GenericHID joystick, int pov, int angle) {
+        disablePOV(joystick.getPort(), pov, angle);
     }
 
     //#endregion
