@@ -70,7 +70,7 @@ public class MotorErrorsTest extends ErrStreamTest {
                 smartCurrentLimit = limit;
     		    return REVLibError.kOk;
             }
-            
+
             public int getDeviceId() {
                 return id;
             }
