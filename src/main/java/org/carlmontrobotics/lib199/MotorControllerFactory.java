@@ -129,13 +129,13 @@ public class MotorControllerFactory {
         spark = MockSparkMax.createMockSparkMax(id, CANSparkMaxLowLevel.MotorType.kBrushless);
     }
 
-    MotorErrors.reportSparkMaxTemp(spark, config.temperatureLimit);
+    MotorErrors.reportSparkMaxTemp(spark, config.temperatureLimitCelsius);
 
     MotorErrors.reportError(spark.restoreFactoryDefaults());
     MotorErrors.reportError(spark.follow(ExternalFollower.kFollowerDisabled, 0));
     MotorErrors.reportError(spark.setIdleMode(IdleMode.kBrake));
     MotorErrors.reportError(spark.enableVoltageCompensation(12));
-    MotorErrors.reportError(spark.setSmartCurrentLimit(config.currentLimit));
+    MotorErrors.reportError(spark.setSmartCurrentLimit(config.currentLimitAmps));
 
     MotorErrors.checkSparkMaxErrors(spark);
 

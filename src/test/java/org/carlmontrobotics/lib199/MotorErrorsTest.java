@@ -46,7 +46,7 @@ public class MotorErrorsTest extends ErrStreamTest {
 
         public static class Instance {
 
-            private int smartCurrentLimit = MotorConfig.NEO.currentLimit;
+            private int smartCurrentLimit = MotorConfig.NEO.currentLimitAmps;
             private double temperature = 30;
             private final int id;
 
