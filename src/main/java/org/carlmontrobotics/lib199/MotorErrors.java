@@ -47,14 +47,14 @@ public final class MotorErrors {
         if(error == null || error == ok) {
             return;
         }
-        System.err.println("Error: " + error.name() + " occured while configuring " + vendor + " motor");
+        System.err.println("Error: " + error.name() + " occurred while configuring " + vendor + " motor");
         System.err.println("Full stack trace:");
         StackTraceElement[] stack = Thread.currentThread().getStackTrace();
         System.err.println(Arrays.toString(stack));
     }
 
     public static void checkSparkMaxErrors(CANSparkMax spark) {
-        //Purposely obivously impersonal to differentiate from actual computer generated errors
+        //Purposely obviously impersonal to differentiate from actual computer generated errors
         short faults = spark.getFaults();
         short stickyFaults = spark.getStickyFaults();
         short prevFaults = flags.containsKey(spark) ? flags.get(spark) : 0;
@@ -114,7 +114,7 @@ public final class MotorErrors {
         temperatureSparks.forEach((port, spark) -> {
             double temp = spark.getMotorTemperature();
             SmartDashboard.putNumber("Port " + port + " Spark Max Temp", temp);
-            // Check if temperature exceeds the setpoint or if the contoller has already overheated to prevent other code from resetting the current limit after the controller has cooled
+            // Check if temperature exceeds the setpoint or if the controller has already overheated to prevent other code from resetting the current limit after the controller has cooled
             if(temp >= sparkTemperatureLimits.get(port) || overheatedSparks.contains(port)) {
                 if(!overheatedSparks.contains(port)) {
                     overheatedSparks.add(port);
