@@ -8,8 +8,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.function.Consumer;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.mockito.MockSettings;
@@ -21,13 +19,6 @@ import org.mockito.stubbing.Answer;
 public final class Mocks {
 
     private static final CopyOnWriteArrayList<WeakReference<Object>> MOCKS = new CopyOnWriteArrayList<>();
-    private static final Predicate<WeakReference<?>> IS_REFERENCE_CLEARED = reference -> reference.get() == null;
-    private static final Consumer<WeakReference<Object>> CLEAR_INVOCATIONS_ON_REFERENCED_MOCK = reference -> Mockito.clearInvocations(reference.get());
-    private static final Predicate<WeakReference<Object>> CLEAR_INVOCATIONS_ON_REFERENCED_MOCK_IF_REFERENCE_NOT_CLEARED = reference -> {
-        if(IS_REFERENCE_CLEARED.test(reference)) return true;
-        CLEAR_INVOCATIONS_ON_REFERENCED_MOCK.accept(reference);
-        return false;
-    };
 
     static {
         // Use a single predicate so that clearing references and invocations is an atomic operation
@@ -36,7 +27,12 @@ public final class Mocks {
         // 2) Garbage collected references are removed
         // 3) Mock is garbage collected
         // 4) Mock invocations are cleared -> throws NullPointerException
-        Lib199Subsystem.registerAsyncPeriodic(() -> MOCKS.removeIf(CLEAR_INVOCATIONS_ON_REFERENCED_MOCK_IF_REFERENCE_NOT_CLEARED));
+        Lib199Subsystem.registerAsyncPeriodic(() -> MOCKS.removeIf(reference -> {
+            Object mock = reference.get();
+            if(mock == null) return true;
+            Mockito.clearInvocations(mock);
+            return false;
+        }));
     }
 
     /**
