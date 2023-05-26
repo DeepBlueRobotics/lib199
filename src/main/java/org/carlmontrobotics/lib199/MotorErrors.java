@@ -95,6 +95,7 @@ public final class MotorErrors {
         flags.keySet().forEach((spark) -> checkSparkMaxErrors(spark));
     }
 
+    @Deprecated
     public static CANSparkMax createDummySparkMax() {
         return DummySparkMaxAnswer.DUMMY_SPARK_MAX;
     }
