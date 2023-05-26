@@ -12,7 +12,6 @@ import com.revrobotics.SparkMaxPIDController.AccelStrategy;
 
 import org.mockito.invocation.InvocationOnMock;
 
-@Deprecated
 public class DummySparkMaxAnswer extends REVLibErrorAnswer {
 
     private static final long serialVersionUID = 2284848703213263465L;
