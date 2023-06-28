@@ -7,15 +7,27 @@ import edu.wpi.first.wpilibj2.command.Subsystem;
 
 public class SafeCommand extends FunctionalCommand {
 
+    private final Command command;
+
     public SafeCommand(Command command) {
         super(
-            command::initialize,
-            command::execute,
+            () -> { if(SafeMode.isEnabled()) command.initialize(); },
+            () -> { if(SafeMode.isEnabled()) command.execute(); },
             command::end,
             () -> command.isFinished() || !SafeMode.isEnabled(),
             command.getRequirements().toArray(Subsystem[]::new)
         );
-        CommandScheduler.getInstance().registerComposedCommands(command);
+        CommandScheduler.getInstance().registerComposedCommands(this.command = command);
+    }
+
+    @Override
+    public boolean runsWhenDisabled() {
+        return command.runsWhenDisabled();
+    }
+
+    @Override
+    public InterruptionBehavior getInterruptionBehavior() {
+        return command.getInterruptionBehavior();
     }
 
 }
