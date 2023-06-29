@@ -85,12 +85,12 @@ public class RobotPath {
         if (trajectory == null) {
             generateTrajectory();
         }
-        hs.reset();
         // We want the robot to stay facing the same direction (in this case), so save
         // the current heading (make sure to update at the start of the command)
         AtomicReference<Rotation2d> headingRef = new AtomicReference<>(dt.getPose().getRotation());
         Supplier<Rotation2d> desiredHeading = (!faceInPathDirection) ? () -> headingRef.get() : () -> hs.sample();
         Command command = dt.createAutoCommand(trajectory, desiredHeading);
+        command = new InstantCommand(hs::reset).andThen(command, new InstantCommand(hs::stop));
         if (stopAtEnd) {
             command = command.andThen(new InstantCommand(dt::stop, dt));
         }
@@ -309,6 +309,14 @@ public class RobotPath {
         public void reset() {
             timerStarted = false;
             timer.reset();
+        }
+
+        /**
+         * Stops the timer
+         */
+        public void stop() {
+            timer.stop();
+            reset();
         }
     }
 }
