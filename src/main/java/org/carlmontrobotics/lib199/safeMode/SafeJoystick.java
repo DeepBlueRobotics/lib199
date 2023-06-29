@@ -59,7 +59,7 @@ public class SafeJoystick {
     }
 
     /**
-     * Safe version of {@link GenericHID#getRawButtonPressed(int)(int)}.
+     * Safe version of {@link GenericHID#getRawButtonPressed(int)}.
      *
      * @param button The button to read
      * @return Whether the button was pressed since the last check
@@ -73,7 +73,7 @@ public class SafeJoystick {
     }
 
     /**
-     * Safe version of {@link GenericHID#getRawButtonReleased(int)(int)}.
+     * Safe version of {@link GenericHID#getRawButtonReleased(int)}.
      *
      * @param button The button to read
      * @return Whether the button was released since the last check
