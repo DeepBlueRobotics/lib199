@@ -5,6 +5,11 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 
+/**
+ * A command that only runs when safe-mode is disabled and returns {@code isFinished() = true} otherwise.
+ *
+ * Note that this does not block calls to {@link #end(boolean)} (If the command is scheduled when safe-mode is enabled, {@link #end(boolean)} will be called immediately})
+ */
 public class UnsafeCommand extends FunctionalCommand {
 
     private final Command command;

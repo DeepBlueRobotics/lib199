@@ -5,7 +5,12 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 
-// These are suitable for cases where the command should keep running such as a default command where isFinished must always return false
+/**
+ * A command that only runs its {@link #execute()} method when safe-mode is disabled, and continues running as long as the underlying command is not finished.
+ *
+ * Keep in mind that this does not block calls to {@link #initialize()} or {@link #end(boolean)}, so it is not appropriate for wrapping commands such as {@link edu.wpi.first.wpilibj2.command.InstantCommand}.
+ * It is intended for cases where the command should keep running such as a default command where {@link #isFinished()} must always return {@code false}
+ */
 public class UnsafeExecuteBlockingCommand extends FunctionalCommand {
 
     private final Command command;
