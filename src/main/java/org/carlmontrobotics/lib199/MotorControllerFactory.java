@@ -171,7 +171,7 @@ public class MotorControllerFactory {
   }
 
   /**
-   * This method is equivilent to calling {@link #configureCamera()} {@code numCameras} times.
+   * This method is equivalent to calling {@link #configureCamera()} {@code numCameras} times.
    * The last camera will be set as the primary Camera feed.
    * To change it, call {@code CameraServer.getServer().setSource()}.
    *
