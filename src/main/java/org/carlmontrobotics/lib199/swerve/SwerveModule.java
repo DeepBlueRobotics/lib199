@@ -40,7 +40,7 @@ public class SwerveModule implements Sendable {
     private boolean reversed;
     private Timer timer;
     private SimpleMotorFeedforward forwardSimpleMotorFF, backwardSimpleMotorFF, turnSimpleMotorFeedforward;
-    private double desiredSpeed, lastAngle, maxAchievableTurnVelocityDps, maxAchievableTurnAccelerationMps2, turnToleranceDeg, angleDiff;
+    private double desiredSpeed, lastAngle, maxAchievableTurnVelocityDps, maxAchievableTurnAccelerationMps2, turnToleranceDeg, angleDiff, relativePositionCorrection;
 
     public SwerveModule(SwerveConfig config, ModuleType type, CANSparkMax drive, CANSparkMax turn, CANCoder turnEncoder,
                         int arrIndex, Supplier<Float> pitchDegSupplier, Supplier<Float> rollDegSupplier) {
@@ -56,7 +56,12 @@ public class SwerveModule implements Sendable {
         drive.setInverted(config.driveInversion[arrIndex]);
         drive.getEncoder().setPositionConversionFactor(positionConstant);
         drive.getEncoder().setVelocityConversionFactor(positionConstant / 60);
+
+        positionConstant = 360 / config.turnGearing; // Convert rotations to degrees
         turn.setInverted(config.turnInversion[arrIndex]);
+        turn.getEncoder().setInverted(config.turnInversion[arrIndex]); // Check to see if this is necessary
+        turn.getEncoder().setPositionConversionFactor(positionConstant);
+        turn.getEncoder().setVelocityConversionFactor(positionConstant / 60);
 
         final double normalForceNewtons = 83.2 /* lbf */ * 4.4482 /* N/lbf */ / 4 /* numModules */;
         double wheelTorqueLimitNewtonMeters = normalForceNewtons * config.mu * config.wheelDiameterMeters / 2;
@@ -78,7 +83,6 @@ public class SwerveModule implements Sendable {
         drivePIDController = new PIDController(2 * config.drivekP[arrIndex],
                                                config.drivekI[arrIndex],
                                                config.drivekD[arrIndex]);
-    
 
         //System.out.println("Velocity Constant: " + (positionConstant / 60));
 
@@ -126,6 +130,14 @@ public class SwerveModule implements Sendable {
 
     private double prevTurnVelocity = 0;
     public void periodic() {
+
+        // Use a member variable instead of setPosition to reduce CAN bus traffic
+        // If we call the CANCoder value c, the SparkMax value s, and the correction x,
+        // When we're using the CANCoder, we want the correction to work out so s - x = c
+        // The formula here gives x = s - c => s - x = s - (s - c) = c + s - s = c as desired
+        // When we're using the SparkMax, we want the correction to work out so there is no chage
+        // The formula here gives x = s - (s - x) = x + s - s = x as desired
+        relativePositionCorrection = turn.getEncoder().getPosition() - getRawEncoderOrFallbackAngle();
 
         // Drive Control
         {
@@ -234,6 +246,13 @@ public class SwerveModule implements Sendable {
     }
 
     /**
+     * @return The current angle measured by the CANCoder (not zeroed) or, if the CANCoder is disconnected, an approximated angle from the turn motor encoder.
+     */
+    public double getRawEncoderOrFallbackAngle() {
+        return cancoderConnected() ? turnEncoder.getAbsolutePosition() : drive.getEncoder().getPosition() - relativePositionCorrection;
+    }
+
+    /**
      * Gets the current state (speed and angle) of this module.
      * @return A SwerveModuleState object representing the speed and angle of the module.
      */
@@ -282,6 +301,7 @@ public class SwerveModule implements Sendable {
         //SmartDashboard.putNumber("Gyro Roll", rollDegSupplier.get());
         SmartDashboard.putNumber(moduleString + "Antigravitational Acceleration", calculateAntiGravitationalA(pitchDegSupplier.get(), rollDegSupplier.get()));
         SmartDashboard.putBoolean(moduleString + " Turn is at Goal", turnPIDController.atGoal());
+        SmartDashboard.putBoolean("CANCoder Connected", cancoderConnected());
     }
 
     public void toggleMode() {
@@ -304,6 +324,18 @@ public class SwerveModule implements Sendable {
         turnPIDController.setConstraints(turnConstraints);
     }
 
+    public boolean cancoderConnected() {
+        switch(turnEncoder.getMagnetFieldStrength()) {
+            case Good_GreenLED:
+            case Adequate_OrangeLED:
+                return true;
+            case BadRange_RedLED:
+            case Invalid_Unknown:
+            default:
+                return false;
+        }
+    }
+
     @Override
     public void initSendable(SendableBuilder builder) {
         builder.setActuator(true);
@@ -324,5 +356,6 @@ public class SwerveModule implements Sendable {
         builder.addDoubleProperty("Error (deg)", turnPIDController::getPositionError, null);
         builder.addDoubleProperty("Desired Speed (mps)", drivePIDController::getSetpoint, null);
         builder.addDoubleProperty("Angle Diff (deg)", () -> angleDiff, null);
+        builder.addBooleanProperty("CANCoder Connected", this::cancoderConnected, null);
     }
 }
