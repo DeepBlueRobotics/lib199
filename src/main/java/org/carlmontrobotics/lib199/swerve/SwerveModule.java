@@ -301,6 +301,7 @@ public class SwerveModule implements Sendable {
         SmartDashboard.putNumber(moduleString + " Antigravitational Acceleration", calculateAntiGravitationalA(pitchDegSupplier.get(), rollDegSupplier.get()));
         SmartDashboard.putBoolean(moduleString + " Turn is at Goal", turnPIDController.atGoal());
         SmartDashboard.putBoolean(moduleString + " CANCoder Connected", cancoderConnected());
+        SmartDashboard.putNumber(moduleString + " Raw Encoder or Fallback Angle", getRawEncoderOrFallbackAngle());
     }
 
     public void toggleMode() {
