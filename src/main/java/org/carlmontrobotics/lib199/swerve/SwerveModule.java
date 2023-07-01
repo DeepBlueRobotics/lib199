@@ -59,7 +59,6 @@ public class SwerveModule implements Sendable {
 
         positionConstant = 360 / config.turnGearing; // Convert rotations to degrees
         turn.setInverted(config.turnInversion[arrIndex]);
-        turn.getEncoder().setInverted(config.turnInversion[arrIndex]); // Check to see if this is necessary
         turn.getEncoder().setPositionConversionFactor(positionConstant);
         turn.getEncoder().setVelocityConversionFactor(positionConstant / 60);
 
