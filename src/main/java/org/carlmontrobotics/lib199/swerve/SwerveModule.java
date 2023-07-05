@@ -26,6 +26,12 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
  * such as moving, getting encoder values, or configuring PID.
  */
 public class SwerveModule implements Sendable {
+
+    /**
+     * If a CANCoder has not sent a packet in this amount of time, it is considered disconnected.
+     */
+    public static final double CANCODER_TIMEOUT_MS = 200;
+
     public enum ModuleType {FL, FR, BL, BR};
 
     private SwerveConfig config;
@@ -325,15 +331,14 @@ public class SwerveModule implements Sendable {
     }
 
     public boolean cancoderConnected() {
-        switch(turnEncoder.getMagnetFieldStrength()) {
-            case Good_GreenLED:
-            case Adequate_OrangeLED:
-                return true;
-            case BadRange_RedLED:
-            case Invalid_Unknown:
-            default:
-                return false;
-        }
+        // The right thing to do here would be to have WPILib tell us this time, but that functionality
+        // is not exposed in the 2023 API.
+        // From what I can tell, WPILib bases CAN packet timestamps off of the system's monotonic clock
+        // On linux (and maybe other OSs), this is exposed through System.nanoTime()
+        // In WPILib 2024, this should be replaced with CAN.getCANPacketBaseTime() (see wpilibsuite/allwpilib#5357)
+        // That function should also return millis rather than nanos, eliminating the need
+        // for the below conversion.
+        return (System.nanoTime() / 1e6d) - turnEncoder.getLastTimestamp() < CANCODER_TIMEOUT_MS;
     }
 
     @Override
