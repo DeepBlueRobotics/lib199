@@ -120,7 +120,7 @@ public class MotorControllerFactory {
   public static CANSparkMax createSparkMax(int id, MotorConfig config) {
     CANSparkMax spark;
     if (RobotBase.isReal()) {
-      spark = new CachedSparkMax(id, CANSparkMaxLowLevel.MotorType.kBrushless);
+      spark = new CANSparkMax(id, CANSparkMaxLowLevel.MotorType.kBrushless);
     } else {
       spark = MockSparkMax.createMockSparkMax(id, CANSparkMaxLowLevel.MotorType.kBrushless);
     }
