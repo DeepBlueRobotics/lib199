@@ -308,6 +308,7 @@ public class SwerveModule implements Sendable {
         SmartDashboard.putBoolean(moduleString + " Turn is at Goal", turnPIDController.atGoal());
         SmartDashboard.putBoolean(moduleString + " CANCoder Connected", cancoderConnected());
         SmartDashboard.putNumber(moduleString + " Raw Encoder or Fallback Angle", getRawEncoderOrFallbackAngle());
+        SmartDashboard.putNumber(moduleString + " CANCoder Last Packet", (System.nanoTime() / 1e6d) - turnEncoder.getLastTimestamp());
     }
 
     public void toggleMode() {
