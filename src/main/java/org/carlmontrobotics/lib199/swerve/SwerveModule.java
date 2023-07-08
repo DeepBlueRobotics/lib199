@@ -142,7 +142,8 @@ public class SwerveModule implements Sendable {
         // The formula here gives x = s - c => s - x = s - (s - c) = c + s - s = c as desired
         // When we're using the SparkMax, we want the correction to work out so there is no chage
         // The formula here gives x = s - (s - x) = x + s - s = x as desired
-        relativePositionCorrection = turn.getEncoder().getPosition() - getRawEncoderOrFallbackAngle();
+        double newRelativePositionCorrection = turn.getEncoder().getPosition() - getRawEncoderOrFallbackAngle();
+        if(!Double.isNaN(newRelativePositionCorrection)) relativePositionCorrection = newRelativePositionCorrection;
 
         // Drive Control
         {
