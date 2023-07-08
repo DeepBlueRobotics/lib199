@@ -247,7 +247,7 @@ public class SwerveModule implements Sendable {
      * @return module angle in degrees
      */
     public double getModuleAngle() {
-        return MathUtil.inputModulus(turnEncoder.getAbsolutePosition()-turnZero, -180, 180);
+        return MathUtil.inputModulus(getRawEncoderOrFallbackAngle()-turnZero, -180, 180);
     }
 
     /**
