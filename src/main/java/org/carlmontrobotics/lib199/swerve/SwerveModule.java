@@ -308,7 +308,7 @@ public class SwerveModule implements Sendable {
         SmartDashboard.putBoolean(moduleString + " Turn is at Goal", turnPIDController.atGoal());
         SmartDashboard.putBoolean(moduleString + " CANCoder Connected", cancoderConnected());
         SmartDashboard.putNumber(moduleString + " Raw Encoder or Fallback Angle", getRawEncoderOrFallbackAngle());
-        SmartDashboard.putNumber(moduleString + " CANCoder Last Packet", (System.nanoTime() / 1e6d) - turnEncoder.getLastTimestamp());
+        SmartDashboard.putNumber(moduleString + " CANCoder Last Packet", (System.nanoTime() / 1e6d) - (turnEncoder.getLastTimestamp() * 1000));
         SmartDashboard.putNumber(moduleString + " CANCoder Last Timestamp", turnEncoder.getLastTimestamp());
     }
 
@@ -340,7 +340,7 @@ public class SwerveModule implements Sendable {
         // In WPILib 2024, this should be replaced with CAN.getCANPacketBaseTime() (see wpilibsuite/allwpilib#5357)
         // That function should also return millis rather than nanos, eliminating the need
         // for the below conversion.
-        return (System.nanoTime() / 1e6d) - turnEncoder.getLastTimestamp() < CANCODER_TIMEOUT_MS;
+        return (System.nanoTime() / 1e6d) - (turnEncoder.getLastTimestamp() * 1000) < CANCODER_TIMEOUT_MS;
     }
 
     @Override
