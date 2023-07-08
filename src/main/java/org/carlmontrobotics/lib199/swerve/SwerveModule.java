@@ -254,7 +254,7 @@ public class SwerveModule implements Sendable {
      * @return The current angle measured by the CANCoder (not zeroed) or, if the CANCoder is disconnected, an approximated angle from the turn motor encoder.
      */
     public double getRawEncoderOrFallbackAngle() {
-        return cancoderConnected() ? turnEncoder.getAbsolutePosition() : drive.getEncoder().getPosition() - relativePositionCorrection;
+        return cancoderConnected() ? turnEncoder.getAbsolutePosition() : turn.getEncoder().getPosition() - relativePositionCorrection;
     }
 
     /**
