@@ -120,14 +120,9 @@ public class MotorControllerFactory {
   public static CANSparkMax createSparkMax(int id, MotorConfig config) {
     CANSparkMax spark;
     if (RobotBase.isReal()) {
-      spark = new CachedSparkMax(id, CANSparkMaxLowLevel.MotorType.kBrushless);
-      if (spark.getFirmwareVersion() == 0) {
-        spark.close();
-        System.err.println("SparkMax on port: " + id + " is not connected!");
-        return MotorErrors.createDummySparkMax();
-      }
+      spark = new CANSparkMax(id, CANSparkMaxLowLevel.MotorType.kBrushless);
     } else {
-        spark = MockSparkMax.createMockSparkMax(id, CANSparkMaxLowLevel.MotorType.kBrushless);
+      spark = MockSparkMax.createMockSparkMax(id, CANSparkMaxLowLevel.MotorType.kBrushless);
     }
 
     MotorErrors.reportSparkMaxTemp(spark, config.temperatureLimit);
@@ -171,7 +166,7 @@ public class MotorControllerFactory {
   }
 
   /**
-   * This method is equivilent to calling {@link #configureCamera()} {@code numCameras} times.
+   * This method is equivalent to calling {@link #configureCamera()} {@code numCameras} times.
    * The last camera will be set as the primary Camera feed.
    * To change it, call {@code CameraServer.getServer().setSource()}.
    *

@@ -6,9 +6,8 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -21,10 +20,10 @@ import org.mockito.stubbing.Answer;
 
 public final class Mocks {
 
-    private static final List<WeakReference<Object>> MOCKS = Collections.synchronizedList(new ArrayList<>());
+    private static final CopyOnWriteArrayList<WeakReference<Object>> MOCKS = new CopyOnWriteArrayList<>();
     private static final Predicate<WeakReference<?>> IS_REFERENCE_CLEARED = reference -> reference.get() == null;
     private static final Consumer<WeakReference<Object>> CLEAR_INVOCATIONS_ON_REFERENCED_MOCK = reference -> Mockito.clearInvocations(reference.get());
-    private static final Predicate<WeakReference<Object>> CLEAR_INVOCATIONS_ON_REFERENCED_MOCK_IF_REFERNCE_NOT_CLEARED = reference -> {
+    private static final Predicate<WeakReference<Object>> CLEAR_INVOCATIONS_ON_REFERENCED_MOCK_IF_REFERENCE_NOT_CLEARED = reference -> {
         if(IS_REFERENCE_CLEARED.test(reference)) return true;
         CLEAR_INVOCATIONS_ON_REFERENCED_MOCK.accept(reference);
         return false;
@@ -37,7 +36,7 @@ public final class Mocks {
         // 2) Garbage collected references are removed
         // 3) Mock is garbage collected
         // 4) Mock invocations are cleared -> throws NullPointerException
-        Lib199Subsystem.registerPeriodic(() -> MOCKS.removeIf(CLEAR_INVOCATIONS_ON_REFERENCED_MOCK_IF_REFERNCE_NOT_CLEARED));
+        Lib199Subsystem.registerAsyncPeriodic(() -> MOCKS.removeIf(CLEAR_INVOCATIONS_ON_REFERENCED_MOCK_IF_REFERENCE_NOT_CLEARED));
     }
 
     /**
@@ -61,7 +60,7 @@ public final class Mocks {
      * @param <U> the class type which will be used to provide method implementations
      * @param classToMock the class type which will be mocked
      * @param implClass the object to which to try to forward method calls
-     * @param forwardUnknownCalls whether methods which are not overriden will call their real methods
+     * @param forwardUnknownCalls whether methods which are not overridden will call their real methods
      * @param interfaces a list of interfaces which the mocked object should extend
      * @return an instance of <code>T</code> in which some or all of the classes methods are replaced with a mocked implementation from <code>U</code>
      * @see #createMock(Class, Object, Class...)
@@ -77,7 +76,7 @@ public final class Mocks {
      * @param <U> the class type which will be used to provide method implementations
      * @param classToMock the class type which will be mocked
      * @param implClass the object to which to try to forward method calls
-     * @param defaultAnswer The answer to use when no overriden implementation is found
+     * @param defaultAnswer The answer to use when no overridden implementation is found
      * @param interfaces a list of interfaces which the mocked object should extend
      * @return an instance of <code>T</code> in which some or all of the classes methods are replaced with a mocked implementation from <code>U</code>
      * @see #createMock(Class, Object, Class...)

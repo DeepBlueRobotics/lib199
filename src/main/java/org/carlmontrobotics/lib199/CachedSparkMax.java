@@ -4,6 +4,7 @@ import com.revrobotics.CANSparkMax;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.SparkMaxPIDController;
 
+@Deprecated
 public class CachedSparkMax extends CANSparkMax {
 
     private RelativeEncoder encoder;

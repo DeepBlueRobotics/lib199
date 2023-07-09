@@ -29,7 +29,7 @@ public class MockedCANCoder {
         position = device.createDouble("count", Direction.kInput, 0);
         gearing = device.createDouble("gearing", Direction.kOutput, 1);
         sim = canCoder.getSimCollection();
-        Lib199Subsystem.registerPeriodic(this::update);
+        Lib199Subsystem.registerAsyncSimulationPeriodic(this::update);
         sims.put(port, this);
     }
 
