@@ -25,7 +25,7 @@ public class Lib199SubsystemTest {
     public void testSimulationPeriodic() {
         assumeTrue(RobotBase.isSimulation());
         AtomicInteger counter = new AtomicInteger(0);
-        Lib199Subsystem.registerPeriodic(() -> counter.addAndGet(1));
+        Lib199Subsystem.registerSimulationPeriodic(() -> counter.addAndGet(1));
         assertEquals("Simulation periodic method called before CommandScheduler.run", 0, counter.get());
         CommandScheduler.getInstance().run();
         assertEquals("Simulation periodic method called more than once or not at all", 1, counter.get());
