@@ -5,6 +5,8 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeNoException;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import com.ctre.phoenix.ErrorCode;
 import com.revrobotics.REVLibError;
 import com.revrobotics.CANSparkMax;
@@ -78,16 +80,6 @@ public class MotorErrorsTest extends ErrStreamTest {
 
     }
 
-    private static final Object asyncPeriodicNotifier = new Object();
-
-    static {
-        Lib199Subsystem.registerAsyncPeriodic(() -> {
-            synchronized(asyncPeriodicNotifier) {
-                asyncPeriodicNotifier.notifyAll();
-            }
-        });
-    }
-
     @Test
     public void testOkErrors() {
         errStream.reset();
@@ -100,7 +92,7 @@ public class MotorErrorsTest extends ErrStreamTest {
         assertEquals(0, errStream.toByteArray().length);
         MotorErrors.reportErrors((REVLibError)null, null);
         assertEquals(0, errStream.toByteArray().length);
-        
+
         // Ok Status
         MotorErrors.reportError(ErrorCode.OK);
         assertEquals(0, errStream.toByteArray().length);
@@ -178,73 +170,87 @@ public class MotorErrorsTest extends ErrStreamTest {
         String smartDashboardKey = "Port " + id + " Spark Max Temp";
         MotorErrors.reportSparkMaxTemp((CANSparkMax)spark, 40);
 
-        spark.setTemperature(20);
-        spark.setSmartCurrentLimit(50);
-        runAsyncPeriodic();
-        assertEquals(20, SmartDashboard.getNumber(smartDashboardKey, 0), 0.01);
-        assertEquals(50, spark.getSmartCurrentLimit());
-
-        spark.setTemperature(20);
-        spark.setSmartCurrentLimit(50);
-        runAsyncPeriodic();
-        assertEquals(20, SmartDashboard.getNumber(smartDashboardKey, 0), 0.01);
-        assertEquals(50, spark.getSmartCurrentLimit());
-
-        if(MotorErrors.kOverheatTripCount > 1) {
-            spark.setTemperature(51);
+        try(AutoCloseable asyncBlock = blockAsyncPeriodic()) {
+            spark.setTemperature(20);
             spark.setSmartCurrentLimit(50);
-            runAsyncPeriodic();
-            assertEquals(51, SmartDashboard.getNumber(smartDashboardKey, 0), 0.01);
+            MotorErrors.doReportSparkMaxTemp();
+            assertEquals(20, SmartDashboard.getNumber(smartDashboardKey, 0), 0.01);
             assertEquals(50, spark.getSmartCurrentLimit());
 
             spark.setTemperature(20);
             spark.setSmartCurrentLimit(50);
-            runAsyncPeriodic();
+            MotorErrors.doReportSparkMaxTemp();
             assertEquals(20, SmartDashboard.getNumber(smartDashboardKey, 0), 0.01);
             assertEquals(50, spark.getSmartCurrentLimit());
-        }
 
-        assertEquals(0, errStream.size());
+            if(MotorErrors.kOverheatTripCount > 1) {
+                spark.setTemperature(51);
+                spark.setSmartCurrentLimit(50);
+                MotorErrors.doReportSparkMaxTemp();
+                assertEquals(51, SmartDashboard.getNumber(smartDashboardKey, 0), 0.01);
+                assertEquals(50, spark.getSmartCurrentLimit());
 
-        for(int i = 0; i < MotorErrors.kOverheatTripCount; i++) {
-            assertEquals(50, spark.getSmartCurrentLimit());
+                spark.setTemperature(20);
+                spark.setSmartCurrentLimit(50);
+                MotorErrors.doReportSparkMaxTemp();
+                assertEquals(20, SmartDashboard.getNumber(smartDashboardKey, 0), 0.01);
+                assertEquals(50, spark.getSmartCurrentLimit());
+            }
+
             assertEquals(0, errStream.size());
+
+            for(int i = 0; i < MotorErrors.kOverheatTripCount; i++) {
+                assertEquals(50, spark.getSmartCurrentLimit());
+                assertEquals(0, errStream.size());
+
+                spark.setTemperature(51);
+                spark.setSmartCurrentLimit(50);
+                MotorErrors.doReportSparkMaxTemp();
+                assertEquals(51, SmartDashboard.getNumber(smartDashboardKey, 0), 0.01);
+            }
+
+            assertNotEquals(0, errStream.size());
+            errStream.reset();
 
             spark.setTemperature(51);
             spark.setSmartCurrentLimit(50);
-            runAsyncPeriodic();
+            MotorErrors.doReportSparkMaxTemp();
             assertEquals(51, SmartDashboard.getNumber(smartDashboardKey, 0), 0.01);
-        }
+            assertEquals(1, spark.getSmartCurrentLimit());
 
-        assertNotEquals(0, errStream.size());
-        errStream.reset();
+            spark.setTemperature(20);
+            spark.setSmartCurrentLimit(50);
+            MotorErrors.doReportSparkMaxTemp();
+            assertEquals(20, SmartDashboard.getNumber(smartDashboardKey, 0), 0.01);
+            assertEquals(1, spark.getSmartCurrentLimit());
 
-        spark.setTemperature(51);
-        spark.setSmartCurrentLimit(50);
-        runAsyncPeriodic();
-        assertEquals(51, SmartDashboard.getNumber(smartDashboardKey, 0), 0.01);
-        assertEquals(1, spark.getSmartCurrentLimit());
-
-        spark.setTemperature(20);
-        spark.setSmartCurrentLimit(50);
-        runAsyncPeriodic();
-        assertEquals(20, SmartDashboard.getNumber(smartDashboardKey, 0), 0.01);
-        assertEquals(1, spark.getSmartCurrentLimit());
-
-        assertEquals(0, errStream.size());
-    }
-
-    // Ensures an update to the asynchronous periodic thread is run
-    private void runAsyncPeriodic() {
-        try {
-            synchronized(asyncPeriodicNotifier) {
-                // Run twice because we don't know in what order we're called, so make sure all periodic methods are run twice
-                asyncPeriodicNotifier.wait();
-                asyncPeriodicNotifier.wait();
-            }
-        } catch(InterruptedException e) {
+            assertEquals(0, errStream.size());
+        } catch(Exception e) {
             assumeNoException(e);
         }
+    }
+
+    // Blocks the Lib199Subsystem's async thread until closed
+    private AutoCloseable blockAsyncPeriodic() {
+        AtomicBoolean block = new AtomicBoolean(true);
+        Object lock = new Object();
+        Lib199Subsystem.registerAsyncPeriodic(() -> {
+            synchronized(lock) {
+                while(block.get()) {
+                    try {
+                        lock.wait();
+                    } catch(InterruptedException e) {
+                        assumeNoException(e);
+                    }
+                }
+            }
+        });
+        return () -> {
+            block.set(false);
+            synchronized(lock) {
+                lock.notifyAll();
+            }
+        };
     }
 
 }
