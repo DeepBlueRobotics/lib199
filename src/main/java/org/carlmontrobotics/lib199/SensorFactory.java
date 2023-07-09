@@ -13,6 +13,13 @@ import edu.wpi.first.wpilibj.RobotBase;
  * A class containing methods to create and configure sensors.
  */
 public class SensorFactory {
+
+    /**
+     * Creates a CANCoder object, linking it to the simulator if necessary
+     *
+     * @param port The CAN ID of the CANCoder
+     * @return The CANCoder object
+     */
     public static CANCoder createCANCoder(int port) {
         CANCoder canCoder = new CANCoder(port);
         if (RobotBase.isSimulation())
