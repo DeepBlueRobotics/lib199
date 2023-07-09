@@ -2,7 +2,6 @@ package org.carlmontrobotics.lib199;
 
 import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.ctre.phoenix.ErrorCode;
 import com.revrobotics.CANSparkMax;
@@ -15,12 +14,15 @@ public final class MotorErrors {
 
     private static final ConcurrentHashMap<Integer, CANSparkMax> temperatureSparks = new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<Integer, Integer> sparkTemperatureLimits = new ConcurrentHashMap<>();
-    private static final CopyOnWriteArrayList<Integer> overheatedSparks = new CopyOnWriteArrayList<>();
+    private static final ConcurrentHashMap<Integer, Integer> overheatedSparks = new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<CANSparkMax, Short> flags = new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<CANSparkMax, Short> stickyFlags = new ConcurrentHashMap<>();
 
+    public static final int kOverheatTripCount = 5;
+
     static {
         Lib199Subsystem.registerAsyncPeriodic(MotorErrors::doReportSparkMaxTemp);
+        Lib199Subsystem.registerAsyncPeriodic(MotorErrors::printSparkMaxErrorMessages);
     }
 
     public static void reportError(ErrorCode error) {
@@ -108,16 +110,30 @@ public final class MotorErrors {
         int id = spark.getDeviceId();
         temperatureSparks.put(id, spark);
         sparkTemperatureLimits.put(id, temperatureLimit);
+        overheatedSparks.put(id, 0);
     }
 
     public static void doReportSparkMaxTemp() {
         temperatureSparks.forEach((port, spark) -> {
             double temp = spark.getMotorTemperature();
+            double limit = sparkTemperatureLimits.get(port);
+            int numTrips = overheatedSparks.get(port);
             SmartDashboard.putNumber("Port " + port + " Spark Max Temp", temp);
+
+            if(numTrips < kOverheatTripCount) {
+                if(temp > limit) {
+                    overheatedSparks.put(port, ++numTrips);
+                } else {
+                    overheatedSparks.put(port, 0);
+                }
+            }
+
             // Check if temperature exceeds the setpoint or if the controller has already overheated to prevent other code from resetting the current limit after the controller has cooled
-            if(temp >= sparkTemperatureLimits.get(port) || overheatedSparks.contains(port)) {
-                if(!overheatedSparks.contains(port)) {
-                    overheatedSparks.add(port);
+            if(numTrips >= kOverheatTripCount) {
+                if(numTrips < kOverheatTripCount + 1) {
+                    // Set trip count to kOverheatTripCount + 1 to flag that an error message has already been printed
+                    // This prevents the error message from being re-printed every time the periodic method is run
+                    overheatedSparks.put(port, kOverheatTripCount + 1);
                     System.err.println("Port " + port + " spark max is operating at " + temp + " degrees Celsius! It will be disabled until the robot code is restarted.");
                 }
                 spark.setSmartCurrentLimit(1);

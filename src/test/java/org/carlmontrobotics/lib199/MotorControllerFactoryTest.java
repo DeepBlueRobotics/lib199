@@ -2,7 +2,6 @@ package org.carlmontrobotics.lib199;
 
 import static org.junit.Assert.assertEquals;
 
-import org.carlmontrobotics.MotorConfig;
 import org.carlmontrobotics.lib199.testUtils.ErrStreamTest;
 import org.carlmontrobotics.lib199.testUtils.SimDeviceTestRule;
 import org.junit.ClassRule;
