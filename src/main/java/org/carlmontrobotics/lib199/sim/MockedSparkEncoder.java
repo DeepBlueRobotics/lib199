@@ -30,7 +30,7 @@ public class MockedSparkEncoder implements AutoCloseable, Runnable {
         count = device.createDouble("count", Direction.kInput, 0);
         gearing = device.createDouble("gearing", Direction.kOutput, 1);
         sims.put(id, this);
-        Lib199Subsystem.registerPeriodic(this);
+        Lib199Subsystem.registerAsyncPeriodic(this);
     }
 
     public double getPosition() {

@@ -17,7 +17,6 @@ import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel;
 import com.revrobotics.SparkMaxPIDController;
 
-import org.carlmontrobotics.MotorConfig;
 import org.carlmontrobotics.lib199.sim.MockSparkMax;
 import org.carlmontrobotics.lib199.sim.MockTalonSRX;
 import org.carlmontrobotics.lib199.sim.MockVictorSPX;
@@ -120,23 +119,18 @@ public class MotorControllerFactory {
   public static CANSparkMax createSparkMax(int id, MotorConfig config) {
     CANSparkMax spark;
     if (RobotBase.isReal()) {
-      spark = new CachedSparkMax(id, CANSparkMaxLowLevel.MotorType.kBrushless);
-      if (spark.getFirmwareVersion() == 0) {
-        spark.close();
-        System.err.println("SparkMax on port: " + id + " is not connected!");
-        return MotorErrors.createDummySparkMax();
-      }
+      spark = new CANSparkMax(id, CANSparkMaxLowLevel.MotorType.kBrushless);
     } else {
-        spark = MockSparkMax.createMockSparkMax(id, CANSparkMaxLowLevel.MotorType.kBrushless);
+      spark = MockSparkMax.createMockSparkMax(id, CANSparkMaxLowLevel.MotorType.kBrushless);
     }
 
-    MotorErrors.reportSparkMaxTemp(spark, config.temperatureLimit);
+    MotorErrors.reportSparkMaxTemp(spark, config.temperatureLimitCelsius);
 
     MotorErrors.reportError(spark.restoreFactoryDefaults());
     MotorErrors.reportError(spark.follow(ExternalFollower.kFollowerDisabled, 0));
     MotorErrors.reportError(spark.setIdleMode(IdleMode.kBrake));
     MotorErrors.reportError(spark.enableVoltageCompensation(12));
-    MotorErrors.reportError(spark.setSmartCurrentLimit(config.currentLimit));
+    MotorErrors.reportError(spark.setSmartCurrentLimit(config.currentLimitAmps));
 
     MotorErrors.checkSparkMaxErrors(spark);
 
@@ -171,7 +165,7 @@ public class MotorControllerFactory {
   }
 
   /**
-   * This method is equivilent to calling {@link #configureCamera()} {@code numCameras} times.
+   * This method is equivalent to calling {@link #configureCamera()} {@code numCameras} times.
    * The last camera will be set as the primary Camera feed.
    * To change it, call {@code CameraServer.getServer().setSource()}.
    *
