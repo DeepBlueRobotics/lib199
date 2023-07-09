@@ -3,6 +3,7 @@ package org.carlmontrobotics.lib199;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeNoException;
 
 import com.ctre.phoenix.ErrorCode;
 import com.revrobotics.REVLibError;
@@ -13,7 +14,6 @@ import org.carlmontrobotics.lib199.testUtils.ErrStreamTest;
 import org.junit.Test;
 
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
 public class MotorErrorsTest extends ErrStreamTest {
 
@@ -76,6 +76,16 @@ public class MotorErrorsTest extends ErrStreamTest {
             }
         }
 
+    }
+
+    private static final Object asyncPeriodicNotifier = new Object();
+
+    static {
+        Lib199Subsystem.registerAsyncPeriodic(() -> {
+            synchronized(asyncPeriodicNotifier) {
+                asyncPeriodicNotifier.notifyAll();
+            }
+        });
     }
 
     @Test
@@ -170,26 +180,26 @@ public class MotorErrorsTest extends ErrStreamTest {
 
         spark.setTemperature(20);
         spark.setSmartCurrentLimit(50);
-        CommandScheduler.getInstance().run();
+        runAsyncPeriodic();
         assertEquals(20, SmartDashboard.getNumber(smartDashboardKey, 0), 0.01);
         assertEquals(50, spark.getSmartCurrentLimit());
 
         spark.setTemperature(20);
         spark.setSmartCurrentLimit(50);
-        CommandScheduler.getInstance().run();
+        runAsyncPeriodic();
         assertEquals(20, SmartDashboard.getNumber(smartDashboardKey, 0), 0.01);
         assertEquals(50, spark.getSmartCurrentLimit());
 
         if(MotorErrors.kOverheatTripCount > 1) {
             spark.setTemperature(51);
             spark.setSmartCurrentLimit(50);
-            CommandScheduler.getInstance().run();
+            runAsyncPeriodic();
             assertEquals(51, SmartDashboard.getNumber(smartDashboardKey, 0), 0.01);
             assertEquals(50, spark.getSmartCurrentLimit());
 
             spark.setTemperature(20);
             spark.setSmartCurrentLimit(50);
-            CommandScheduler.getInstance().run();
+            runAsyncPeriodic();
             assertEquals(20, SmartDashboard.getNumber(smartDashboardKey, 0), 0.01);
             assertEquals(50, spark.getSmartCurrentLimit());
         }
@@ -202,7 +212,7 @@ public class MotorErrorsTest extends ErrStreamTest {
 
             spark.setTemperature(51);
             spark.setSmartCurrentLimit(50);
-            CommandScheduler.getInstance().run();
+            runAsyncPeriodic();
             assertEquals(51, SmartDashboard.getNumber(smartDashboardKey, 0), 0.01);
         }
 
@@ -211,17 +221,30 @@ public class MotorErrorsTest extends ErrStreamTest {
 
         spark.setTemperature(51);
         spark.setSmartCurrentLimit(50);
-        CommandScheduler.getInstance().run();
+        runAsyncPeriodic();
         assertEquals(51, SmartDashboard.getNumber(smartDashboardKey, 0), 0.01);
         assertEquals(1, spark.getSmartCurrentLimit());
 
         spark.setTemperature(20);
         spark.setSmartCurrentLimit(50);
-        CommandScheduler.getInstance().run();
+        runAsyncPeriodic();
         assertEquals(20, SmartDashboard.getNumber(smartDashboardKey, 0), 0.01);
         assertEquals(1, spark.getSmartCurrentLimit());
 
         assertEquals(0, errStream.size());
+    }
+
+    // Ensures an update to the asynchronous periodic thread is run
+    private void runAsyncPeriodic() {
+        try {
+            synchronized(asyncPeriodicNotifier) {
+                // Run twice because we don't know in what order we're called, so make sure all periodic methods are run twice
+                asyncPeriodicNotifier.wait();
+                asyncPeriodicNotifier.wait();
+            }
+        } catch(InterruptedException e) {
+            assumeNoException(e);
+        }
     }
 
 }

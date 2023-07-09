@@ -1,7 +1,7 @@
 package org.carlmontrobotics.lib199;
 
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.ctre.phoenix.ErrorCode;
 import com.revrobotics.CANSparkMax;
@@ -12,17 +12,17 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public final class MotorErrors {
 
-    private static final HashMap<Integer, CANSparkMax> temperatureSparks = new HashMap<>();
-    private static final HashMap<Integer, Integer> sparkTemperatureLimits = new HashMap<>();
-    private static final HashMap<Integer, Integer> overheatedSparks = new HashMap<>();
-    private static final HashMap<CANSparkMax, Short> flags = new HashMap<>();
-    private static final HashMap<CANSparkMax, Short> stickyFlags = new HashMap<>();
+    private static final ConcurrentHashMap<Integer, CANSparkMax> temperatureSparks = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<Integer, Integer> sparkTemperatureLimits = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<Integer, Integer> overheatedSparks = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<CANSparkMax, Short> flags = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<CANSparkMax, Short> stickyFlags = new ConcurrentHashMap<>();
 
     public static final int kOverheatTripCount = 5;
 
     static {
-        Lib199Subsystem.registerPeriodic(MotorErrors::doReportSparkMaxTemp);
-        Lib199Subsystem.registerPeriodic(MotorErrors::printSparkMaxErrorMessages);
+        Lib199Subsystem.registerAsyncPeriodic(MotorErrors::doReportSparkMaxTemp);
+        Lib199Subsystem.registerAsyncPeriodic(MotorErrors::printSparkMaxErrorMessages);
     }
 
     public static void reportError(ErrorCode error) {
