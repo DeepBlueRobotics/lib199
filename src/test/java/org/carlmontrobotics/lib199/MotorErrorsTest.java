@@ -5,6 +5,7 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeNoException;
 
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.ctre.phoenix.ErrorCode;
@@ -234,21 +235,28 @@ public class MotorErrorsTest extends ErrStreamTest {
     private AutoCloseable blockAsyncPeriodic() {
         AtomicBoolean block = new AtomicBoolean(true);
         Object lock = new Object();
+        CountDownLatch latch = new CountDownLatch(1);
         Lib199Subsystem.registerAsyncPeriodic(() -> {
             synchronized(lock) {
-                while(block.get()) {
+                latch.countDown(); // Signal that we've started blocking
+                while(block.get()) { // Block until released
                     try {
-                        lock.wait();
+                        lock.wait(); // Wait for the block to be released
                     } catch(InterruptedException e) {
                         assumeNoException(e);
                     }
                 }
             }
         });
+        try {
+            latch.await(); // Wait for the async thread to start blocking
+        } catch(InterruptedException e) {
+            assumeNoException(e);
+        }
         return () -> {
-            block.set(false);
+            block.set(false); // Release the block
             synchronized(lock) {
-                lock.notifyAll();
+                lock.notifyAll(); // Notify the async thread that the block has been released
             }
         };
     }
