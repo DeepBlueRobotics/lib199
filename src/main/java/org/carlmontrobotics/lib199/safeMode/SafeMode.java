@@ -47,6 +47,11 @@ public class SafeMode {
     }
 
     /**
+     * Ensures that the static block of this class is called, setting up safe-mode
+     */
+    public static void ensureRegistered() {}
+
+    /**
      * Enables safe-mode
      */
     public static void enable() {
