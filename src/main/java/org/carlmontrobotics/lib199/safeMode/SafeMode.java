@@ -47,9 +47,10 @@ public class SafeMode {
     }
 
     /**
-     * Ensures that the static block of this class is called, setting up safe-mode
+     * Ensures that the static block of this class is called, setting up safe-mode.
+     * It is unlikely that you will need to call this function.
      */
-    public static void ensureRegistered() {}
+    public static void ensureInitialized() {}
 
     /**
      * Enables safe-mode

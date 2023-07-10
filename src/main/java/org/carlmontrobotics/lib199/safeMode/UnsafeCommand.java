@@ -15,7 +15,7 @@ public class UnsafeCommand extends FunctionalCommand {
     private final Command command;
 
     static {
-        SafeMode.ensureRegistered();
+        SafeMode.ensureInitialized();
     }
 
     public UnsafeCommand(Command command) {

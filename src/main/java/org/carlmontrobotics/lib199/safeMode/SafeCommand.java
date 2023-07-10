@@ -15,7 +15,7 @@ public class SafeCommand extends FunctionalCommand {
     private final Command command;
 
     static {
-        SafeMode.ensureRegistered();
+        SafeMode.ensureInitialized();
     }
 
     /**
