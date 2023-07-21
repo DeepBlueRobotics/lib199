@@ -3,13 +3,13 @@ package org.carlmontrobotics.lib199.safeMode;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 
 /**
- * A command that counts how many times it has been initialized and executed for the purposes of testing safe mode functionality.
+ * A command that counts how many times it has been initialized, executed, and ended for the purposes of testing safe mode functionality.
  *
  * @see SafeModeCommandsTest
  */
 public class LoggingCommand extends CommandBase {
 
-    private int initializedCount = 0, executeCount = 0;
+    private int initializedCount = 0, executeCount = 0, endCount = 0;
 
     @Override
     public void initialize() {
@@ -21,11 +21,16 @@ public class LoggingCommand extends CommandBase {
         executeCount++;
     }
 
+    @Override
+    public void end(boolean interrupted) {
+        endCount++;
+    }
+
     /**
      * Resets the initialized and execute counts to zero.
      */
     public void reset() {
-        initializedCount = executeCount = 0;
+        initializedCount = executeCount = endCount = 0;
     }
 
     /**
@@ -40,6 +45,13 @@ public class LoggingCommand extends CommandBase {
      */
     public int getExecuteCount() {
         return executeCount;
+    }
+
+    /**
+     * @return The number of times this command has been ended.
+     */
+    public int getEndCount() {
+        return endCount;
     }
 
     @Override
