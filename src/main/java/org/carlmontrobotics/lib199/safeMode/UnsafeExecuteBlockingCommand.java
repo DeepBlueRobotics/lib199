@@ -15,6 +15,10 @@ public class UnsafeExecuteBlockingCommand extends FunctionalCommand {
 
     private final Command command;
 
+    static {
+        SafeMode.ensureInitialized();
+    }
+
     public UnsafeExecuteBlockingCommand(Command command) {
         super(
             command::initialize,

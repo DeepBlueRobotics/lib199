@@ -15,6 +15,10 @@ public class SafeExecuteBlockingCommand extends FunctionalCommand {
 
     private final Command command;
 
+    static {
+        SafeMode.ensureInitialized();
+    }
+
     public SafeExecuteBlockingCommand(Command command) {
         super(
             () -> command.initialize(),

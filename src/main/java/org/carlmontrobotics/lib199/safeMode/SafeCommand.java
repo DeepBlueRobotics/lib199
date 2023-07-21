@@ -14,6 +14,10 @@ public class SafeCommand extends FunctionalCommand {
 
     private final Command command;
 
+    static {
+        SafeMode.ensureInitialized();
+    }
+
     /**
      * Creates a new SafeCommand
      * @param command The command to run

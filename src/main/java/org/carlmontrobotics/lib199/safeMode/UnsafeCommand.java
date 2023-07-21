@@ -14,6 +14,10 @@ public class UnsafeCommand extends FunctionalCommand {
 
     private final Command command;
 
+    static {
+        SafeMode.ensureInitialized();
+    }
+
     public UnsafeCommand(Command command) {
         super(
             () -> { if(!SafeMode.isEnabled()) command.initialize(); },
