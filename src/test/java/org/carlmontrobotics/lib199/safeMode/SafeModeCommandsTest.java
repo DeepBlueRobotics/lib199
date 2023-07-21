@@ -1,8 +1,6 @@
 package org.carlmontrobotics.lib199.safeMode;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.util.function.Function;
 
@@ -46,8 +44,10 @@ public class SafeModeCommandsTest {
             assertTrue(command.isScheduled());
         else
             assertFalse(command.isScheduled());
-        if (!staysEnabled)
+        if (!staysEnabled) {
             assertEquals(isSafe ? 1 : 0, loggingCommand.getInitializedCount());
+            assertEquals(0, loggingCommand.getEndCount());
+        }
         assertEquals(isSafe ? 1 : 0, loggingCommand.getExecuteCount());
 
         SafeMode.disable();
@@ -57,9 +57,20 @@ public class SafeModeCommandsTest {
             assertTrue(command.isScheduled());
         else
             assertFalse(command.isScheduled());
-        if (!staysEnabled)
+        if (!staysEnabled) {
             assertEquals(1, loggingCommand.getInitializedCount());
+            if(isSafe)
+                assertEquals(1, loggingCommand.getEndCount());
+            else
+                assertEquals(0, loggingCommand.getEndCount());
+        }
         assertEquals(1, loggingCommand.getExecuteCount());
+
+        if(!staysEnabled && !isSafe) {
+            SafeMode.enable();
+            CommandScheduler.getInstance().run();
+            assertEquals(1, loggingCommand.getEndCount());
+        }
     }
 
 }
