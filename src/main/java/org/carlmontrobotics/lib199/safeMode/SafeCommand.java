@@ -8,6 +8,10 @@ import edu.wpi.first.wpilibj2.command.WrapperCommand;
  */
 public class SafeCommand extends WrapperCommand {
 
+    static {
+        SafeMode.ensureInitialized();
+    }
+
     /**
      * Creates a new SafeCommand
      * @param command The command to run

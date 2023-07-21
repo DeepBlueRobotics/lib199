@@ -11,6 +11,10 @@ import edu.wpi.first.wpilibj2.command.WrapperCommand;
  */
 public class SafeExecuteBlockingCommand extends WrapperCommand {
 
+    static {
+        SafeMode.ensureInitialized();
+    }
+
     public SafeExecuteBlockingCommand(Command command) {
         super(command);
     }

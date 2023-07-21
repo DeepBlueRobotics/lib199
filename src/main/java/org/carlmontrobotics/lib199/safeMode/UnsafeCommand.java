@@ -8,6 +8,10 @@ import edu.wpi.first.wpilibj2.command.WrapperCommand;
  */
 public class UnsafeCommand extends WrapperCommand {
 
+    static {
+        SafeMode.ensureInitialized();
+    }
+
     public UnsafeCommand(Command command) {
         super(new EndBlockingCommand(command));
     }

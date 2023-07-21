@@ -144,6 +144,10 @@ public class MotorControllerFactory {
     return spark;
   }
 
+  /**
+   * @deprecated Use {@link SensorFactory#createCANCoder(int)} instead.
+   */
+  @Deprecated
   public static CANCoder createCANCoder(int port) {
     CANCoder canCoder = new CANCoder(port);
     if(RobotBase.isSimulation()) new MockedCANCoder(canCoder);
@@ -156,7 +160,10 @@ public class MotorControllerFactory {
    * This MUST be called AFTER AHRS initialization or the code will be unable to connect to the gyro.
    *
    * @return The configured camera
+   *
+   * @deprecated Use {@link SensorFactory#configureCamera()} instead.
    */
+  @Deprecated
   public static UsbCamera configureCamera() {
     UsbCamera camera = CameraServer.startAutomaticCapture();
     camera.setConnectionStrategy(ConnectionStrategy.kKeepOpen);
@@ -171,7 +178,10 @@ public class MotorControllerFactory {
    *
    * @param numCameras The number of cameras to configure
    * @return The configured cameras.
+   *
+   * @deprecated Use {@link SensorFactory#configureCameras(int)} instead.
    */
+  @Deprecated
   public static UsbCamera[] configureCameras(int numCameras) {
     UsbCamera[] cameras = new UsbCamera[numCameras];
     for(int i = 0; i < numCameras; i++) cameras[i] = configureCamera();
