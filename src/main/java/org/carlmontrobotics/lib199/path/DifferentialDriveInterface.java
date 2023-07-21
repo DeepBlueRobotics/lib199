@@ -5,10 +5,8 @@ import java.util.stream.DoubleStream;
 
 import edu.wpi.first.math.controller.RamseteController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
-import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
-import edu.wpi.first.math.kinematics.DifferentialDriveOdometry;
 import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.math.trajectory.TrajectoryConfig;
 import edu.wpi.first.math.trajectory.constraint.DifferentialDriveVoltageConstraint;
@@ -47,18 +45,14 @@ public interface DifferentialDriveInterface extends DrivetrainInterface {
     public double[][] getCharacterizationValues();
 
     /**
-     * Gets odometry
-     * 
-     * @return Odometry
+     * @return The left encoder position in meters
      */
-    public DifferentialDriveOdometry getOdometry();
+    public double getLeftEncoderPosition();
 
     /**
-     * Sets odometry
-     * 
-     * @param odometry Odometry that will be set
+     * @return The right encoder position in meters
      */
-    public void setOdometry(DifferentialDriveOdometry odometry);
+    public double getRightEncoderPosition();
 
     /**
      * Creates Ramsete Controller
@@ -98,21 +92,7 @@ public interface DifferentialDriveInterface extends DrivetrainInterface {
      */
     @Override
     public default Command createAutoCommand(Trajectory trajectory, Supplier<Rotation2d> desiredHeading) {
-        return new RamseteCommand(trajectory,
-                // Call getOdometry in the supplier because the odometry object may be reset
-                // when the command is run
-                () -> getOdometry().getPoseMeters(), createRamsete(), getKinematics(), this::drive, this);
-    }
-
-    /**
-     * Sets odometry based on current gyro angle and pose
-     * 
-     * @param gyroAngle   The angle reported by the gyroscope.
-     * @param initialPose The starting position of the robot on the field.
-     */
-    @Override
-    public default void setOdometry(Rotation2d gyroAngle, Pose2d initialPose) {
-        setOdometry(new DifferentialDriveOdometry(gyroAngle, initialPose));
+        return new RamseteCommand(trajectory, this::getPose, createRamsete(), getKinematics(), this::drive, this);
     }
 
 }

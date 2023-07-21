@@ -20,7 +20,7 @@ public abstract class HeadingSupplier {
      * 
      * @return current trajectory rotation at current point in time
      */
-    public Rotation2d sample() {            
+    public Rotation2d sample() {
         if (!timerStarted) {
             timerStarted = true;
             timer.start();
@@ -36,5 +36,13 @@ public abstract class HeadingSupplier {
     public void reset() {
         timerStarted = false;
         timer.reset();
+    }
+
+    /**
+     * Stops the timer
+     */
+    public void stop() {
+        timer.stop();
+        reset();
     }
 }

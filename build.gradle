@@ -1,8 +1,6 @@
-import edu.wpi.first.gradlerio.deploy.roborio.RoboRIO
-
 plugins {
     id "java"
-    id "edu.wpi.first.GradleRIO" version "2022.4.1"
+    id "edu.wpi.first.GradleRIO" version "2023.4.3"
     id "maven-publish"
 }
 
@@ -94,7 +92,7 @@ publishing {
         gpr(MavenPublication) {
             groupId = 'org.carlmontrobotics'
             artifactId = 'lib199'
-            version = '1.0.2'
+            version = '4.0.2'
 
             from components.java
         }
@@ -105,3 +103,8 @@ publishing {
 deployArtifact.jarTask = jar
 wpi.java.configureExecutableTasks(jar)
 wpi.java.configureTestTasks(test)
+
+// Configure string concat to always inline compile
+tasks.withType(JavaCompile) {
+    options.compilerArgs.add '-XDstringConcat=inline'
+}

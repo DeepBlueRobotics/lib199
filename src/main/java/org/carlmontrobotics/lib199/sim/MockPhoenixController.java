@@ -1,7 +1,7 @@
 package org.carlmontrobotics.lib199.sim;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.IMotorController;
@@ -15,7 +15,7 @@ abstract class MockPhoenixController implements AutoCloseable {
     // CAN ports should be separate from PWM ports
     protected PWMMotorController motorPWM;
     // Since we need to keep a record of all the motor's followers
-    protected static HashMap<Integer, ArrayList<PWMMotorController>> followMap = new HashMap<>();
+    protected static ConcurrentHashMap<Integer, CopyOnWriteArrayList<PWMMotorController>> followMap = new ConcurrentHashMap<>();
 
     public MockPhoenixController(int portPWM) {
         this.portPWM = portPWM;
@@ -36,7 +36,7 @@ abstract class MockPhoenixController implements AutoCloseable {
 
     public void follow(IMotorController leader) {
         if (!followMap.containsKey(leader.getDeviceID())) {
-            ArrayList<PWMMotorController> arr = new ArrayList<PWMMotorController>();
+            CopyOnWriteArrayList<PWMMotorController> arr = new CopyOnWriteArrayList<PWMMotorController>();
             arr.add(motorPWM);
             followMap.put(leader.getDeviceID(), arr);
         } else {

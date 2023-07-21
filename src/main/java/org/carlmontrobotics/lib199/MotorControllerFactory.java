@@ -17,7 +17,6 @@ import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel;
 import com.revrobotics.SparkMaxPIDController;
 
-import org.carlmontrobotics.lib199.MotorErrors.TemperatureLimit;
 import org.carlmontrobotics.lib199.sim.MockSparkMax;
 import org.carlmontrobotics.lib199.sim.MockTalonSRX;
 import org.carlmontrobotics.lib199.sim.MockVictorSPX;
@@ -78,10 +77,12 @@ public class MotorControllerFactory {
 
   //checks for spark max errors
 
-  public static CANSparkMax createSparkMax(int id, TemperatureLimit temperatureLimit) {
+  @Deprecated
+  public static CANSparkMax createSparkMax(int id, MotorErrors.TemperatureLimit temperatureLimit) {
     return createSparkMax(id, temperatureLimit.limit);
   }
 
+  @Deprecated
   public static CANSparkMax createSparkMax(int id, int temperatureLimit) {
     CANSparkMax spark;
     if (RobotBase.isReal()) {
@@ -102,6 +103,34 @@ public class MotorControllerFactory {
     MotorErrors.reportError(spark.setIdleMode(IdleMode.kBrake));
     MotorErrors.reportError(spark.enableVoltageCompensation(12));
     MotorErrors.reportError(spark.setSmartCurrentLimit(50));
+
+    MotorErrors.checkSparkMaxErrors(spark);
+
+    SparkMaxPIDController controller = spark.getPIDController();
+    MotorErrors.reportError(controller.setOutputRange(-1, 1));
+    MotorErrors.reportError(controller.setP(0));
+    MotorErrors.reportError(controller.setI(0));
+    MotorErrors.reportError(controller.setD(0));
+    MotorErrors.reportError(controller.setFF(0));
+
+    return spark;
+  }
+
+  public static CANSparkMax createSparkMax(int id, MotorConfig config) {
+    CANSparkMax spark;
+    if (RobotBase.isReal()) {
+      spark = new CANSparkMax(id, CANSparkMaxLowLevel.MotorType.kBrushless);
+    } else {
+      spark = MockSparkMax.createMockSparkMax(id, CANSparkMaxLowLevel.MotorType.kBrushless);
+    }
+
+    MotorErrors.reportSparkMaxTemp(spark, config.temperatureLimitCelsius);
+
+    MotorErrors.reportError(spark.restoreFactoryDefaults());
+    MotorErrors.reportError(spark.follow(ExternalFollower.kFollowerDisabled, 0));
+    MotorErrors.reportError(spark.setIdleMode(IdleMode.kBrake));
+    MotorErrors.reportError(spark.enableVoltageCompensation(12));
+    MotorErrors.reportError(spark.setSmartCurrentLimit(config.currentLimitAmps));
 
     MotorErrors.checkSparkMaxErrors(spark);
 
@@ -136,7 +165,7 @@ public class MotorControllerFactory {
   }
 
   /**
-   * This method is equivilent to calling {@link #configureCamera()} {@link numCameras} times.
+   * This method is equivalent to calling {@link #configureCamera()} {@code numCameras} times.
    * The last camera will be set as the primary Camera feed.
    * To change it, call {@code CameraServer.getServer().setSource()}.
    *

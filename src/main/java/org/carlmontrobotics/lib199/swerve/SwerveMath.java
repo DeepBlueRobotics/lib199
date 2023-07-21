@@ -131,7 +131,7 @@ public class SwerveMath {
 
     /**
      * Determines whether or not the robot should take the reverse direction to get to angle. 
-     * e.g. if the robot was to turn 3&#960/2 radians clockwise, it would be better to turn &#960/2 radians counter-clockwsie.
+     * e.g. if the robot was to turn 3&#960;/2 radians clockwise, it would be better to turn &#960;/2 radians counter-clockwsie.
      * Credit to Team 100 for their code.
      * 
      * @param angle             The desired angle between -0.5 and 0.5

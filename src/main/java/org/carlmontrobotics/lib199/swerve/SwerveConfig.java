@@ -1,17 +1,17 @@
-package org.carlmontrobotics.lib199;
+package org.carlmontrobotics.lib199.swerve;
 
 public final class SwerveConfig {
 
-    public double wheelDiameterMeters, driveGearing, mu, autoCentripetalAccel;
+    public double wheelDiameterMeters, driveGearing, mu, autoCentripetalAccel, driveModifier;
     public double[] kForwardVolts, kForwardVels, kForwardAccels, kBackwardVolts, kBackwardVels, kBackwardAccels,
             drivekP, drivekI, drivekD, turnkP, turnkI, turnkD, turnkS, turnkV, turnkA, turnZero;
-    public boolean[] driveInversion, reversed;
+    public boolean[] driveInversion, turnInversion, reversed;
 
     public SwerveConfig(double wheelDiameterMeters, double driveGearing, double mu,
             double autoCentripetalAccel, double[] kForwardVolts, double[] kForwardVels, double[] kForwardAccels,
             double[] kBackwardVolts, double[] kBackwardVels, double[] kBackwardAccels, double[] drivekP,
             double[] drivekI, double[] drivekD, double[] turnkP, double[] turnkI, double[] turnkD, double[] turnkS,
-            double[] turnkV, double[] turnkA, double[] turnZero, boolean[] driveInversion, boolean[] reversed) {
+            double[] turnkV, double[] turnkA, double[] turnZero, boolean[] driveInversion, boolean[] reversed, double driveModifier, boolean[] turnInversion) {
         this.wheelDiameterMeters = wheelDiameterMeters;
         this.driveGearing = driveGearing;
         this.mu = mu;
@@ -34,6 +34,8 @@ public final class SwerveConfig {
         this.turnZero = turnZero;
         this.driveInversion = driveInversion;
         this.reversed = reversed;
+        this.driveModifier = driveModifier;
+        this.turnInversion = turnInversion;
     }
 
 }

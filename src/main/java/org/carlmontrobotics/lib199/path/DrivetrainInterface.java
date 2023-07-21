@@ -50,12 +50,16 @@ public interface DrivetrainInterface extends Subsystem {
     public double getHeadingDeg();
 
     /**
-     * Sets odometry based on current gyro angle and pose
+     * @return The current position of the robot
+     */
+    public Pose2d getPose();
+
+    /**
+     * Sets odometry to the specified pose
      * 
-     * @param gyroAngle   The angle reported by the gyroscope.
      * @param initialPose The starting position of the robot on the field.
      */
-    public void setOdometry(Rotation2d gyroAngle, Pose2d initialPose);
+    public void setPose(Pose2d initialPose);
 
     /**
      * Stops the drivetrain

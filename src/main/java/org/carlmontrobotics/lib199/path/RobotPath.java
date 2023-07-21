@@ -97,17 +97,17 @@ public class RobotPath {
         if (trajectory == null) {
             generateTrajectory();
         }
-        hs.reset();
         // We want the robot to stay facing the same direction (in this case), so save
         // the current heading (make sure to update at the start of the command)
-        AtomicReference<Rotation2d> headingRef = new AtomicReference<>(getRotationOfDrivetrain(dt));
+        AtomicReference<Rotation2d> headingRef = new AtomicReference<>(dt.getPose().getRotation());
         Supplier<Rotation2d> desiredHeading = (!faceInPathDirection) ? () -> headingRef.get() : () -> hs.sample();
         Command command = dt.createAutoCommand(trajectory, desiredHeading);
+        command = new InstantCommand(hs::reset).andThen(command, new InstantCommand(hs::stop));
         if (stopAtEnd) {
             command = command.andThen(new InstantCommand(dt::stop, dt));
         }
         if (!faceInPathDirection) {
-            command = new InstantCommand(() -> headingRef.set(getRotationOfDrivetrain(dt))).andThen(command);
+            command = new InstantCommand(() -> headingRef.set(dt.getPose().getRotation())).andThen(command);
             SmartDashboard.putNumber("Desired Path Heading", headingRef.get().getDegrees());
         }
         return command;
@@ -149,7 +149,7 @@ public class RobotPath {
         if (trajectory == null) {
             generateTrajectory();
         }
-        dt.setOdometry(Rotation2d.fromDegrees(dt.getHeadingDeg()), trajectory.getInitialPose());
+        dt.setPose(trajectory.getInitialPose());
     }
 
     /**
@@ -309,15 +309,6 @@ public class RobotPath {
     public static File getPathFile(String pathName) {
         return Filesystem.getDeployDirectory().toPath().resolve(Paths.get("PathWeaver/Paths/" + pathName + ".path"))
                 .toFile();
-    }
-
-    private static final Rotation2d getRotationOfDrivetrain(DrivetrainInterface dt) {
-        return
-            dt instanceof SwerveDriveInterface ?
-                ((SwerveDriveInterface)dt).getOdometry().getPoseMeters().getRotation() :
-                dt instanceof DifferentialDriveInterface ?
-                    ((DifferentialDriveInterface)dt).getOdometry().getPoseMeters().getRotation() :
-                    Rotation2d.fromDegrees(dt.getHeadingDeg());
     }
 
 }

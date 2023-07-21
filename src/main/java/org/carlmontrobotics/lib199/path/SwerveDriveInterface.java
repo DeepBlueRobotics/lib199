@@ -1,19 +1,26 @@
 package org.carlmontrobotics.lib199.path;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
 import java.util.function.Supplier;
+
+import com.pathplanner.lib.PathPlannerTrajectory;
+import com.pathplanner.lib.auto.SwerveAutoBuilder;
+import com.pathplanner.lib.commands.PPSwerveControllerCommand;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
-import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
-import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
+import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.math.trajectory.TrajectoryConfig;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
 import edu.wpi.first.math.trajectory.constraint.SwerveDriveKinematicsConstraint;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandBase;
 import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
 
 public interface SwerveDriveInterface extends DrivetrainInterface {
@@ -33,13 +40,6 @@ public interface SwerveDriveInterface extends DrivetrainInterface {
     public SwerveDriveKinematics getKinematics();
 
     /**
-     * Gets Swerve Drive odometry
-     * 
-     * @return odometry
-     */
-    public SwerveDriveOdometry getOdometry();
-
-    /**
      * Retrieves the PID constants which will be used for path following in the form
      * { xPID, yPID, zPID } The values in these arrays will be read as P, I, D All
      * three xPID, yPID, zPID and P, I, D values must be included
@@ -49,14 +49,13 @@ public interface SwerveDriveInterface extends DrivetrainInterface {
     public double[][] getPIDConstants();
 
     /**
-     * Sets odometry based on current kinematics, gyro angle, pose
-     * 
-     * @param odometry current kinematics, gyro angle, pose
+     * @return The current positions of the swerve modules
      */
-    public void setOdometry(SwerveDriveOdometry odometry);
+    public SwerveModulePosition[] getModulePositions();
 
     /**
      * Configures the constants for generating a trajectory
+     * WARNING: THIS METHOD IS NOT CALLED IF USING PPRobotPath!
      * 
      * @param path The configuration for generating a trajectory
      */
@@ -87,22 +86,42 @@ public interface SwerveDriveInterface extends DrivetrainInterface {
         ProfiledPIDController thetaController = new ProfiledPIDController(thetaPID[0], thetaPID[1], thetaPID[2],
                 new Constraints(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY));
         thetaController.enableContinuousInput(-Math.PI, Math.PI);
-        return new SwerveControllerCommand(trajectory,
-                // Call getOdometry in the supplier because the odometry object may be reset
-                // when the command is run
-                () -> getOdometry().getPoseMeters(), getKinematics(), xController, yController, thetaController,
-                desiredHeading, this::drive, this);
+        return new SwerveControllerCommand(trajectory, this::getPose, getKinematics(), xController, yController, thetaController, desiredHeading, this::drive, this);
     }
 
     /**
-     * Sets odometry based on current kinematics, gyro angle, and pose
+     * Constructs a new PPSwerveControllerCommand that, when executed, will follow the
+     * provided trajectory.
      * 
-     * @param gyroAngle   The angle reported by the gyroscope.
-     * @param initialPose The starting position of the robot on the field.
+     * @param trajectory The trajectory to follow.
+     * @param eventMap   Map of event marker names to the commands that should run when reaching that marker.
+     *                   This SHOULD NOT contain any commands requiring Drivetrain, or it will be interrupted
+     * @return PPSwerveControllerCommand
      */
-    @Override
-    public default void setOdometry(Rotation2d gyroAngle, Pose2d initialPose) {
-        setOdometry(new SwerveDriveOdometry(getKinematics(), gyroAngle, initialPose));
+    public default Command createPPAutoCommand(PathPlannerTrajectory trajectory, HashMap<String, Command> eventMap) {
+        return createPPAutoCommand(Arrays.asList(trajectory), eventMap);
+    }
+
+    /**
+     * Constructs a new PPSwerveControllerCommand that, when executed, will follow the
+     * provided trajectory.
+     * 
+     * @param trajectory The trajectory to follow.
+     * @param eventMap   Map of event marker names to the commands that should run when reaching that marker.
+     *                   This SHOULD NOT contain any commands requiring Drivetrain, or it will be interrupted
+     * @return PPSwerveControllerCommand
+     */
+    public default Command createPPAutoCommand(List<PathPlannerTrajectory> trajectory, HashMap<String, Command> eventMap) {
+        PIDController[] pidControllers = Arrays.stream(getPIDConstants()).map(constants -> new PIDController(constants[0], constants[1], constants[2])).toArray(PIDController[]::new);
+        pidControllers[2].enableContinuousInput(-Math.PI, Math.PI);
+        // Use SwerveAutoBuilder because required argument for base auto builder "DrivetrainType" is protected
+        return new SwerveAutoBuilder(this::getPose, this::setPose, null, null, null, null, eventMap, true) {
+            @Override
+            public CommandBase followPath(PathPlannerTrajectory trajectory) {
+                // AutoBuilder will convert this to work with events
+                return new PPSwerveControllerCommand(trajectory, poseSupplier, getKinematics(), pidControllers[0], pidControllers[1], pidControllers[2], SwerveDriveInterface.this::drive, true, SwerveDriveInterface.this);
+            };
+        }.fullAuto(trajectory);
     }
 
 }
