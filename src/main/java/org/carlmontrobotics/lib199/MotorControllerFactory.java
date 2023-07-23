@@ -8,9 +8,8 @@
 package org.carlmontrobotics.lib199;
 
 import com.ctre.phoenix.motorcontrol.NeutralMode;
-import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
-import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
 import com.ctre.phoenix.sensors.CANCoder;
+import com.ctre.phoenix6.hardware.TalonFX;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMax.ExternalFollower;
 import com.revrobotics.CANSparkMax.IdleMode;
@@ -18,8 +17,6 @@ import com.revrobotics.CANSparkMaxLowLevel;
 import com.revrobotics.SparkMaxPIDController;
 
 import org.carlmontrobotics.lib199.sim.MockSparkMax;
-import org.carlmontrobotics.lib199.sim.MockTalonSRX;
-import org.carlmontrobotics.lib199.sim.MockVictorSPX;
 import org.carlmontrobotics.lib199.sim.MockedCANCoder;
 
 import edu.wpi.first.cameraserver.CameraServer;
@@ -32,13 +29,8 @@ import edu.wpi.first.wpilibj.RobotBase;
  */
 public class MotorControllerFactory {
 
-  public static WPI_TalonSRX createTalon(int id) {
-    WPI_TalonSRX talon;
-    if (RobotBase.isReal()) {
-        talon = new WPI_TalonSRX(id);
-    } else {
-        talon = MockTalonSRX.createMockTalonSRX(id);
-    }
+  public static TalonFX createTalon(int id) {
+    TalonFX talon = new TalonFX(id);
 
     // Put all configurations for the talon motor controllers in here.
     // All values are from last year's code.
