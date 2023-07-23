@@ -9,7 +9,9 @@ package org.carlmontrobotics.lib199;
 
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.sensors.CANCoder;
+import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMax.ExternalFollower;
 import com.revrobotics.CANSparkMax.IdleMode;
@@ -34,15 +36,17 @@ public class MotorControllerFactory {
 
     // Put all configurations for the talon motor controllers in here.
     // All values are from last year's code.
-    MotorErrors.reportError(talon.configPeakOutputForward(1, 10));
-    MotorErrors.reportError(talon.configPeakOutputReverse(-1, 10));
+    MotorOutputConfigs motorOutputConfigs = new MotorOutputConfigs();
+    motorOutputConfigs.PeakForwardDutyCycle = 1;
+    motorOutputConfigs.PeakReverseDutyCycle = -1;
+    motorOutputConfigs.NeutralMode = NeutralModeValue.Brake;
+    motorOutputConfigs.DutyCycleNeutralDeadband = 0.001;
+    MotorErrors.reportError(talon.getConfigurator().apply(motorOutputConfigs));
     MotorErrors.reportError(talon.configPeakCurrentLimit(0, 0));
     MotorErrors.reportError(talon.configPeakCurrentDuration(0, 0));
     // 40 Amps is the amp limit of a CIM. lThe PDP has 40 amp circuit breakers,
     MotorErrors.reportError(talon.configContinuousCurrentLimit(30, 0));
     talon.enableCurrentLimit(true);
-    MotorErrors.reportError(talon.configNeutralDeadband(0.001, 10));
-    talon.setNeutralMode(NeutralMode.Brake);
 
     return talon;
   }
