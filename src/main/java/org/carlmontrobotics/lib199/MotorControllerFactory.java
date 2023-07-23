@@ -34,8 +34,6 @@ public class MotorControllerFactory {
 
     // Put all configurations for the talon motor controllers in here.
     // All values are from last year's code.
-    MotorErrors.reportError(talon.configNominalOutputForward(0, 10));
-    MotorErrors.reportError(talon.configNominalOutputReverse(0, 10));
     MotorErrors.reportError(talon.configPeakOutputForward(1, 10));
     MotorErrors.reportError(talon.configPeakOutputReverse(-1, 10));
     MotorErrors.reportError(talon.configPeakCurrentLimit(0, 0));
