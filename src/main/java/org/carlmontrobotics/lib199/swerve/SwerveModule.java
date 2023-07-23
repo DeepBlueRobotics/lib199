@@ -16,6 +16,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.util.sendable.SendableRegistry;
@@ -234,7 +235,7 @@ public class SwerveModule implements Sendable {
      * @return module angle in degrees
      */
     public double getModuleAngle() {
-        return MathUtil.inputModulus(turnEncoder.getAbsolutePosition().getValue() - turnZero, -180, 180);
+        return MathUtil.inputModulus(Units.rotationsToDegrees(turnEncoder.getAbsolutePosition().getValue()) - turnZero, -180, 180);
     }
 
     /**
@@ -270,9 +271,9 @@ public class SwerveModule implements Sendable {
     public void updateSmartDashboard() {
         String moduleString = type.toString();
         // Display the position of the quadrature encoder.
-        SmartDashboard.putNumber(moduleString + " Incremental Position", turnEncoder.getPosition().getValue());
+        SmartDashboard.putNumber(moduleString + " Incremental Position", Units.rotationsToDegrees(turnEncoder.getPosition().getValue()));
         // Display the position of the analog encoder.
-        SmartDashboard.putNumber(moduleString + " Absolute Angle (deg)", turnEncoder.getAbsolutePosition().getValue());
+        SmartDashboard.putNumber(moduleString + " Absolute Angle (deg)", Units.rotationsToDegrees(turnEncoder.getAbsolutePosition().getValue()));
         // Display the module angle as calculated using the absolute encoder.
         SmartDashboard.putNumber(moduleString + " Turn Measured Pos (deg)", getModuleAngle());
         SmartDashboard.putNumber(moduleString + " Encoder Position", drive.getEncoder().getPosition());
@@ -313,8 +314,8 @@ public class SwerveModule implements Sendable {
         builder.setActuator(true);
         builder.setSafeState(() -> setSpeed(0));
         builder.setSmartDashboardType("SwerveModule");
-        builder.addDoubleProperty("Incremental Position", () -> turnEncoder.getPosition().getValue(), null);
-        builder.addDoubleProperty("Absolute Angle (deg)", () -> turnEncoder.getAbsolutePosition().getValue(), null);
+        builder.addDoubleProperty("Incremental Position", () -> Units.rotationsToDegrees(turnEncoder.getPosition().getValue()), null);
+        builder.addDoubleProperty("Absolute Angle (deg)", () -> Units.rotationsToDegrees(turnEncoder.getAbsolutePosition().getValue()), null);
         builder.addDoubleProperty("Turn Measured Pos (deg)", this::getModuleAngle, null);
         builder.addDoubleProperty("Encoder Position", drive.getEncoder()::getPosition, null);
         // Display the speed that the robot thinks it is travelling at.
