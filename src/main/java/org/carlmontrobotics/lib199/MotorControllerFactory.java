@@ -7,9 +7,9 @@
 
 package org.carlmontrobotics.lib199;
 
-import com.ctre.phoenix.sensors.CANCoder;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
+import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.revrobotics.CANSparkMax;
@@ -19,7 +19,6 @@ import com.revrobotics.CANSparkMaxLowLevel;
 import com.revrobotics.SparkMaxPIDController;
 
 import org.carlmontrobotics.lib199.sim.MockSparkMax;
-import org.carlmontrobotics.lib199.sim.MockedCANCoder;
 
 import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.cscore.UsbCamera;
@@ -129,9 +128,8 @@ public class MotorControllerFactory {
    * @deprecated Use {@link SensorFactory#createCANCoder(int)} instead.
    */
   @Deprecated
-  public static CANCoder createCANCoder(int port) {
-    CANCoder canCoder = new CANCoder(port);
-    if(RobotBase.isSimulation()) new MockedCANCoder(canCoder);
+  public static CANcoder createCANCoder(int port) {
+    CANcoder canCoder = new CANcoder(port);
     return canCoder;
   }
 

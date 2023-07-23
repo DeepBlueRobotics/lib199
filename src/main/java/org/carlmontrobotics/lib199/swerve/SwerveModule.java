@@ -2,8 +2,9 @@ package org.carlmontrobotics.lib199.swerve;
 
 import java.util.function.Supplier;
 
-import com.ctre.phoenix.sensors.AbsoluteSensorRange;
-import com.ctre.phoenix.sensors.CANCoder;
+import com.ctre.phoenix6.configs.MagnetSensorConfigs;
+import com.ctre.phoenix6.hardware.CANcoder;
+import com.ctre.phoenix6.signals.AbsoluteSensorRangeValue;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMax.IdleMode;
 
@@ -31,7 +32,7 @@ public class SwerveModule implements Sendable {
     private SwerveConfig config;
     private ModuleType type;
     private CANSparkMax drive, turn;
-    private CANCoder turnEncoder;
+    private CANcoder turnEncoder;
     private PIDController drivePIDController;
     private ProfiledPIDController turnPIDController;
     private TrapezoidProfile.Constraints turnConstraints;
@@ -42,7 +43,7 @@ public class SwerveModule implements Sendable {
     private SimpleMotorFeedforward forwardSimpleMotorFF, backwardSimpleMotorFF, turnSimpleMotorFeedforward;
     private double desiredSpeed, lastAngle, maxAchievableTurnVelocityDps, maxAchievableTurnAccelerationMps2, turnToleranceDeg, angleDiff;
 
-    public SwerveModule(SwerveConfig config, ModuleType type, CANSparkMax drive, CANSparkMax turn, CANCoder turnEncoder,
+    public SwerveModule(SwerveConfig config, ModuleType type, CANSparkMax drive, CANSparkMax turn, CANcoder turnEncoder,
                         int arrIndex, Supplier<Float> pitchDegSupplier, Supplier<Float> rollDegSupplier) {
         //SmartDashboard.putNumber("Target Angle (deg)", 0.0);
         this.timer = new Timer();
@@ -106,7 +107,10 @@ public class SwerveModule implements Sendable {
         turnPIDController.setTolerance(turnToleranceDeg);
 
         this.turnEncoder = turnEncoder;
-        this.turnEncoder.configAbsoluteSensorRange(AbsoluteSensorRange.Signed_PlusMinus180);
+        MagnetSensorConfigs rangeConfig = new MagnetSensorConfigs();
+        // WARNING: Signed_PlusMinusHalf != Signed-PlusMinus180 (Phoenix 6 does not provide PlusMinus180)
+        rangeConfig.AbsoluteSensorRange = AbsoluteSensorRangeValue.Signed_PlusMinusHalf;
+        this.turnEncoder.getConfigurator().apply(rangeConfig);
 
         this.driveModifier = config.driveModifier;
         this.reversed = config.reversed[arrIndex];
@@ -230,7 +234,7 @@ public class SwerveModule implements Sendable {
      * @return module angle in degrees
      */
     public double getModuleAngle() {
-        return MathUtil.inputModulus(turnEncoder.getAbsolutePosition()-turnZero, -180, 180);
+        return MathUtil.inputModulus(turnEncoder.getAbsolutePosition().getValue() - turnZero, -180, 180);
     }
 
     /**
@@ -266,9 +270,9 @@ public class SwerveModule implements Sendable {
     public void updateSmartDashboard() {
         String moduleString = type.toString();
         // Display the position of the quadrature encoder.
-        SmartDashboard.putNumber(moduleString + " Incremental Position", turnEncoder.getPosition());
+        SmartDashboard.putNumber(moduleString + " Incremental Position", turnEncoder.getPosition().getValue());
         // Display the position of the analog encoder.
-        SmartDashboard.putNumber(moduleString + " Absolute Angle (deg)", turnEncoder.getAbsolutePosition());
+        SmartDashboard.putNumber(moduleString + " Absolute Angle (deg)", turnEncoder.getAbsolutePosition().getValue());
         // Display the module angle as calculated using the absolute encoder.
         SmartDashboard.putNumber(moduleString + " Turn Measured Pos (deg)", getModuleAngle());
         SmartDashboard.putNumber(moduleString + " Encoder Position", drive.getEncoder().getPosition());
@@ -309,8 +313,8 @@ public class SwerveModule implements Sendable {
         builder.setActuator(true);
         builder.setSafeState(() -> setSpeed(0));
         builder.setSmartDashboardType("SwerveModule");
-        builder.addDoubleProperty("Incremental Position", turnEncoder::getPosition, null);
-        builder.addDoubleProperty("Absolute Angle (deg)", turnEncoder::getAbsolutePosition, null);
+        builder.addDoubleProperty("Incremental Position", () -> turnEncoder.getPosition().getValue(), null);
+        builder.addDoubleProperty("Absolute Angle (deg)", () -> turnEncoder.getAbsolutePosition().getValue(), null);
         builder.addDoubleProperty("Turn Measured Pos (deg)", this::getModuleAngle, null);
         builder.addDoubleProperty("Encoder Position", drive.getEncoder()::getPosition, null);
         // Display the speed that the robot thinks it is travelling at.
