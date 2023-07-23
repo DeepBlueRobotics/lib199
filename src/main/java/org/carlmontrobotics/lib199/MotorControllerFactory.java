@@ -31,24 +31,6 @@ import edu.wpi.first.wpilibj.RobotBase;
  * Add your docs here.
  */
 public class MotorControllerFactory {
-  public static WPI_VictorSPX createVictor(int port) {
-    WPI_VictorSPX victor;
-    if (RobotBase.isReal()) {
-        victor = new WPI_VictorSPX(port);
-    } else {
-        victor = MockVictorSPX.createMockVictorSPX(port);
-    }
-
-    // Put all configurations for the victor motor controllers in here.
-    MotorErrors.reportError(victor.configNominalOutputForward(0, 10));
-    MotorErrors.reportError(victor.configNominalOutputReverse(0, 10));
-    MotorErrors.reportError(victor.configPeakOutputForward(1, 10));
-    MotorErrors.reportError(victor.configPeakOutputReverse(-1, 10));
-    MotorErrors.reportError(victor.configNeutralDeadband(0.001, 10));
-    victor.setNeutralMode(NeutralMode.Brake);
-
-    return victor;
-  }
 
   public static WPI_TalonSRX createTalon(int id) {
     WPI_TalonSRX talon;
