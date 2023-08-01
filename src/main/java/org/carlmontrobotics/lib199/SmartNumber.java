@@ -10,23 +10,17 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class SmartNumber
 {
-    private final double defaultValue;
-    private final int handle;
+    private final double userValue;
+    
     private final String name;
     private final DoubleEntry entry;
-    
-   
-    
 
-
-    public SmartNumber(String name, double defaultValue)
+    public SmartNumber(String name, double userValue)
     {
-        this.defaultValue = defaultValue;
+        this.userValue = userValue;
         this.name = name;
-        handle = NetworkTablesJNI.getEntry(NetworkTablesJNI.getDefaultInstance(), "SmartDashboard/" + name);
-        SmartDashboard.getEntry(name);
         DoubleTopic smartNumberTopic = new DoubleTopic(SmartDashboard.getEntry(name).getTopic());
-        entry = smartNumberTopic.getEntry(defaultValue);
+        entry = smartNumberTopic.getEntry(userValue);
         
         reset();
 
@@ -34,17 +28,27 @@ public class SmartNumber
     }
     public void reset()
     {
-        set(getDefault());
+        set(getValue());
     }
      
-    public void set(double defaultValue) 
+    public void set(double userValue) 
     {
-        entry.set(defaultValue);
+        entry.set(userValue);
     }
    
-    public double getDefault()
+    public double getValue()
     {
-        return defaultValue;
+        return userValue;
+    }
+
+    public String getName()
+    {
+        return name;
+    }
+
+    public DoubleEntry getEntry()
+    {
+        return entry;
     }
    
 
