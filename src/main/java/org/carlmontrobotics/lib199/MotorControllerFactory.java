@@ -10,7 +10,7 @@ package org.carlmontrobotics.lib199;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
-import com.ctre.phoenix.sensors.CANCoder;
+import com.ctre.phoenixpro.hardware.CANcoder;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMax.ExternalFollower;
 import com.revrobotics.CANSparkMax.IdleMode;
@@ -33,11 +33,12 @@ import edu.wpi.first.wpilibj.RobotBase;
 public class MotorControllerFactory {
   public static WPI_VictorSPX createVictor(int port) {
     WPI_VictorSPX victor;
-    if (RobotBase.isReal()) {
-        victor = new WPI_VictorSPX(port);
-    } else {
-        victor = MockVictorSPX.createMockVictorSPX(port);
-    }
+    victor = new WPI_VictorSPX(port);
+    // if (RobotBase.isReal()) {
+        
+    // } else {
+    //     victor = MockVictorSPX.createMockVictorSPX(port);
+    // }
 
     // Put all configurations for the victor motor controllers in here.
     MotorErrors.reportError(victor.configNominalOutputForward(0, 10));
@@ -52,11 +53,12 @@ public class MotorControllerFactory {
 
   public static WPI_TalonSRX createTalon(int id) {
     WPI_TalonSRX talon;
-    if (RobotBase.isReal()) {
-        talon = new WPI_TalonSRX(id);
-    } else {
-        talon = MockTalonSRX.createMockTalonSRX(id);
-    }
+    talon = new WPI_TalonSRX(id);
+    // if (RobotBase.isReal()) {
+    //     talon = new WPI_TalonSRX(id);
+    // } else {
+    //     talon = MockTalonSRX.createMockTalonSRX(id);
+    // }
 
     // Put all configurations for the talon motor controllers in here.
     // All values are from last year's code.
@@ -118,11 +120,12 @@ public class MotorControllerFactory {
 
   public static CANSparkMax createSparkMax(int id, MotorConfig config) {
     CANSparkMax spark;
-    if (RobotBase.isReal()) {
-      spark = new CANSparkMax(id, CANSparkMaxLowLevel.MotorType.kBrushless);
-    } else {
-      spark = MockSparkMax.createMockSparkMax(id, CANSparkMaxLowLevel.MotorType.kBrushless);
-    }
+    spark = new CANSparkMax(id, CANSparkMaxLowLevel.MotorType.kBrushless);
+    // if (RobotBase.isReal()) {
+    //   spark = new CANSparkMax(id, CANSparkMaxLowLevel.MotorType.kBrushless);
+    // } else {
+    //   spark = MockSparkMax.createMockSparkMax(id, CANSparkMaxLowLevel.MotorType.kBrushless);
+    // }
 
     MotorErrors.reportSparkMaxTemp(spark, config.temperatureLimitCelsius);
 
@@ -148,9 +151,9 @@ public class MotorControllerFactory {
    * @deprecated Use {@link SensorFactory#createCANCoder(int)} instead.
    */
   @Deprecated
-  public static CANCoder createCANCoder(int port) {
-    CANCoder canCoder = new CANCoder(port);
-    if(RobotBase.isSimulation()) new MockedCANCoder(canCoder);
+  public static CANcoder createCANCoder(int port) {
+    CANcoder canCoder = new CANcoder(port);
+    // if(RobotBase.isSimulation()) new MockedCANCoder(canCoder);
     return canCoder;
   }
 
