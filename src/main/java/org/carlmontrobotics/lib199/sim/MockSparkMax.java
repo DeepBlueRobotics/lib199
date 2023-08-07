@@ -2,6 +2,7 @@ package org.carlmontrobotics.lib199.sim;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.DoubleConsumer;
 
 import org.carlmontrobotics.lib199.DummySparkMaxAnswer;
 import org.carlmontrobotics.lib199.Mocks;
@@ -29,8 +30,10 @@ public class MockSparkMax {
     private RelativeEncoder encoder;
     private SparkMaxPIDController pidController;
     private boolean isInverted;
+    // We need to store the function so we can remove it from the follower list when this motor is no longer a follower
+    private DoubleConsumer followFunction;
     // Since we need to keep a record of all the motor's followers
-    private static ConcurrentHashMap<Integer, CopyOnWriteArrayList<SimDouble>> followMap = new ConcurrentHashMap<>();
+    private static ConcurrentHashMap<Integer, CopyOnWriteArrayList<DoubleConsumer>> followMap = new ConcurrentHashMap<>();
 
     public MockSparkMax(int port, MotorType type) {
         this.port = port;
@@ -44,12 +47,14 @@ public class MockSparkMax {
     public static CANSparkMax createMockSparkMax(int portPWM, MotorType type) {
         return Mocks.createMock(CANSparkMax.class, new MockSparkMax(portPWM, type), new DummySparkMaxAnswer());
     }
-    
+
     public void set(double speed) {
         speed = (isInverted ? -1.0 : 1.0) * speed;
         this.speed.set(speed);
         if (followMap.containsKey(getDeviceId())) {
-            for (SimDouble motorOutput : followMap.get(getDeviceId())) motorOutput.set(speed);
+            // For spark maxes, the follower receives the post-leader-inversion speed and does not depend on the inversion state from setInverted
+            // For following inversion semantics see the "Motor Inversion Testing Results" section of the "Programming Resources/Documentation" document in the the team drive
+            for (DoubleConsumer motorOutputSetter : followMap.get(getDeviceId())) motorOutputSetter.accept(speed);
         }
     }
 
@@ -60,23 +65,29 @@ public class MockSparkMax {
     public REVLibError follow(CANSparkMax leader, boolean invert) {
 		return follow(ExternalFollower.kFollowerSparkMax, leader.getDeviceId(), invert);
 	}
-    
+
     public REVLibError follow(ExternalFollower leader, int deviceID) {
         return follow(leader, deviceID, false);
     }
 
     public REVLibError follow(ExternalFollower leader, int deviceID, boolean invert) {
+        // For spark maxes, the follower receives the post-leader-inversion speed and does not depend on the inversion state from setInverted
+        // For following inversion semantics see the "Motor Inversion Testing Results" section of the "Programming Resources/Documentation" document in the the team drive
         if (!followMap.containsKey(deviceID)) {
-            followMap.put(deviceID, new CopyOnWriteArrayList<SimDouble>());
+            followMap.put(deviceID, new CopyOnWriteArrayList<>());
         }
-        followMap.get(deviceID).add(speed);
+        if(followFunction != null) {
+            followMap.values().forEach(followList -> followList.remove(followFunction));
+        }
+        double inversionMultiplier = (invert ? -1.0 : 1.0);
+        followMap.get(deviceID).add(newSpeed -> speed.set(inversionMultiplier * newSpeed));
         return REVLibError.kOk;
     }
-    
+
     public double get() {
         return speed.get();
     }
-    
+
     public int getDeviceId() {
         return port;
     }
@@ -104,7 +115,7 @@ public class MockSparkMax {
 	public REVLibError disableVoltageCompensation() {
 		return REVLibError.kOk;
     }
-    
+
     public REVLibError setSmartCurrentLimit(int limit) {
         return REVLibError.kOk;
     }
