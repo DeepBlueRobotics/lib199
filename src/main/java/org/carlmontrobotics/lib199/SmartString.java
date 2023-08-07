@@ -1,40 +1,35 @@
 package org.carlmontrobotics.lib199;
 
-
-import edu.wpi.first.networktables.DoubleEntry;
-import edu.wpi.first.networktables.DoubleTopic;
+import edu.wpi.first.networktables.StringEntry;
+import edu.wpi.first.networktables.StringTopic;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
-
-public class SmartNumber
-{
-    private final double userValue;
-    
+public class SmartString {
+    private final String userValue;
     private final String name;
-    private final DoubleEntry entry;
+    private final StringEntry entry;
 
-    public SmartNumber(String name, double userValue)
+    public SmartString(String name, String userValue)
     {
         this.userValue = userValue;
         this.name = name;
-        DoubleTopic smartNumberTopic = new DoubleTopic(SmartDashboard.getEntry(name).getTopic());
+        StringTopic smartNumberTopic = new StringTopic(SmartDashboard.getEntry(name).getTopic());
         entry = smartNumberTopic.getEntry(userValue);
         
         reset();
-
-
     }
+
     public void reset()
     {
         set(getValue());
     }
      
-    public void set(double userValue) 
+    public void set(String userValue) 
     {
         entry.set(userValue);
     }
    
-    public double getValue()
+    public String getValue()
     {
         return userValue;
     }
@@ -44,11 +39,8 @@ public class SmartNumber
         return name;
     }
 
-    public DoubleEntry getEntry()
+    public StringEntry getEntry()
     {
         return entry;
     }
-   
-
-    
 }
