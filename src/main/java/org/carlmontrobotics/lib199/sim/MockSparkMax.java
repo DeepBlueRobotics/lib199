@@ -80,7 +80,7 @@ public class MockSparkMax {
             followMap.values().forEach(followList -> followList.remove(followFunction));
         }
         double inversionMultiplier = (invert ? -1.0 : 1.0);
-        followMap.get(deviceID).add(newSpeed -> speed.set(inversionMultiplier * newSpeed));
+        followMap.get(deviceID).add(followFunction = (newSpeed -> speed.set(inversionMultiplier * newSpeed)));
         return REVLibError.kOk;
     }
 
