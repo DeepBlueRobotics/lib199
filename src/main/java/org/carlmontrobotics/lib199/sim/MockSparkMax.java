@@ -24,9 +24,6 @@ public class MockSparkMax {
 
     public static final double defaultNominalVoltage = 12.0;
 
-    // Assign the CAN port to a PWM port so it works with the simulator. Not a fan
-    // of this solution though
-    // CAN ports should be separate from PWM ports
     private final int port;
     private final SimDevice motor;
     private final SimDouble speed;
