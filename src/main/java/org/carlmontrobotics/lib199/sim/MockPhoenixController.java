@@ -68,4 +68,12 @@ abstract class MockPhoenixController implements AutoCloseable, DoubleConsumer {
         motorPWM.close();
         followMap.values().forEach(followerList -> followerList.remove(this));
     }
+
+    public void disable() {
+        set(0);
+    }
+
+    public void setVoltage(double outputVolts) {
+        set(outputVolts / 12.0);
+    }
 }

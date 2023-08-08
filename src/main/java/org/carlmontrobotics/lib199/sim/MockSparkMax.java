@@ -10,17 +10,20 @@ import org.carlmontrobotics.lib199.REVLibErrorAnswer;
 
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMax.ExternalFollower;
-import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 import com.revrobotics.REVLibError;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.SparkMaxPIDController;
+import com.revrobotics.SparkMaxRelativeEncoder;
 
 import edu.wpi.first.hal.SimDevice;
 import edu.wpi.first.hal.SimDevice.Direction;
 import edu.wpi.first.hal.SimDouble;
 
 public class MockSparkMax {
+
+    public static final double defaultNominalVoltage = 12.0;
+
     // Assign the CAN port to a PWM port so it works with the simulator. Not a fan
     // of this solution though
     // CAN ports should be separate from PWM ports
@@ -30,6 +33,7 @@ public class MockSparkMax {
     private RelativeEncoder encoder;
     private SparkMaxPIDController pidController;
     private boolean isInverted;
+    private double voltageCompensationNominalVoltage = defaultNominalVoltage;
     // We need to store the function so we can remove it from the follower list when this motor is no longer a follower
     private DoubleConsumer followFunction;
     // Since we need to keep a record of all the motor's followers
@@ -49,6 +53,7 @@ public class MockSparkMax {
     }
 
     public void set(double speed) {
+        speed *= voltageCompensationNominalVoltage / defaultNominalVoltage;
         speed = (isInverted ? -1.0 : 1.0) * speed;
         this.speed.set(speed);
         if (followMap.containsKey(getDeviceId())) {
@@ -76,12 +81,22 @@ public class MockSparkMax {
         if (!followMap.containsKey(deviceID)) {
             followMap.put(deviceID, new CopyOnWriteArrayList<>());
         }
-        if(followFunction != null) {
+        if(isFollower()) {
             followMap.values().forEach(followList -> followList.remove(followFunction));
         }
         double inversionMultiplier = (invert ? -1.0 : 1.0);
-        followMap.get(deviceID).add(followFunction = (newSpeed -> speed.set(inversionMultiplier * newSpeed)));
+        // Because ExternalFollower does not implement equals, this could result in bugs if the user passes in a custom ExternalFollower object,
+        // but I think that it's unlikely and users should use the builtin definitions anyway
+        if(leader.equals(ExternalFollower.kFollowerSparkMax)) {
+            followMap.get(deviceID).add(followFunction = (newSpeed -> speed.set(inversionMultiplier * newSpeed)));
+        } else if(leader.equals(ExternalFollower.kFollowerPhoenix)) {
+            MockPhoenixController.followMap.get(deviceID).add(followFunction = (newSpeed -> speed.set(inversionMultiplier * newSpeed)));
+        }
         return REVLibError.kOk;
+    }
+
+    public boolean isFollower() {
+        return followFunction != null;
     }
 
     public double get() {
@@ -96,28 +111,30 @@ public class MockSparkMax {
         return encoder;
     }
 
+    public RelativeEncoder getEncoder(SparkMaxRelativeEncoder.Type type, int countsPerRev) {
+        return getEncoder();
+    }
+
     public void setInverted(boolean inverted) {
         isInverted = inverted;
     }
 
-    public REVLibError restoreFactoryDefaults() {
-        return REVLibError.kOk;
-    }
-
-    public REVLibError setIdleMode(IdleMode mode) {
-        return REVLibError.kOk;
+    public boolean getInverted() {
+        return isInverted;
     }
 
     public REVLibError enableVoltageCompensation(double nominalVoltage) {
+        voltageCompensationNominalVoltage = nominalVoltage;
 		return REVLibError.kOk;
 	}
 
 	public REVLibError disableVoltageCompensation() {
+        voltageCompensationNominalVoltage = defaultNominalVoltage;
 		return REVLibError.kOk;
     }
 
-    public REVLibError setSmartCurrentLimit(int limit) {
-        return REVLibError.kOk;
+    public double getVoltageCompensationNominalVoltage() {
+        return voltageCompensationNominalVoltage;
     }
 
     public SparkMaxPIDController getPIDController() {
@@ -126,5 +143,17 @@ public class MockSparkMax {
 
     public void setVoltage(double outputVolts) {
         set(outputVolts / 12);
+    }
+
+    public void disable() {
+        set(0);
+    }
+
+    public double getAppliedOutput() {
+        return get();
+    }
+
+    public double getBusVoltage() {
+        return defaultNominalVoltage;
     }
 }
