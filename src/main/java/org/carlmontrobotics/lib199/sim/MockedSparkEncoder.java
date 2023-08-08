@@ -17,8 +17,8 @@ public class MockedSparkEncoder implements AutoCloseable, Runnable {
     private SimDevice device;
     private SimDouble count;
     private SimDouble gearing;
-    // Default value for a CANEncoder
-    private final int countsPerRevolution = 4096;
+    // Default value for a NEO/NEO 550
+    private final int countsPerRevolution = 42;
     private double velocity;
     private double positionConversionFactor = 1;
     private double velocityConversionFactor = 1;
