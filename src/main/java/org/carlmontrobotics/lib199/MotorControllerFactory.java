@@ -86,12 +86,7 @@ public class MotorControllerFactory {
   public static CANSparkMax createSparkMax(int id, int temperatureLimit) {
     CANSparkMax spark;
     if (RobotBase.isReal()) {
-      spark = new CachedSparkMax(id, CANSparkMaxLowLevel.MotorType.kBrushless);
-      if (spark.getFirmwareVersion() == 0) {
-        spark.close();
-        System.err.println("SparkMax on port: " + id + " is not connected!");
-        return MotorErrors.createDummySparkMax();
-      }
+      spark = new CANSparkMax(id, CANSparkMaxLowLevel.MotorType.kBrushless);
     } else {
         spark = MockSparkMax.createMockSparkMax(id, CANSparkMaxLowLevel.MotorType.kBrushless);
     }
