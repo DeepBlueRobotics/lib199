@@ -9,38 +9,33 @@ public class SmartString {
     private final String name;
     private final StringEntry entry;
 
-    public SmartString(String name, String userValue)
-    {
+    public SmartString(String name, String userValue) {
         this.userValue = userValue;
         this.name = name;
         StringTopic smartNumberTopic = new StringTopic(SmartDashboard.getEntry(name).getTopic());
         entry = smartNumberTopic.getEntry(userValue);
-        
+
         reset();
     }
 
-    public void reset()
-    {
+    public void reset() {
         set(getValue());
     }
-     
-    public void set(String userValue) 
-    {
+
+    public void set(String userValue) {
         entry.set(userValue);
     }
-   
-    public String getValue()
-    {
+
+    public String getValue() {
         return userValue;
     }
 
-    public String getName()
-    {
+    public String getName() {
         return name;
     }
 
-    public StringEntry getEntry()
-    {
+    public StringEntry getEntry() {
         return entry;
     }
+
 }
