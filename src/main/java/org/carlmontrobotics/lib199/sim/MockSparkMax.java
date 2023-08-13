@@ -1,8 +1,6 @@
 package org.carlmontrobotics.lib199.sim;
 
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.function.DoubleConsumer;
 
 import org.carlmontrobotics.lib199.DummySparkMaxAnswer;
 import org.carlmontrobotics.lib199.Mocks;
@@ -13,51 +11,70 @@ import com.revrobotics.CANSparkMax.ExternalFollower;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 import com.revrobotics.REVLibError;
 import com.revrobotics.RelativeEncoder;
+import com.revrobotics.SparkMaxAbsoluteEncoder;
+import com.revrobotics.SparkMaxAlternateEncoder;
+import com.revrobotics.SparkMaxAnalogSensor;
 import com.revrobotics.SparkMaxPIDController;
 import com.revrobotics.SparkMaxRelativeEncoder;
+import com.revrobotics.SparkMaxRelativeEncoder.Type;
 
 import edu.wpi.first.hal.SimDevice;
-import edu.wpi.first.hal.SimDevice.Direction;
-import edu.wpi.first.hal.SimDouble;
+import edu.wpi.first.wpilibj.motorcontrol.MotorController;
 
-public class MockSparkMax {
+public class MockSparkMax extends MockedMotorBase {
 
-    public static final double defaultNominalVoltage = 12.0;
+    private static final ConcurrentHashMap<Integer, MockSparkMax> controllers = new ConcurrentHashMap<>();
 
-    private final int port;
-    private final SimDevice motor;
-    private final SimDouble speed;
-    private RelativeEncoder encoder;
-    private SparkMaxPIDController pidController;
-    private boolean isInverted;
-    private double voltageCompensationNominalVoltage = defaultNominalVoltage;
-    // We need to store the function so we can remove it from the follower list when this motor is no longer a follower
-    private DoubleConsumer followFunction;
-    // Since we need to keep a record of all the motor's followers
-    private static ConcurrentHashMap<Integer, CopyOnWriteArrayList<DoubleConsumer>> followMap = new ConcurrentHashMap<>();
+    public final MotorType type;
+    private final MockedEncoder encoder;
+    private final SparkMaxPIDController pidController;
+    private final MockedSparkMaxPIDController pidControllerImpl;
+    private SparkMaxAbsoluteEncoder absoluteEncoder = null;
+    private MockedEncoder alternateEncoder = null;
+    private SparkMaxAnalogSensor analogSensor = null;
 
     public MockSparkMax(int port, MotorType type) {
-        this.port = port;
-        motor = SimDevice.create("SparkMax", port);
-        speed = motor.createDouble("Motor Output", Direction.kOutput, 0);
-        encoder = Mocks.createMock(RelativeEncoder.class, new MockedSparkEncoder(port), new REVLibErrorAnswer());
-        pidController = Mocks.createMock(SparkMaxPIDController.class, new MockedSparkMaxPIDController(), new REVLibErrorAnswer());
-        isInverted = false;
+        super("SparkMax", port, false);
+        this.type = type;
+
+        if(type == MotorType.kBrushless) {
+            encoder = new MockedEncoder(SimDevice.create(device.getName() + "_RelativeEncoder"), MockedEncoder.builtinEncoderCountsPerRev, false) {
+                @Override
+                public REVLibError setInverted(boolean inverted) {
+                    System.err.println(
+                            "(MockedEncoder) SparkMaxRelativeEncoder cannot be inverted separately from the motor in brushless mode!");
+                    return REVLibError.kParamInvalid;
+                }
+            };
+        } else {
+            encoder = new MockedEncoder(SimDevice.create(device.getName() + "_RelativeEncoder"), MockedEncoder.builtinEncoderCountsPerRev, false);
+        }
+
+        pidControllerImpl = new MockedSparkMaxPIDController(this);
+        pidController = Mocks.createMock(SparkMaxPIDController.class, pidControllerImpl, new REVLibErrorAnswer());
+        pidController.setFeedbackDevice(encoder);
+
+        controllers.put(port, this);
+    }
+
+    @Override
+    public double getRequestedSpeed() {
+        return pidControllerImpl.calculate(getCurrentDraw());
+    }
+
+    public static MockSparkMax getControllerWithId(int port) {
+        return controllers.get(port);
     }
 
     public static CANSparkMax createMockSparkMax(int portPWM, MotorType type) {
         return Mocks.createMock(CANSparkMax.class, new MockSparkMax(portPWM, type), new DummySparkMaxAnswer());
     }
 
+    @Override
     public void set(double speed) {
         speed *= voltageCompensationNominalVoltage / defaultNominalVoltage;
         speed = (isInverted ? -1.0 : 1.0) * speed;
-        this.speed.set(speed);
-        if (followMap.containsKey(getDeviceId())) {
-            // For spark maxes, the follower receives the post-leader-inversion speed and does not depend on the inversion state from setInverted
-            // For following inversion semantics see the "Motor Inversion Testing Results" section of the "Programming Resources/Documentation" document in the the team drive
-            for (DoubleConsumer motorOutputSetter : followMap.get(getDeviceId())) motorOutputSetter.accept(speed);
-        }
+        pidControllerImpl.setDutyCycle(speed);
     }
 
     public REVLibError follow(CANSparkMax leader) {
@@ -65,7 +82,8 @@ public class MockSparkMax {
     }
 
     public REVLibError follow(CANSparkMax leader, boolean invert) {
-		return follow(ExternalFollower.kFollowerSparkMax, leader.getDeviceId(), invert);
+		pidControllerImpl.follow(leader, invert); // No need to lookup the spark max if we already have it
+        return REVLibError.kOk;
 	}
 
     public REVLibError follow(ExternalFollower leader, int deviceID) {
@@ -73,31 +91,24 @@ public class MockSparkMax {
     }
 
     public REVLibError follow(ExternalFollower leader, int deviceID, boolean invert) {
-        // For spark maxes, the follower receives the post-leader-inversion speed and does not depend on the inversion state from setInverted
-        // For following inversion semantics see the "Motor Inversion Testing Results" section of the "Programming Resources/Documentation" document in the the team drive
-        if (!followMap.containsKey(deviceID)) {
-            followMap.put(deviceID, new CopyOnWriteArrayList<>());
-        }
-        if(isFollower()) {
-            followMap.values().forEach(followList -> followList.remove(followFunction));
-        }
-        double inversionMultiplier = (invert ? -1.0 : 1.0);
+        MotorController controller = null;
         // Because ExternalFollower does not implement equals, this could result in bugs if the user passes in a custom ExternalFollower object,
         // but I think that it's unlikely and users should use the builtin definitions anyway
         if(leader.equals(ExternalFollower.kFollowerSparkMax)) {
-            followMap.get(deviceID).add(followFunction = (newSpeed -> speed.set(inversionMultiplier * newSpeed)));
+            controller = getControllerWithId(deviceID);
         } else if(leader.equals(ExternalFollower.kFollowerPhoenix)) {
-            MockPhoenixController.followMap.get(deviceID).add(followFunction = (newSpeed -> speed.set(inversionMultiplier * newSpeed)));
+            // controller = MockPhoenixController.getControllerWithId(deviceID);
         }
+        if(controller == null) {
+            System.err.println("Error: Attempted to follow unknown motor controller: " + leader + " " + deviceID);
+            return REVLibError.kFollowConfigMismatch;
+        }
+        pidControllerImpl.follow(controller, invert);
         return REVLibError.kOk;
     }
 
     public boolean isFollower() {
-        return followFunction != null;
-    }
-
-    public double get() {
-        return speed.get();
+        return pidControllerImpl.isFollower();
     }
 
     public int getDeviceId() {
@@ -109,48 +120,100 @@ public class MockSparkMax {
     }
 
     public RelativeEncoder getEncoder(SparkMaxRelativeEncoder.Type type, int countsPerRev) {
+        if(type != Type.kHallSensor) {
+            System.err.println("Error: MockSparkMax only supports hall effect encoders");
+            return null;
+        }
         return getEncoder();
     }
 
+    @Override
     public void setInverted(boolean inverted) {
-        isInverted = inverted;
-    }
+        super.setInverted(inverted);
 
-    public boolean getInverted() {
-        return isInverted;
+        // Set the encoder inversion directly to avoid the error message
+        if(type == MotorType.kBrushless) encoder.inverted = inverted;
     }
 
     public REVLibError enableVoltageCompensation(double nominalVoltage) {
-        voltageCompensationNominalVoltage = nominalVoltage;
+        super.doEnableVoltageCompensation(nominalVoltage);
 		return REVLibError.kOk;
 	}
 
 	public REVLibError disableVoltageCompensation() {
-        voltageCompensationNominalVoltage = defaultNominalVoltage;
+        super.doDisableVoltageCompensation();
 		return REVLibError.kOk;
-    }
-
-    public double getVoltageCompensationNominalVoltage() {
-        return voltageCompensationNominalVoltage;
     }
 
     public SparkMaxPIDController getPIDController() {
         return pidController;
     }
 
-    public void setVoltage(double outputVolts) {
-        set(outputVolts / 12);
-    }
-
-    public void disable() {
-        set(0);
-    }
-
     public double getAppliedOutput() {
-        return get();
+        // MockedMotorBase returns speed before rate limiting.
+        // The current output is the speed after rate limiting.
+        return (isInverted ? -1.0 : 1.0) * speed.get();
     }
 
     public double getBusVoltage() {
         return defaultNominalVoltage;
     }
+
+    @Override
+    public void close() {
+        controllers.remove(port);
+        super.close();
+    }
+
+    public REVLibError enableSoftLimit​(CANSparkMax.SoftLimitDirection direction, boolean enable) {
+        System.err.println("Error: MockSparkMax does not support soft limits");
+        return REVLibError.kNotImplemented;
+    }
+
+    public synchronized SparkMaxAbsoluteEncoder getAbsoluteEncoder(SparkMaxAbsoluteEncoder.Type encoderType) {
+        System.err.println("WARNING: An absolute encoder was created for a simulated Spark Max. Currently, the only way to specify the CPR is to use the REVHardwareClient. A CPR of " + MockedEncoder.builtinEncoderCountsPerRev + " will be assumed.");
+        if(absoluteEncoder == null) {
+            MockedEncoder absoluteEncoderImpl = new MockedEncoder(SimDevice.create(device.getName() + "_AbsoluteEncoder"), MockedEncoder.builtinEncoderCountsPerRev, true);
+            absoluteEncoder = Mocks.createMock(SparkMaxAbsoluteEncoder.class, absoluteEncoderImpl, new REVLibErrorAnswer());
+        }
+        return absoluteEncoder;
+    }
+
+    public RelativeEncoder getAlternateEncoder(int countsPerRev) {
+        return getAlternateEncoder(SparkMaxAlternateEncoder.Type.kQuadrature, countsPerRev);
+    }
+
+    public synchronized RelativeEncoder getAlternateEncoder(SparkMaxAlternateEncoder.Type encoderType, int countsPerRev) {
+        if(alternateEncoder == null) {
+            alternateEncoder = new MockedEncoder(SimDevice.create(device.getName() + "_AlternateEncoder"), countsPerRev, false);
+        }
+        return alternateEncoder;
+    }
+
+    public synchronized SparkMaxAnalogSensor getAnalog(SparkMaxAnalogSensor.Mode mode) {
+        if(analogSensor == null) {
+            MockedEncoder analogSensorImpl = new MockedEncoder(SimDevice.create(device.getName() + "_AnalogSensor"), MockedEncoder.analogSensorCPR, true);
+            analogSensor = Mocks.createMock(SparkMaxAnalogSensor.class, analogSensorImpl, new REVLibErrorAnswer());
+        }
+        return analogSensor;
+    }
+
+    public double getClosedLoopRampRate() {
+        return getRampRateClosedLoop();
+    }
+
+    public double getOpenLoopRampRate() {
+        return getRampRateOpenLoop();
+    }
+
+    public REVLibError setClosedLoopRampRate(double secondsFromNeutralToFull) {
+        setRampRateClosedLoop(secondsFromNeutralToFull);
+        return REVLibError.kOk;
+    }
+
+    public REVLibError setOpenLoopRampRate(double secondsFromNeutralToFull) {
+        setRampRateOpenLoop(secondsFromNeutralToFull);
+        return REVLibError.kOk;
+    }
+
 }

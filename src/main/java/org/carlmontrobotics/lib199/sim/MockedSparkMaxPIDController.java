@@ -16,13 +16,17 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
+import edu.wpi.first.wpilibj.motorcontrol.MotorController;
 
 // NOT THREAD SAFE
 public class MockedSparkMaxPIDController {
 
     public final Map<Integer, Slot> slots = new ConcurrentHashMap<>();
+    public final MockedMotorBase motor;
     public Slot activeSlot;
     public CANSparkMax.ControlType controlType = CANSparkMax.ControlType.kDutyCycle;
+    public MotorController leader = null;
+    public boolean invertLeader = false;
     public double setpoint = 0.0;
     public double arbFF = 0.0;
     public FeedbackDevice feedbackDevice;
@@ -30,9 +34,67 @@ public class MockedSparkMaxPIDController {
     public double positionPIDWrappingMinInput = 0.0;
     public double positionPIDWrappingMaxInput = 0.0;
 
-    public MockedSparkMaxPIDController() {
+    // Methods to interface with MockSparkMax
+    public double calculate(double currentDraw) {
+        if(leader != null) {
+            // For spark maxes, the follower receives the post-leader-inversion speed and does not depend on the inversion state from setInverted
+            // For following inversion semantics see the "Motor Inversion Testing Results" section of the "Programming Resources/Documentation" document in the the team drive
+            return (invertLeader ? -1 : 1) * leader.get();
+        }
+
+        double output = 0;
+        switch(controlType) {
+            case kDutyCycle:
+                return setpoint;
+            case kVoltage:
+                return setpoint / 12.0;
+            case kPosition:
+                output = activeSlot.pidController.calculate(feedbackDevice.getPosition(), setpoint);
+                break;
+            case kVelocity:
+                output = activeSlot.pidController.calculate(feedbackDevice.getVelocity(), setpoint);
+                break;
+            case kSmartMotion:
+                output = activeSlot.profiledPIDController.calculate(feedbackDevice.getPosition(), setpoint);
+                if(Math.abs(activeSlot.profiledPIDController.getGoal().velocity) < activeSlot.smartMotionMinVelocity) {
+                    output = 0;
+                }
+                break;
+            case kCurrent:
+                output = activeSlot.pidController.calculate(currentDraw, setpoint);
+                break;
+            case kSmartVelocity:
+            default:
+                throw new IllegalArgumentException("Unsupported ControlType: " + controlType);
+        }
+        output += activeSlot.ff * setpoint + arbFF;
+        output = MathUtil.clamp(output, activeSlot.outputMin, activeSlot.outputMax);
+        return output;
+    }
+
+    public void setDutyCycle(double speed) {
+        setpoint = speed;
+        controlType = CANSparkMax.ControlType.kDutyCycle;
+        leader = null;
+        motor.setClosedLoopControl(false);
+    }
+
+    public void follow(MotorController leader, boolean invert) {
+        this.leader = leader;
+        invertLeader = invert;
+        motor.setClosedLoopControl(false);
+    }
+
+    public boolean isFollower() {
+        return leader != null;
+    }
+
+    public MockedSparkMaxPIDController(MockedMotorBase motor) {
+        this.motor = motor;
         slots.put(0, activeSlot = new Slot(positionPIDWrappingMinInput, positionPIDWrappingMaxInput, positionPIDWrappingEnabled));
     }
+
+    // Overrides
 
     public double getD() {
         return getD(0);
@@ -61,7 +123,7 @@ public class MockedSparkMaxPIDController {
     }
 
     public double getIAccum() {
-        System.err.println("WARNING (MockedSparkMaxPIDController): getIAccum() is not currently implemented");
+        System.err.println("(MockedSparkMaxPIDController): getIAccum() is not currently implemented");
         return 0;
     }
 
@@ -266,8 +328,8 @@ public class MockedSparkMaxPIDController {
     }
 
     public REVLibError setIAccum(double iAccum) {
-        System.err.println("WARNING (MockedSparkMaxPIDController): setIAccum() is not currently implemented");
-        return REVLibError.kOk;
+        System.err.println("(MockedSparkMaxPIDController): setIAccum() is not currently implemented");
+        return REVLibError.kNotImplemented;
     }
 
     public REVLibError setIMaxAccum(double iMaxAccum, int slotID) {
@@ -283,8 +345,8 @@ public class MockedSparkMaxPIDController {
     }
 
     public REVLibError setIZone(double IZone, int slotID) {
-        System.err.println("WARNING (MockedSparkMaxPIDController): setIZone() is not currently implemented");
-        return REVLibError.kOk;
+        System.err.println("(MockedSparkMaxPIDController): setIZone() is not currently implemented");
+        return REVLibError.kNotImplemented;
     }
 
     public REVLibError setOutputRange(double min, double max) {
@@ -323,11 +385,28 @@ public class MockedSparkMaxPIDController {
 
     public REVLibError setReference(double value, CANSparkMax.ControlType ctrl, int pidSlot, double arbFeedforward, SparkMaxPIDController.ArbFFUnits arbFFUnits) {
         if(ctrl == CANSparkMax.ControlType.kSmartVelocity) {
-            throw new IllegalArgumentException("WARNING (MockedSparkMaxPIDController): setReference() with ControlType.kSmartVelocity is not currently implemented");
+            System.err.println("(MockedSparkMaxPIDController): setReference() with ControlType.kSmartVelocity is not currently implemented");
+            return REVLibError.kNotImplemented;
         }
 
         setpoint = value;
         controlType = ctrl;
+        leader = null;
+
+        switch(ctrl) {
+            case kDutyCycle:
+            case kVoltage:
+                motor.setClosedLoopControl(false);
+                break;
+            case kPosition:
+            case kVelocity:
+            case kSmartMotion:
+            case kCurrent:
+                motor.setClosedLoopControl(true);
+                break;
+            case kSmartVelocity:
+                break; // This should never happen
+        }
 
         activeSlot = getSlot(pidSlot);
 
@@ -346,39 +425,10 @@ public class MockedSparkMaxPIDController {
         return REVLibError.kOk;
     }
 
-    public double calculate(double currentDraw) {
-        double output = 0;
-        switch(controlType) {
-            case kDutyCycle:
-                return setpoint;
-            case kVoltage:
-                return setpoint / 12.0;
-            case kPosition:
-                output = activeSlot.pidController.calculate(feedbackDevice.getPosition(), setpoint);
-                break;
-            case kVelocity:
-                output = activeSlot.pidController.calculate(feedbackDevice.getVelocity(), setpoint);
-                break;
-            case kSmartMotion:
-                output = activeSlot.profiledPIDController.calculate(feedbackDevice.getPosition(), setpoint);
-                if(Math.abs(activeSlot.profiledPIDController.getGoal().velocity) < activeSlot.smartMotionMinVelocity) {
-                    output = 0;
-                }
-                break;
-            case kCurrent:
-                output = activeSlot.pidController.calculate(currentDraw, setpoint);
-                break;
-            default:
-                throw new IllegalArgumentException("Unsupported ControlType: " + controlType);
-        }
-        output += activeSlot.ff * setpoint + arbFF;
-        output = MathUtil.clamp(output, activeSlot.outputMin, activeSlot.outputMax);
-        return output;
-    }
-
     public REVLibError setSmartMotionAccelStrategy(SparkMaxPIDController.AccelStrategy accelStrategy, int slotID) {
         if(accelStrategy != SparkMaxPIDController.AccelStrategy.kTrapezoidal) {
             System.err.println("(MockedSparkMaxPIDController) Ignoring command to set accel strategy on slot " + slotID + " to " + accelStrategy + ". Only AccelStrategy.kTrapezoidal is supported.");
+            return REVLibError.kParamNotImplementedDeprecated;
         }
         return REVLibError.kOk;
     }
