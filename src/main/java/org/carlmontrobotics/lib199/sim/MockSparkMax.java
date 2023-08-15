@@ -8,6 +8,7 @@ import org.carlmontrobotics.lib199.REVLibErrorAnswer;
 
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMax.ExternalFollower;
+import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 import com.revrobotics.REVLibError;
 import com.revrobotics.RelativeEncoder;
@@ -213,6 +214,11 @@ public class MockSparkMax extends MockedMotorBase {
 
     public REVLibError setOpenLoopRampRate(double secondsFromNeutralToFull) {
         setRampRateOpenLoop(secondsFromNeutralToFull);
+        return REVLibError.kOk;
+    }
+
+    public REVLibError setIdleMode(IdleMode mode) {
+        super.setBrakeModeEnabled(mode == IdleMode.kBrake);
         return REVLibError.kOk;
     }
 

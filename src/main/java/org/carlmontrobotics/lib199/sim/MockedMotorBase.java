@@ -45,7 +45,7 @@ public abstract class MockedMotorBase implements AutoCloseable, MotorController,
         this.neutralDeadband.set(Math.abs(deadbandPercent));
     }
 
-    public void setBrakeMode(boolean brakeMode) {
+    public void setBrakeModeEnabled(boolean brakeMode) {
         this.brakeModeEnabled.set(brakeMode);
     }
 
