@@ -12,9 +12,9 @@ import edu.wpi.first.hal.SimDouble;
 
 public class MockedEncoder implements AbsoluteEncoder, AnalogInput, AutoCloseable, RelativeEncoder {
 
-    public static final int builtinEncoderCountsPerRev = 42;
-    public static final double analogSensorMaxVoltage = 3.3;
-    public static final int analogSensorCPR = 8192;
+    public static final int NEO_BUILTIN_ENCODER_CPR = 42;
+    public static final double ANALOG_SENSOR_MAX_VOLTAGE = 3.3;
+    public static final int ANALOG_SENSOR_CPR = 8192;
 
     public final SimDevice device;
     protected final SimDouble position;
@@ -150,7 +150,7 @@ public class MockedEncoder implements AbsoluteEncoder, AnalogInput, AutoCloseabl
 
     @Override
     public double getVoltage() {
-        return MathUtil.inputModulus(position.get() / countsPerRev, 0, 1) * analogSensorMaxVoltage;
+        return MathUtil.inputModulus(position.get() / countsPerRev, 0, 1) * ANALOG_SENSOR_MAX_VOLTAGE;
     }
 
 }

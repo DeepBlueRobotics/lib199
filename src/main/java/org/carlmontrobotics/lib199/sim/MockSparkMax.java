@@ -39,7 +39,7 @@ public class MockSparkMax extends MockedMotorBase {
         this.type = type;
 
         if(type == MotorType.kBrushless) {
-            encoder = new MockedEncoder(SimDevice.create(device.getName() + "_RelativeEncoder"), MockedEncoder.builtinEncoderCountsPerRev, false) {
+            encoder = new MockedEncoder(SimDevice.create(device.getName() + "_RelativeEncoder"), MockedEncoder.NEO_BUILTIN_ENCODER_CPR, false) {
                 @Override
                 public REVLibError setInverted(boolean inverted) {
                     System.err.println(
@@ -48,7 +48,7 @@ public class MockSparkMax extends MockedMotorBase {
                 }
             };
         } else {
-            encoder = new MockedEncoder(SimDevice.create(device.getName() + "_RelativeEncoder"), MockedEncoder.builtinEncoderCountsPerRev, false);
+            encoder = new MockedEncoder(SimDevice.create(device.getName() + "_RelativeEncoder"), MockedEncoder.NEO_BUILTIN_ENCODER_CPR, false);
         }
 
         pidControllerImpl = new MockedSparkMaxPIDController(this);
@@ -172,9 +172,9 @@ public class MockSparkMax extends MockedMotorBase {
     }
 
     public synchronized SparkMaxAbsoluteEncoder getAbsoluteEncoder(SparkMaxAbsoluteEncoder.Type encoderType) {
-        System.err.println("WARNING: An absolute encoder was created for a simulated Spark Max. Currently, the only way to specify the CPR is to use the REVHardwareClient. A CPR of " + MockedEncoder.builtinEncoderCountsPerRev + " will be assumed.");
+        System.err.println("WARNING: An absolute encoder was created for a simulated Spark Max. Currently, the only way to specify the CPR is to use the REVHardwareClient. A CPR of " + MockedEncoder.NEO_BUILTIN_ENCODER_CPR + " will be assumed.");
         if(absoluteEncoder == null) {
-            MockedEncoder absoluteEncoderImpl = new MockedEncoder(SimDevice.create(device.getName() + "_AbsoluteEncoder"), MockedEncoder.builtinEncoderCountsPerRev, true);
+            MockedEncoder absoluteEncoderImpl = new MockedEncoder(SimDevice.create(device.getName() + "_AbsoluteEncoder"), MockedEncoder.NEO_BUILTIN_ENCODER_CPR, true);
             absoluteEncoder = Mocks.createMock(SparkMaxAbsoluteEncoder.class, absoluteEncoderImpl, new REVLibErrorAnswer());
         }
         return absoluteEncoder;
@@ -193,7 +193,7 @@ public class MockSparkMax extends MockedMotorBase {
 
     public synchronized SparkMaxAnalogSensor getAnalog(SparkMaxAnalogSensor.Mode mode) {
         if(analogSensor == null) {
-            MockedEncoder analogSensorImpl = new MockedEncoder(SimDevice.create(device.getName() + "_AnalogSensor"), MockedEncoder.analogSensorCPR, true);
+            MockedEncoder analogSensorImpl = new MockedEncoder(SimDevice.create(device.getName() + "_AnalogSensor"), MockedEncoder.ANALOG_SENSOR_CPR, true);
             analogSensor = Mocks.createMock(SparkMaxAnalogSensor.class, analogSensorImpl, new REVLibErrorAnswer());
         }
         return analogSensor;
