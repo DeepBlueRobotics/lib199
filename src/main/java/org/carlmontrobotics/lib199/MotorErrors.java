@@ -3,7 +3,7 @@ package org.carlmontrobotics.lib199;
 import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.ctre.phoenix.ErrorCode;
+import com.ctre.phoenix6.StatusCode;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMax.FaultID;
 import com.revrobotics.REVLibError;
@@ -25,16 +25,16 @@ public final class MotorErrors {
         Lib199Subsystem.registerAsyncPeriodic(MotorErrors::printSparkMaxErrorMessages);
     }
 
-    public static void reportError(ErrorCode error) {
-        reportError("CTRE", error, ErrorCode.OK);
+    public static void reportError(StatusCode error) {
+        reportError("CTRE", error, StatusCode.OK);
     }
 
     public static void reportError(REVLibError error) {
         reportError("REV Robotics", error, REVLibError.kOk);
     }
 
-    public static void reportErrors(ErrorCode... errors) {
-        for(ErrorCode error: errors) {
+    public static void reportErrors(StatusCode... errors) {
+        for(StatusCode error: errors) {
             reportError(error);
         }
     }

@@ -8,8 +8,8 @@ import static org.junit.Assume.assumeNoException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import com.ctre.phoenix.ErrorCode;
 import com.revrobotics.REVLibError;
+import com.ctre.phoenix6.StatusCode;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMax.FaultID;
 
@@ -85,21 +85,21 @@ public class MotorErrorsTest extends ErrStreamTest {
     public void testOkErrors() {
         errStream.reset();
         // Null Status
-        MotorErrors.reportError((ErrorCode)null);
+        MotorErrors.reportError((StatusCode)null);
         assertEquals(0, errStream.toByteArray().length);
         MotorErrors.reportError((REVLibError)null);
         assertEquals(0, errStream.toByteArray().length);
-        MotorErrors.reportErrors((ErrorCode)null, null);
+        MotorErrors.reportErrors((StatusCode)null, null);
         assertEquals(0, errStream.toByteArray().length);
         MotorErrors.reportErrors((REVLibError)null, null);
         assertEquals(0, errStream.toByteArray().length);
 
         // Ok Status
-        MotorErrors.reportError(ErrorCode.OK);
+        MotorErrors.reportError(StatusCode.OK);
         assertEquals(0, errStream.toByteArray().length);
         MotorErrors.reportError(REVLibError.kOk);
         assertEquals(0, errStream.toByteArray().length);
-        MotorErrors.reportErrors(ErrorCode.OK, ErrorCode.OK);
+        MotorErrors.reportErrors(StatusCode.OK, StatusCode.OK);
         assertEquals(0, errStream.toByteArray().length);
         MotorErrors.reportErrors(REVLibError.kOk, REVLibError.kOk);
         assertEquals(0, errStream.toByteArray().length);
@@ -108,12 +108,12 @@ public class MotorErrorsTest extends ErrStreamTest {
     @Test
     public void testOtherErrors() {
         errStream.reset();
-        for(ErrorCode code: ErrorCode.values()) {
-            if(code != ErrorCode.OK) {
+        for(StatusCode code: StatusCode.values()) {
+            if(code != StatusCode.OK) {
                 MotorErrors.reportError(code);
                 assertNotEquals(0, errStream.toByteArray().length);
                 errStream.reset();
-                MotorErrors.reportErrors(ErrorCode.OK, code);
+                MotorErrors.reportErrors(StatusCode.OK, code);
                 assertNotEquals(0, errStream.toByteArray().length);
                 errStream.reset();
             }

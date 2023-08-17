@@ -1,8 +1,6 @@
 package org.carlmontrobotics.lib199;
 
-import org.carlmontrobotics.lib199.sim.MockedCANCoder;
-
-import com.ctre.phoenix.sensors.CANCoder;
+import com.ctre.phoenix6.hardware.CANcoder;
 
 import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.cscore.UsbCamera;
@@ -20,10 +18,8 @@ public class SensorFactory {
      * @param port The CAN ID of the CANCoder
      * @return The CANCoder object
      */
-    public static CANCoder createCANCoder(int port) {
-        CANCoder canCoder = new CANCoder(port);
-        if (RobotBase.isSimulation())
-            new MockedCANCoder(canCoder);
+    public static CANcoder createCANCoder(int port) {
+        CANcoder canCoder = new CANcoder(port);
         return canCoder;
     }
 
