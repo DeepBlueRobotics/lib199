@@ -7,8 +7,8 @@ import org.carlmontrobotics.lib199.Lib199Subsystem;
 import com.revrobotics.REVLibError;
 
 import edu.wpi.first.hal.SimDevice;
-import edu.wpi.first.hal.SimDouble;
 import edu.wpi.first.hal.SimDevice.Direction;
+import edu.wpi.first.hal.SimDouble;
 
 public class MockedSparkEncoder implements AutoCloseable, Runnable {
 

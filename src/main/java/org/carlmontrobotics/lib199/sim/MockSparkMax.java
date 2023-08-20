@@ -44,7 +44,7 @@ public class MockSparkMax {
     public static CANSparkMax createMockSparkMax(int portPWM, MotorType type) {
         return Mocks.createMock(CANSparkMax.class, new MockSparkMax(portPWM, type), new DummySparkMaxAnswer());
     }
-    
+
     public void set(double speed) {
         speed = (isInverted ? -1.0 : 1.0) * speed;
         this.speed.set(speed);
@@ -60,7 +60,7 @@ public class MockSparkMax {
     public REVLibError follow(CANSparkMax leader, boolean invert) {
 		return follow(ExternalFollower.kFollowerSparkMax, leader.getDeviceId(), invert);
 	}
-    
+
     public REVLibError follow(ExternalFollower leader, int deviceID) {
         return follow(leader, deviceID, false);
     }
@@ -72,11 +72,11 @@ public class MockSparkMax {
         followMap.get(deviceID).add(speed);
         return REVLibError.kOk;
     }
-    
+
     public double get() {
         return speed.get();
     }
-    
+
     public int getDeviceId() {
         return port;
     }
@@ -104,7 +104,7 @@ public class MockSparkMax {
 	public REVLibError disableVoltageCompensation() {
 		return REVLibError.kOk;
     }
-    
+
     public REVLibError setSmartCurrentLimit(int limit) {
         return REVLibError.kOk;
     }
