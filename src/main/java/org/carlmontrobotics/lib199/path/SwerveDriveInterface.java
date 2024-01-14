@@ -20,7 +20,7 @@ import edu.wpi.first.math.trajectory.TrajectoryConfig;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
 import edu.wpi.first.math.trajectory.constraint.SwerveDriveKinematicsConstraint;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.CommandBase;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
 
 public interface SwerveDriveInterface extends DrivetrainInterface {
@@ -117,7 +117,7 @@ public interface SwerveDriveInterface extends DrivetrainInterface {
         // Use SwerveAutoBuilder because required argument for base auto builder "DrivetrainType" is protected
         return new SwerveAutoBuilder(this::getPose, this::setPose, null, null, null, null, eventMap, true) {
             @Override
-            public CommandBase followPath(PathPlannerTrajectory trajectory) {
+            public Command followPath(PathPlannerTrajectory trajectory) {
                 // AutoBuilder will convert this to work with events
                 return new PPSwerveControllerCommand(trajectory, poseSupplier, getKinematics(), pidControllers[0], pidControllers[1], pidControllers[2], SwerveDriveInterface.this::drive, true, SwerveDriveInterface.this);
             };
