@@ -14,7 +14,7 @@ public final class SwerveConfig {
             double[] turnkV, double[] turnkA, double[] turnZero, boolean[] driveInversion, boolean[] reversed, double driveModifier, boolean[] turnInversion) {
         this.wheelDiameterMeters = wheelDiameterMeters;
         this.driveGearing = driveGearing;
-        this.mu = mu;
+        this.mu = mu;//coefficient of friction between the wheel and the surface
         this.autoCentripetalAccel = autoCentripetalAccel;
         this.kForwardVolts = kForwardVolts;
         this.kForwardVels = kForwardVels;
@@ -28,7 +28,7 @@ public final class SwerveConfig {
         this.turnkP = turnkP;
         this.turnkI = turnkI;
         this.turnkD = turnkD;
-        this.turnkS = turnkS;
+        this.turnkS = turnkS;//for overcoming static friction
         this.turnkV = turnkV;
         this.turnkA = turnkA;
         this.turnZero = turnZero;
