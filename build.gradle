@@ -70,7 +70,7 @@ dependencies {
     nativeRelease wpi.java.vendor.jniRelease(wpi.platforms.desktop)
     simulationRelease wpi.sim.enableRelease()
 
-    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.1'
+    testImplementation 'junit:junit:4.12'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
     implementation 'org.mockito:mockito-core:3.6.0'
