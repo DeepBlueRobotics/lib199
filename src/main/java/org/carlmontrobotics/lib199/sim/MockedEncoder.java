@@ -10,6 +10,16 @@ import edu.wpi.first.hal.SimDevice.Direction;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.hal.SimDouble;
 
+/**
+ * Represents a base encoder class which can connect to a DeepBlueSim SimDeviceEncoderMediator.
+ *
+ * Currently this is only used for spark max simulation, pending #62. The REV classes just implement
+ * methods defined in {@link AbsoluteEncoder}, {@link AnalogInput}, and {@link RelativeEncoder}, so
+ * this class implements these interfaces to allow the compiler to check that all necessary methods
+ * are implemented.
+ *
+ * This class can be used as a mock implementation when needed, but if possible, it should be used directly to reduce overhead.
+ */
 public class MockedEncoder implements AbsoluteEncoder, AnalogInput, AutoCloseable, RelativeEncoder {
 
     public static final int NEO_BUILTIN_ENCODER_CPR = 42;
@@ -26,6 +36,13 @@ public class MockedEncoder implements AbsoluteEncoder, AnalogInput, AutoCloseabl
     protected double positionOffset = 0.0;
     protected boolean inverted = false;
 
+    /**
+     * @param device The device to retrieve position and velocity data from
+     * @param countsPerRev The cpr of the simulated encoder
+     * @param absolute Whether the encoder is an absolute encoder.
+     * This flag caps the position to one rotation via. {@link MathUtil#inputModulus(double, double, double)},
+     * disables {@link #setPosition(double)}, and enables {@link #setZeroOffset(double)}.
+     */
     public MockedEncoder(SimDevice device, int countsPerRev, boolean absolute) {
         this.device = device;
         position = device.createDouble("Position", Direction.kInput, 0);
@@ -61,6 +78,9 @@ public class MockedEncoder implements AbsoluteEncoder, AnalogInput, AutoCloseabl
         return countsPerRev;
     }
 
+    /**
+     * @return The current position of the encoder, not accounting for the position offset ({@link #setPosition(double)} and {@link #setZeroOffset(double)})
+     */
     public double getRawPosition() {
         return position.get() * (inverted ? -1 : 1) * positionConversionFactor / countsPerRev;
     }
@@ -105,10 +125,6 @@ public class MockedEncoder implements AbsoluteEncoder, AnalogInput, AutoCloseabl
     public REVLibError setInverted(boolean inverted) {
         this.inverted = inverted;
         return REVLibError.kOk;
-    }
-
-    public void setInvertedFromMotor(boolean inverted) {
-        this.inverted = inverted;
     }
 
     @Override

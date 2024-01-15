@@ -22,6 +22,9 @@ import com.revrobotics.SparkMaxRelativeEncoder.Type;
 import edu.wpi.first.hal.SimDevice;
 import edu.wpi.first.wpilibj.motorcontrol.MotorController;
 
+/**
+ * An extension of {@link MockedMotorBase} which implements spark-max-specific functionality
+ */
 public class MockSparkMax extends MockedMotorBase {
 
     private static final ConcurrentHashMap<Integer, MockSparkMax> controllers = new ConcurrentHashMap<>();
@@ -34,8 +37,13 @@ public class MockSparkMax extends MockedMotorBase {
     private MockedEncoder alternateEncoder = null;
     private SparkMaxAnalogSensor analogSensor = null;
 
+    /**
+     * @param port the port to associate this {@code MockSparkMax} with. Will be used to create the {@link SimDevice} and facilitate motor following.
+     * @param type the type of the simulated motor. If this is set to {@link MotorType#kBrushless}, the builtin encoder simulation will be configured
+     * to follow the inversion state of the motor and its {@code setInverted} method will be disabled.
+     */
     public MockSparkMax(int port, MotorType type) {
-        super("SparkMax", port, false);
+        super("SparkMax", port);
         this.type = type;
 
         if(type == MotorType.kBrushless) {
@@ -63,10 +71,21 @@ public class MockSparkMax extends MockedMotorBase {
         return pidControllerImpl.calculate(getCurrentDraw());
     }
 
+    /**
+     * @param port the port of the controller to search for
+     * @return Queries the simulated motor controller with the given port
+     */
     public static MockSparkMax getControllerWithId(int port) {
         return controllers.get(port);
     }
 
+    /**
+     * Creates a simulated {@link CANSparkMax} with an instance of this class acting as the underling implementation, and forwarding all unimplemented method calls to {@link DummySparkMaxAnswer}
+     * @param port the port to associate this {@code MockSparkMax} with. Will be used to create the {@link SimDevice} and facilitate motor following.
+     * @param type the type of the simulated motor. If this is set to {@link MotorType#kBrushless}, the builtin encoder simulation will be configured
+     * to follow the inversion state of the motor and its {@code setInverted} method will be disabled.
+     * @return the simulated {@link CANSparkMax}
+     */
     public static CANSparkMax createMockSparkMax(int portPWM, MotorType type) {
         return Mocks.createMock(CANSparkMax.class, new MockSparkMax(portPWM, type), new DummySparkMaxAnswer());
     }
@@ -166,11 +185,14 @@ public class MockSparkMax extends MockedMotorBase {
         super.close();
     }
 
-    public REVLibError enableSoftLimit​(CANSparkMax.SoftLimitDirection direction, boolean enable) {
-        System.err.println("Error: MockSparkMax does not support soft limits");
-        return REVLibError.kNotImplemented;
-    }
-
+    /**
+     * Creates a simulated {@link SparkMaxAbsoluteEncoder} linked to this simulated controller.
+     * After this method has been called once, its output is cached for future invocations.
+     * For this reason, the method is also {@code synchronized}.
+     *
+     * @param encoderType ignored
+     * @return the simulated encoder
+     */
     public synchronized SparkMaxAbsoluteEncoder getAbsoluteEncoder(SparkMaxAbsoluteEncoder.Type encoderType) {
         System.err.println("WARNING: An absolute encoder was created for a simulated Spark Max. Currently, the only way to specify the CPR is to use the REVHardwareClient. A CPR of " + MockedEncoder.NEO_BUILTIN_ENCODER_CPR + " will be assumed.");
         if(absoluteEncoder == null) {
@@ -180,10 +202,27 @@ public class MockSparkMax extends MockedMotorBase {
         return absoluteEncoder;
     }
 
+    /**
+     * Creates a simulated alternate encoder linked to this simulated controller.
+     * After this method has been called once, its output is cached for future invocations.
+     * This means that only the first call to this method will set the CPR of the encoder.
+     * For this reason, the method is also {@code synchronized}.
+     *
+     * @param countsPerRev the CPR of the absolute encoder
+     * @return the simulated encoder
+     */
     public RelativeEncoder getAlternateEncoder(int countsPerRev) {
         return getAlternateEncoder(SparkMaxAlternateEncoder.Type.kQuadrature, countsPerRev);
     }
 
+    /**
+     * Creates a simulated {@link SparkMaxAbsoluteEncoder} linked to this simulated controller.
+     * After this method has been called once, its output is cached for future invocations.
+     * For this reason, the method is also {@code synchronized}.
+     *
+     * @param encoderType ignored
+     * @return the simulated encoder
+     */
     public synchronized RelativeEncoder getAlternateEncoder(SparkMaxAlternateEncoder.Type encoderType, int countsPerRev) {
         if(alternateEncoder == null) {
             alternateEncoder = new MockedEncoder(SimDevice.create(device.getName() + "_AlternateEncoder"), countsPerRev, false);
@@ -191,6 +230,15 @@ public class MockSparkMax extends MockedMotorBase {
         return alternateEncoder;
     }
 
+    /**
+     * Creates a simulated {@link SparkMaxAnalogSensor} linked to this simulated controller.
+     * After this method has been called once, its output is cached for future invocations.
+     * For this reason, the method is also {@code synchronized}.
+     *
+     * @param mode setting this to {@link SparkMaxAnalogSensor.Mode#kAbsolute} makes the position relative to the position on startup.
+     * We will assume that this value is always zero, so this parameter has no effect.
+     * @return the simulated encoder
+     */
     public synchronized SparkMaxAnalogSensor getAnalog(SparkMaxAnalogSensor.Mode mode) {
         if(analogSensor == null) {
             MockedEncoder analogSensorImpl = new MockedEncoder(SimDevice.create(device.getName() + "_AnalogSensor"), MockedEncoder.ANALOG_SENSOR_CPR, true);
@@ -220,6 +268,12 @@ public class MockSparkMax extends MockedMotorBase {
     public REVLibError setIdleMode(IdleMode mode) {
         super.setBrakeModeEnabled(mode == IdleMode.kBrake);
         return REVLibError.kOk;
+    }
+
+    @Override
+    public void disable() {
+        // CANSparkMax sets the motor speed to zero rather than actually disabling the motor
+        set(0);
     }
 
 }
