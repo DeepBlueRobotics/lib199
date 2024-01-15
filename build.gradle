@@ -70,8 +70,7 @@ dependencies {
     nativeRelease wpi.java.vendor.jniRelease(wpi.platforms.desktop)
     simulationRelease wpi.sim.enableRelease()
 
-    testImplementation 'junit:junit:4.12'
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testImplementation 'junit:junit:4.13.2'
 
     implementation 'org.mockito:mockito-core:3.6.0'
     implementation group: 'org.apache.commons', name: 'commons-csv', version: '1.6'
