@@ -10,10 +10,10 @@ import org.carlmontrobotics.lib199.REVLibErrorAnswer;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkBase.ExternalFollower;
 import com.revrobotics.CANSparkBase.IdleMode;
-import com.revrobotics.CANSparkMaxLowLevel.MotorType;
+import com.revrobotics.CANSparkLowLevel.MotorType;
 import com.revrobotics.REVLibError;
 import com.revrobotics.RelativeEncoder;
-import com.revrobotics.SparkMaxPIDController;
+import com.revrobotics.SparkPIDController;
 
 import edu.wpi.first.hal.SimDevice;
 import edu.wpi.first.hal.SimDevice.Direction;
@@ -27,7 +27,7 @@ public class MockSparkMax {
     private final SimDevice motor;
     private final SimDouble speed;
     private RelativeEncoder encoder;
-    private SparkMaxPIDController pidController;
+    private SparkPIDController pidController;
     private boolean isInverted;
     // Since we need to keep a record of all the motor's followers
     private static ConcurrentHashMap<Integer, CopyOnWriteArrayList<SimDouble>> followMap = new ConcurrentHashMap<>();
@@ -37,7 +37,7 @@ public class MockSparkMax {
         motor = SimDevice.create("SparkMax", port);
         speed = motor.createDouble("Motor Output", Direction.kOutput, 0);
         encoder = Mocks.createMock(RelativeEncoder.class, new MockedSparkEncoder(port), new REVLibErrorAnswer());
-        pidController = Mocks.createMock(SparkMaxPIDController.class, new MockedSparkMaxPIDController(), new REVLibErrorAnswer());
+        pidController = Mocks.createMock(SparkPIDController.class, new MockedSparkMaxPIDController(), new REVLibErrorAnswer());
         isInverted = false;
     }
 
@@ -109,7 +109,7 @@ public class MockSparkMax {
         return REVLibError.kOk;
     }
 
-    public SparkMaxPIDController getPIDController() {
+    public SparkPIDController getPIDController() {
         return pidController;
     }
 

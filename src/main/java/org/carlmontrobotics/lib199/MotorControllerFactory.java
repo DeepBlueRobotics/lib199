@@ -14,8 +14,8 @@ import com.ctre.phoenix.sensors.CANCoder;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkBase.ExternalFollower;
 import com.revrobotics.CANSparkBase.IdleMode;
-import com.revrobotics.CANSparkMaxLowLevel;
-import com.revrobotics.SparkMaxPIDController;
+import com.revrobotics.CANSparkLowLevel;
+import com.revrobotics.SparkPIDController;
 
 import org.carlmontrobotics.lib199.sim.MockSparkMax;
 import org.carlmontrobotics.lib199.sim.MockTalonSRX;
@@ -86,9 +86,9 @@ public class MotorControllerFactory {
   public static CANSparkMax createSparkMax(int id, int temperatureLimit) {
     CANSparkMax spark;
     if (RobotBase.isReal()) {
-      spark = new CANSparkMax(id, CANSparkMaxLowLevel.MotorType.kBrushless);
+      spark = new CANSparkMax(id, CANSparkLowLevel.MotorType.kBrushless);
     } else {
-        spark = MockSparkMax.createMockSparkMax(id, CANSparkMaxLowLevel.MotorType.kBrushless);
+        spark = MockSparkMax.createMockSparkMax(id, CANSparkLowLevel.MotorType.kBrushless);
     }
 
     MotorErrors.reportSparkMaxTemp(spark, temperatureLimit);
@@ -101,7 +101,7 @@ public class MotorControllerFactory {
 
     MotorErrors.checkSparkMaxErrors(spark);
 
-    SparkMaxPIDController controller = spark.getPIDController();
+    SparkPIDController controller = spark.getPIDController();
     MotorErrors.reportError(controller.setOutputRange(-1, 1));
     MotorErrors.reportError(controller.setP(0));
     MotorErrors.reportError(controller.setI(0));
@@ -114,9 +114,9 @@ public class MotorControllerFactory {
   public static CANSparkMax createSparkMax(int id, MotorConfig config) {
     CANSparkMax spark;
     if (RobotBase.isReal()) {
-      spark = new CANSparkMax(id, CANSparkMaxLowLevel.MotorType.kBrushless);
+      spark = new CANSparkMax(id, CANSparkLowLevel.MotorType.kBrushless);
     } else {
-      spark = MockSparkMax.createMockSparkMax(id, CANSparkMaxLowLevel.MotorType.kBrushless);
+      spark = MockSparkMax.createMockSparkMax(id, CANSparkLowLevel.MotorType.kBrushless);
     }
 
     MotorErrors.reportSparkMaxTemp(spark, config.temperatureLimitCelsius);
@@ -129,7 +129,7 @@ public class MotorControllerFactory {
 
     MotorErrors.checkSparkMaxErrors(spark);
 
-    SparkMaxPIDController controller = spark.getPIDController();
+    SparkPIDController controller = spark.getPIDController();
     MotorErrors.reportError(controller.setOutputRange(-1, 1));
     MotorErrors.reportError(controller.setP(0));
     MotorErrors.reportError(controller.setI(0));
