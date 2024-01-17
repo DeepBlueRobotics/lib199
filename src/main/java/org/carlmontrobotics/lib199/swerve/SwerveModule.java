@@ -1,9 +1,11 @@
 package org.carlmontrobotics.lib199.swerve;
 
+
 import java.util.function.Supplier;
 
-import com.ctre.phoenix.sensors.AbsoluteSensorRange;
-import com.ctre.phoenix.sensors.CANCoder;
+import com.ctre.phoenix6.signals.AbsoluteSensorRangeValue;
+import com.ctre.phoenix6.configs.CANcoderConfiguration;
+import com.ctre.phoenix6.hardware.CANcoder;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkBase.IdleMode;
 
@@ -31,7 +33,7 @@ public class SwerveModule implements Sendable {
     private SwerveConfig config;
     private ModuleType type;
     private CANSparkMax drive, turn;
-    private CANCoder turnEncoder;
+    private CANcoder turnEncoder;
     private PIDController drivePIDController;
     private ProfiledPIDController turnPIDController;
     private TrapezoidProfile.Constraints turnConstraints;
@@ -42,7 +44,7 @@ public class SwerveModule implements Sendable {
     private SimpleMotorFeedforward forwardSimpleMotorFF, backwardSimpleMotorFF, turnSimpleMotorFeedforward;
     private double desiredSpeed, lastAngle, maxAchievableTurnVelocityDps, maxAchievableTurnAccelerationMps2, turnToleranceDeg, angleDiff;
 
-    public SwerveModule(SwerveConfig config, ModuleType type, CANSparkMax drive, CANSparkMax turn, CANCoder turnEncoder,
+    public SwerveModule(SwerveConfig config, ModuleType type, CANSparkMax drive, CANSparkMax turn, CANcoder turnEncoder,
                         int arrIndex, Supplier<Float> pitchDegSupplier, Supplier<Float> rollDegSupplier) {
         //SmartDashboard.putNumber("Target Angle (deg)", 0.0);
         this.timer = new Timer();
@@ -104,9 +106,11 @@ public class SwerveModule implements Sendable {
                                               turnConstraints);
         turnPIDController.enableContinuousInput(-180.0, 180.0);
         turnPIDController.setTolerance(turnToleranceDeg);
-
+        
+        CANcoderConfiguration configs = new CANcoderConfiguration();
+         configs.MagnetSensor.AbsoluteSensorRange = AbsoluteSensorRangeValue.Signed_PlusMinusHalf;
         this.turnEncoder = turnEncoder;
-        this.turnEncoder.configAbsoluteSensorRange(AbsoluteSensorRange.Signed_PlusMinus180);
+        this.turnEncoder.getConfigurator().apply(configs);
 
         this.driveModifier = config.driveModifier;
         this.reversed = config.reversed[arrIndex];

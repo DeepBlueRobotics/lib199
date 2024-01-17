@@ -58,7 +58,7 @@ public class MockSparkMax {
     }
 
     public REVLibError follow(CANSparkMax leader, boolean invert) {
-		return follow(ExternalFollower.kFollowerSparkMax, leader.getDeviceId(), invert);
+		return follow(ExternalFollower.kFollowerSpark, leader.getDeviceId(), invert);
 	}
     
     public REVLibError follow(ExternalFollower leader, int deviceID) {
