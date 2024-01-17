@@ -22,14 +22,14 @@ public class SmartNumber {
     }
 
     public void reset() {
-        set(getValue());
+        set(get());
     }
 
     public void set(double userValue) {
         entry.set(userValue);
     }
 
-    public double getValue() {
+    public double get() {
         return userValue;
     }
 

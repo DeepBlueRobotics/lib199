@@ -5,28 +5,28 @@ import org.junit.Test;
 
 public class SmartStringTest {
 
-    SmartString dizzy = new SmartString("Goober", "blue");
+    SmartString dizzy = new SmartString("Gargle", "blue");
 
     @Test
     public void testGetName() {
-        assertEquals(dizzy.getName(), "Goober");
+        assertEquals(dizzy.getName(), "Gargle");
     }
 
     @Test
     public void testGetUserValue() {
-        assertEquals(dizzy.getValue(), "blue", "blue");
+        assertEquals(dizzy.getValue(), "blue");
     }
 
     @Test
     public void testSetValue() {
         dizzy.set("splat");
-        assertEquals("splat", "splat");
+        assertEquals(dizzy.getName(), "splat");
     }
 
     @Test
     public void testReset() {
         dizzy.reset();
-        assertEquals("", "");
+        assertEquals(dizzy.getName(), "blue");
     }
 
 }

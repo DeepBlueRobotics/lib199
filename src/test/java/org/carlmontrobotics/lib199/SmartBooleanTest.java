@@ -15,13 +15,13 @@ public class SmartBooleanTest {
 
     @Test
     public void testGetUserValue() {
-        assertTrue(wingMan.getValue());
+        assertTrue(wingMan.get());
     }
 
     @Test
     public void testSetValue() {
         wingMan.set(false);
-        assertFalse(false);
+        assertFalse(wingMan.get());
     }
 
     @Test

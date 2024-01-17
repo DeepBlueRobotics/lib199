@@ -20,14 +20,14 @@ public class SmartBoolean {
     }
 
     public void reset() {
-        set(getValue());
+        set(get());
     }
 
-    public void set(Boolean userValue) {
+    public void set(boolean userValue) {
         entry.set(userValue);
     }
 
-    public Boolean getValue() {
+    public boolean get() {
         return userValue;
     }
 
