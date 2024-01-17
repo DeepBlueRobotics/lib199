@@ -2,8 +2,8 @@ package org.carlmontrobotics.lib199.sim;
 
 import java.util.HashMap;
 
-import com.ctre.phoenix.sensors.CANCoder;
-import com.ctre.phoenix.sensors.CANCoderSimCollection;
+import com.ctre.phoenix6.hardware.CANcoder;
+import com.ctre.phoenix6.sim.CANcoderSimState;
 
 import org.carlmontrobotics.lib199.Lib199Subsystem;
 
@@ -21,14 +21,14 @@ public class MockedCANCoder {
     private SimDevice device;
     private SimDouble position; // Rotations - Continuous
     private SimDouble gearing;
-    private CANCoderSimCollection sim;
+    private CANcoderSimState sim;
 
-    public MockedCANCoder(CANCoder canCoder) {
+    public MockedCANCoder(CANcoder canCoder) {
         port = canCoder.getDeviceID();
         device = SimDevice.create("CANCoder", port);
         position = device.createDouble("count", Direction.kInput, 0);
         gearing = device.createDouble("gearing", Direction.kOutput, 1);
-        sim = canCoder.getSimCollection();
+        sim = canCoder.getSimState();
         Lib199Subsystem.registerAsyncSimulationPeriodic(this::update);
         sims.put(port, this);
     }

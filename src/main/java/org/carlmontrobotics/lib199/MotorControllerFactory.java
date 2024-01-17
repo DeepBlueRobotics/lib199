@@ -10,7 +10,7 @@ package org.carlmontrobotics.lib199;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
-import com.ctre.phoenix.sensors.CANCoder;
+import com.ctre.phoenix6.hardware.CANcoder;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkBase.ExternalFollower;
 import com.revrobotics.CANSparkBase.IdleMode;
@@ -143,8 +143,8 @@ public class MotorControllerFactory {
    * @deprecated Use {@link SensorFactory#createCANCoder(int)} instead.
    */
   @Deprecated
-  public static CANCoder createCANCoder(int port) {
-    CANCoder canCoder = new CANCoder(port);
+  public static CANcoder createCANCoder(int port) {
+    CANcoder canCoder = new CANcoder(port);
     if(RobotBase.isSimulation()) new MockedCANCoder(canCoder);
     return canCoder;
   }
