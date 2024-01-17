@@ -1,0 +1,42 @@
+package org.carlmontrobotics.lib199;
+
+import edu.wpi.first.networktables.BooleanEntry;
+import edu.wpi.first.networktables.BooleanTopic;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+
+public class SmartBoolean {
+
+    private final boolean userValue;
+    private final String name;
+    private final BooleanEntry entry;
+
+    public SmartBoolean(String name, boolean userValue) {
+        this.userValue = userValue;
+        this.name = name;
+        BooleanTopic smartNumberTopic = new BooleanTopic(SmartDashboard.getEntry(name).getTopic());
+        entry = smartNumberTopic.getEntry(userValue);
+
+        reset();
+    }
+
+    public void reset() {
+        set(get());
+    }
+
+    public void set(boolean userValue) {
+        entry.set(userValue);
+    }
+
+    public boolean get() {
+        return userValue;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public BooleanEntry getEntry() {
+        return entry;
+    }
+
+}
