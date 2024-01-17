@@ -27,7 +27,7 @@ public class SmartBooleanTest {
     @Test
     public void testReset() {
         wingMan.reset();
-        assertFalse(false);
+        assertFalse(wingMan.get());
     }
 
 }

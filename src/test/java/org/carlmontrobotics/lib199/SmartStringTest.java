@@ -26,7 +26,7 @@ public class SmartStringTest {
     @Test
     public void testReset() {
         dizzy.reset();
-        assertEquals(dizzy.getName(), "blue");
+        assertEquals(dizzy.getName(), "");
     }
 
 }

@@ -6,7 +6,7 @@ import org.junit.Test;
 
 public class SmartNumberTest {
 
-    SmartNumber mosh = new SmartNumber("wooper", 4);
+    SmartNumber mosh = new SmartNumber("wooper", 2.2);
 
     @Test
     public void testGetName() {
@@ -27,7 +27,7 @@ public class SmartNumberTest {
     @Test
     public void testReset() {
         mosh.reset();
-        assertEquals(mosh.get(), 4, 0.001);
+        assertEquals(mosh.get(), 2.2, 0.001);
     }
 
 }
