@@ -15,6 +15,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.util.sendable.SendableRegistry;
@@ -230,7 +231,7 @@ public class SwerveModule implements Sendable {
      * @return module angle in degrees
      */
     public double getModuleAngle() {
-        return MathUtil.inputModulus(turnEncoder.getAbsolutePosition()-turnZero, -180, 180);
+        return MathUtil.inputModulus(Units.rotationsToDegrees(turnEncoder.getAbsolutePosition()-turnZero), -180, 180);
     }
 
     /**
