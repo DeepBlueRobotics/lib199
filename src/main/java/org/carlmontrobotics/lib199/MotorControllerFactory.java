@@ -90,6 +90,7 @@ public class MotorControllerFactory {
     } else {
         spark = MockSparkMax.createMockSparkMax(id, CANSparkLowLevel.MotorType.kBrushless);
     }
+    spark.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus0, 1);
 
     MotorErrors.reportSparkMaxTemp(spark, temperatureLimit);
 

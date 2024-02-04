@@ -145,26 +145,26 @@ public class SwerveModule implements Sendable {
             drive.setVoltage(appliedVoltage);
         }
 
-        // Turn Control
-        {
-            double measuredAngleDegs = getModuleAngle();
-            TrapezoidProfile.State goal = turnPIDController.getGoal();
-            goal = new TrapezoidProfile.State(goal.position, goal.velocity);
+        // // Turn Control
+        // {
+        //     double measuredAngleDegs = getModuleAngle();
+        //     TrapezoidProfile.State goal = turnPIDController.getGoal();
+        //     goal = new TrapezoidProfile.State(goal.position, goal.velocity);
 
-            double period = turnPIDController.getPeriod();
-            double optimalTurnVelocityDps = Math.abs(MathUtil.inputModulus(goal.position-measuredAngleDegs, -180, 180))/period;
-            setMaxTurnVelocity(Math.min(maxAchievableTurnVelocityDps, optimalTurnVelocityDps));
+        //     double period = turnPIDController.getPeriod();
+        //     double optimalTurnVelocityDps = Math.abs(MathUtil.inputModulus(goal.position-measuredAngleDegs, -180, 180))/period;
+        //     setMaxTurnVelocity(Math.min(maxAchievableTurnVelocityDps, optimalTurnVelocityDps));
 
-            double turnSpeedCorrectionDps = turnPIDController.calculate(measuredAngleDegs) * turnSimpleMotorFeedforward.maxAchievableVelocity(12,0);
-            TrapezoidProfile.State state = turnPIDController.getSetpoint();
-            double turnVolts = turnSimpleMotorFeedforward.calculate(prevTurnVelocity+turnSpeedCorrectionDps, (state.velocity-prevTurnVelocity) / period);
-            if (!turnPIDController.atGoal()) {
-                turn.setVoltage(MathUtil.clamp(turnVolts, -12.0, 12.0));
-            } else {
-                turn.setVoltage(turnSimpleMotorFeedforward.calculate(goal.velocity));
-            }
-            prevTurnVelocity = state.velocity;
-        }
+        //     double turnSpeedCorrectionDps = turnPIDController.calculate(measuredAngleDegs) * turnSimpleMotorFeedforward.maxAchievableVelocity(12,0);
+        //     TrapezoidProfile.State state = turnPIDController.getSetpoint();
+        //     double turnVolts = turnSimpleMotorFeedforward.calculate(prevTurnVelocity+turnSpeedCorrectionDps, (state.velocity-prevTurnVelocity) / period);
+        //     if (!turnPIDController.atGoal()) {
+        //         turn.setVoltage(MathUtil.clamp(turnVolts, -12.0, 12.0));
+        //     } else {
+        //         turn.setVoltage(turnSimpleMotorFeedforward.calculate(goal.velocity));
+        //     }
+        //     prevTurnVelocity = state.velocity;
+        // }
     }
 
     /**
