@@ -11,7 +11,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import com.ctre.phoenix.ErrorCode;
 import com.revrobotics.REVLibError;
 import com.revrobotics.CANSparkMax;
-import com.revrobotics.CANSparkMax.FaultID;
+import com.revrobotics.CANSparkBase.FaultID;
 
 import org.carlmontrobotics.lib199.testUtils.ErrStreamTest;
 import org.junit.Test;

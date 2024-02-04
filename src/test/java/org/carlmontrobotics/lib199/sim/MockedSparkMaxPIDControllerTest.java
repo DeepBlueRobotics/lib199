@@ -7,7 +7,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import com.revrobotics.REVLibError;
-import com.revrobotics.SparkMaxPIDController;
+import com.revrobotics.SparkPIDController;
 
 import org.carlmontrobotics.lib199.Mocks;
 import org.carlmontrobotics.lib199.REVLibErrorAnswer;
@@ -17,7 +17,7 @@ public class MockedSparkMaxPIDControllerTest {
     
     @Test
     public void testResponses() {
-        SparkMaxPIDController mock = Mocks.createMock(SparkMaxPIDController.class, new MockedSparkMaxPIDController(), new REVLibErrorAnswer());
+        SparkPIDController mock = Mocks.createMock(SparkPIDController.class, new MockedSparkMaxPIDController(), new REVLibErrorAnswer());
         assertSlotValueUpdate(mock::setP, mock::setP, mock::getP, mock::getP);
         assertSlotValueUpdate(mock::setI, mock::setI, mock::getI, mock::getI);
         assertSlotValueUpdate(mock::setD, mock::setD, mock::getD, mock::getD);

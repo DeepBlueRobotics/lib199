@@ -11,7 +11,7 @@ public class LinearActuator extends PWM {
         this.minLength = minLength;
         this.maxLength = maxLength;
         // Our linear actators accept a pulse between 1ms and 2ms
-        setBounds(2, 0, 0, 0, 1);
+        setBoundsMicroseconds(2, 0, 0, 0, 1);
     }
 
     public void set(double value) {

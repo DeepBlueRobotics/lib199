@@ -1,13 +1,13 @@
 package org.carlmontrobotics.lib199.safeMode;
 
-import edu.wpi.first.wpilibj2.command.CommandBase;
+import edu.wpi.first.wpilibj2.command.Command;
 
 /**
  * A command that counts how many times it has been initialized, executed, and ended for the purposes of testing safe mode functionality.
  *
  * @see SafeModeCommandsTest
  */
-public class LoggingCommand extends CommandBase {
+public class LoggingCommand extends Command {
 
     private int initializedCount = 0, executeCount = 0, endCount = 0;
 

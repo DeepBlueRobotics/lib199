@@ -5,11 +5,11 @@ import static org.junit.Assert.assertNotNull;
 
 import com.revrobotics.REVLibError;
 import com.revrobotics.CANSparkMax;
-import com.revrobotics.CANSparkMax.IdleMode;
-import com.revrobotics.CANSparkMaxLowLevel.MotorType;
-import com.revrobotics.SparkMaxAnalogSensor.Mode;
-import com.revrobotics.SparkMaxLimitSwitch.Type;
-import com.revrobotics.SparkMaxPIDController.AccelStrategy;
+import com.revrobotics.CANSparkBase.IdleMode;
+import com.revrobotics.CANSparkLowLevel.MotorType;
+import com.revrobotics.SparkAnalogSensor.Mode;
+import com.revrobotics.SparkLimitSwitch.Type;
+import com.revrobotics.SparkPIDController.AccelStrategy;
 
 import org.junit.Test;
 
