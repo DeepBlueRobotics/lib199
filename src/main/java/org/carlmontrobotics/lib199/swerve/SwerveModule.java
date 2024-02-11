@@ -45,6 +45,8 @@ public class SwerveModule implements Sendable {
     private SimpleMotorFeedforward forwardSimpleMotorFF, backwardSimpleMotorFF, turnSimpleMotorFeedforward;
     private double desiredSpeed, lastAngle, maxAchievableTurnVelocityDps, maxAchievableTurnAccelerationMps2, turnToleranceDeg, angleDiff;
 
+    private double turnSpeedCorrectionDps, turnVolts;
+
     public SwerveModule(SwerveConfig config, ModuleType type, CANSparkMax drive, CANSparkMax turn, CANcoder turnEncoder,
                         int arrIndex, Supplier<Float> pitchDegSupplier, Supplier<Float> rollDegSupplier) {
         //SmartDashboard.putNumber("Target Angle (deg)", 0.0);
@@ -132,39 +134,39 @@ public class SwerveModule implements Sendable {
     private double prevTurnVelocity = 0;
     public void periodic() {
 
-        // Drive Control
-        // {
-        //     double actualSpeed = getCurrentSpeed();
-        //     double targetVoltage = (actualSpeed >= 0 ? forwardSimpleMotorFF :
-        //                             backwardSimpleMotorFF).calculate(desiredSpeed, calculateAntiGravitationalA(pitchDegSupplier.get(), rollDegSupplier.get()));//clippedAcceleration);
+        //Drive Control
+        {
+            double actualSpeed = getCurrentSpeed();
+            double targetVoltage = (actualSpeed >= 0 ? forwardSimpleMotorFF :
+                                    backwardSimpleMotorFF).calculate(desiredSpeed, calculateAntiGravitationalA(pitchDegSupplier.get(), rollDegSupplier.get()));//clippedAcceleration);
 
-        //     // Use robot characterization as a simple physical model to account for internal resistance, frcition, etc.
-        //     // Add a PID adjustment for error correction (also "drives" the actual speed to the desired speed)
-        //     targetVoltage += drivePIDController.calculate(actualSpeed, desiredSpeed);
-        //     double appliedVoltage = MathUtil.clamp(targetVoltage, -12, 12);
-        //     drive.setVoltage(appliedVoltage);
-        // }
+            // Use robot characterization as a simple physical model to account for internal resistance, frcition, etc.
+            // Add a PID adjustment for error correction (also "drives" the actual speed to the desired speed)
+            targetVoltage += drivePIDController.calculate(actualSpeed, desiredSpeed);
+            double appliedVoltage = MathUtil.clamp(targetVoltage, -12, 12);
+            drive.setVoltage(appliedVoltage);
+        }
 
-        // // Turn Control
-        // {
-        //     double measuredAngleDegs = getModuleAngle();
-        //     TrapezoidProfile.State goal = turnPIDController.getGoal();
-        //     goal = new TrapezoidProfile.State(goal.position, goal.velocity);
+        // Turn Control
+        {
+            double measuredAngleDegs = getModuleAngle();
+            TrapezoidProfile.State goal = turnPIDController.getGoal();
+            goal = new TrapezoidProfile.State(goal.position, goal.velocity);
 
-        //     double period = turnPIDController.getPeriod();
-        //     double optimalTurnVelocityDps = Math.abs(MathUtil.inputModulus(goal.position-measuredAngleDegs, -180, 180))/period;
-        //     setMaxTurnVelocity(Math.min(maxAchievableTurnVelocityDps, optimalTurnVelocityDps));
+            double period = turnPIDController.getPeriod();
+            double optimalTurnVelocityDps = Math.abs(MathUtil.inputModulus(goal.position-measuredAngleDegs, -180, 180))/period;
+            setMaxTurnVelocity(Math.min(maxAchievableTurnVelocityDps, optimalTurnVelocityDps));
 
-        //     double turnSpeedCorrectionDps = turnPIDController.calculate(measuredAngleDegs) * turnSimpleMotorFeedforward.maxAchievableVelocity(12,0);
-        //     TrapezoidProfile.State state = turnPIDController.getSetpoint();
-        //     double turnVolts = turnSimpleMotorFeedforward.calculate(prevTurnVelocity+turnSpeedCorrectionDps, (state.velocity-prevTurnVelocity) / period);
-        //     if (!turnPIDController.atGoal()) {
-        //         turn.setVoltage(MathUtil.clamp(turnVolts, -12.0, 12.0));
-        //     } else {
-        //         turn.setVoltage(turnSimpleMotorFeedforward.calculate(goal.velocity));
-        //     }
-        //     prevTurnVelocity = state.velocity;
-        // }
+            turnSpeedCorrectionDps = turnPIDController.calculate(measuredAngleDegs) * turnSimpleMotorFeedforward.maxAchievableVelocity(12,0);
+            TrapezoidProfile.State state = turnPIDController.getSetpoint();
+            turnVolts = turnSimpleMotorFeedforward.calculate(prevTurnVelocity+turnSpeedCorrectionDps, (state.velocity-prevTurnVelocity) / period);
+            if (!turnPIDController.atGoal()) {
+                turn.setVoltage(MathUtil.clamp(turnVolts, -12.0, 12.0));
+            } else {
+                turn.setVoltage(turnSimpleMotorFeedforward.calculate(goal.velocity));
+            }
+            prevTurnVelocity = state.velocity;
+        }
     }
 
     /**
@@ -287,6 +289,10 @@ public class SwerveModule implements Sendable {
         //SmartDashboard.putNumber("Gyro Roll", rollDegSupplier.get());
         SmartDashboard.putNumber(moduleString + "Antigravitational Acceleration", calculateAntiGravitationalA(pitchDegSupplier.get(), rollDegSupplier.get()));
         SmartDashboard.putBoolean(moduleString + " Turn is at Goal", turnPIDController.atGoal());
+        
+        SmartDashboard.putNumber(moduleString + "Turn PID Output", turnSpeedCorrectionDps);
+        SmartDashboard.putNumber(moduleString + "Turn FF Output", turnVolts);
+        
     }
 
     public void toggleMode() {
@@ -329,5 +335,8 @@ public class SwerveModule implements Sendable {
         builder.addDoubleProperty("Error (deg)", turnPIDController::getPositionError, null);
         builder.addDoubleProperty("Desired Speed (mps)", drivePIDController::getSetpoint, null);
         builder.addDoubleProperty("Angle Diff (deg)", () -> angleDiff, null);
+
+        builder.addDoubleProperty("Turn PID Output", () -> turnSpeedCorrectionDps, null);
+        builder.addDoubleProperty("Turn FF Output", () -> turnVolts, null);
     }
 }
