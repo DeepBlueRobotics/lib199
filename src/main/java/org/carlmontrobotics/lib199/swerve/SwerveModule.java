@@ -129,6 +129,7 @@ public class SwerveModule implements Sendable {
 
         SmartDashboard.putNumber("Swerve kP", turnPIDController.getP());
         SmartDashboard.putNumber("Swerve kD", turnPIDController.getD());
+        SmartDashboard.putData(this);
 
         SendableRegistry.addLW(this, "SweverModule", type.toString());
     }
