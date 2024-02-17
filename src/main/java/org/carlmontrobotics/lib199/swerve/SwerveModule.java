@@ -133,7 +133,7 @@ public class SwerveModule implements Sendable {
 
     private double prevTurnVelocity = 0;
     public void periodic() {
-
+        /*
         //Drive Control
         {
             double actualSpeed = getCurrentSpeed();
@@ -167,6 +167,7 @@ public class SwerveModule implements Sendable {
             }
             prevTurnVelocity = state.velocity;
         }
+        */
     }
 
     /**
