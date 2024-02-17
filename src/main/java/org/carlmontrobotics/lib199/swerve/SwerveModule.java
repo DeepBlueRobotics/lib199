@@ -22,6 +22,8 @@ import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.util.sendable.SendableRegistry;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
+import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 /**
@@ -124,6 +126,9 @@ public class SwerveModule implements Sendable {
         this.rollDegSupplier = rollDegSupplier;
         this.pitchDegSupplier = pitchDegSupplier;
 
+        SmartDashboard.putNumber("Swerve kP", turnPIDController.getP());
+        SmartDashboard.putNumber("Swerve kD", turnPIDController.getD());
+
         SendableRegistry.addLW(this, "SweverModule", type.toString());
     }
 
@@ -147,6 +152,15 @@ public class SwerveModule implements Sendable {
             drive.setVoltage(appliedVoltage);
         }
         */
+
+        double kP = SmartDashboard.getNumber("Swerve kP", turnPIDController.getP());
+        if (turnPIDController.getP() != kP) {
+            turnPIDController.setP(kP);
+        }
+        double kD = SmartDashboard.getNumber("Swerve kD", turnPIDController.getD());
+        if (turnPIDController.getD() != kD) {
+            turnPIDController.setD(kD);
+        }
 
         // Turn Control
         {
