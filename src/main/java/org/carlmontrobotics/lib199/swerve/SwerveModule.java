@@ -146,6 +146,7 @@ public class SwerveModule implements Sendable {
             double appliedVoltage = MathUtil.clamp(targetVoltage, -12, 12);
             drive.setVoltage(appliedVoltage);
         }
+        */
 
         // Turn Control
         {
@@ -167,7 +168,7 @@ public class SwerveModule implements Sendable {
             }
             prevTurnVelocity = state.velocity;
         }
-        */
+        
     }
 
     /**
