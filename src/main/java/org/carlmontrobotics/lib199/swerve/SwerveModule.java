@@ -177,9 +177,10 @@ public class SwerveModule implements Sendable {
             double optimalTurnVelocityDps = Math.abs(MathUtil.inputModulus(goal.position-measuredAngleDegs, -180, 180))/period;
             setMaxTurnVelocity(Math.min(maxAchievableTurnVelocityDps, optimalTurnVelocityDps));
 
-            turnSpeedCorrectionDps = turnPIDController.calculate(measuredAngleDegs) * turnSimpleMotorFeedforward.maxAchievableVelocity(12,0);
+            //turnSpeedCorrectionDps = turnPIDController.calculate(measuredAngleDegs) * turnSimpleMotorFeedforward.maxAchievableVelocity(12,0);
+            turnSpeedCorrectionDps = turnPIDController.calculate(measuredAngleDegs);
             TrapezoidProfile.State state = turnPIDController.getSetpoint();
-            turnVolts = turnSimpleMotorFeedforward.calculate(prevTurnVelocity+turnSpeedCorrectionDps, (state.velocity-prevTurnVelocity) / period);
+            turnVolts = turnSimpleMotorFeedforward.calculate(prevTurnVelocity, (state.velocity-prevTurnVelocity) / period) + turnSpeedCorrectionDps;
             if (!turnPIDController.atGoal()) {
                 turn.setVoltage(MathUtil.clamp(turnVolts, -12.0, 12.0));
             } else {
