@@ -102,6 +102,7 @@ public class SwerveModule implements Sendable {
         // Assume accelerating while at limited speed --> 12 = kS + kV * limited speed + kA * acceleration
         // acceleration = (12 - kS - kV * limiedSpeed) / kA
         turnToleranceDeg = 3 * 360/4096.0; /* degree offset for 3 CANCoder counts */
+        SmartDashboard.putNumber("Swerve Turn Tolerance", turnToleranceDeg);
         maxAchievableTurnAccelerationMps2 = 0.5 * turnSimpleMotorFeedforward.maxAchievableAcceleration(12.0, maxAchievableTurnVelocityDps);
         turnConstraints = new TrapezoidProfile.Constraints(maxAchievableTurnVelocityDps, maxAchievableTurnAccelerationMps2);
         lastAngle = 0.0;
@@ -160,6 +161,10 @@ public class SwerveModule implements Sendable {
         double kD = SmartDashboard.getNumber("Swerve kD", turnPIDController.getD());
         if (turnPIDController.getD() != kD) {
             turnPIDController.setD(kD);
+        }
+        double turnTolerance = SmartDashboard.getNumber("Swerve Turn Tolerance", turnToleranceDeg);
+        if (turnPIDController.getPositionTolerance() != turnTolerance) {
+            turnPIDController.setTolerance(turnTolerance);
         }
 
         // Turn Control
