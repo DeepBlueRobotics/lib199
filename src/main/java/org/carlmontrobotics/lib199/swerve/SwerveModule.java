@@ -154,6 +154,7 @@ public class SwerveModule implements Sendable {
             drive.setVoltage(appliedVoltage);
         }
         */
+        updateSmartDashboard();
 
         double kP = SmartDashboard.getNumber("Swerve kP", turnPIDController.getP());
         if (turnPIDController.getP() != kP) {
