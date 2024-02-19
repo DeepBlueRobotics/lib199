@@ -40,7 +40,7 @@ public class SwerveModule implements Sendable {
     private PIDController drivePIDController;
     private ProfiledPIDController turnPIDController;
     private TrapezoidProfile.Constraints turnConstraints;
-    private double driveModifier, turnZero;
+    private double driveModifier, turnZeroDeg;
     private Supplier<Float> pitchDegSupplier, rollDegSupplier;
     private boolean reversed;
     private Timer timer;
@@ -120,7 +120,7 @@ public class SwerveModule implements Sendable {
 
         this.driveModifier = config.driveModifier;
         this.reversed = config.reversed[arrIndex];
-        this.turnZero = config.turnZero[arrIndex];
+        this.turnZeroDeg = config.turnZeroDeg[arrIndex];
 
         turnPIDController.reset(getModuleAngle());
 
@@ -260,7 +260,7 @@ public class SwerveModule implements Sendable {
      * @return module angle in degrees
      */
     public double getModuleAngle() {
-        return MathUtil.inputModulus(Units.rotationsToDegrees(turnEncoder.getAbsolutePosition().getValue()) - turnZero, -180, 180);
+        return MathUtil.inputModulus(Units.rotationsToDegrees(turnEncoder.getAbsolutePosition().getValue()) - turnZeroDeg, -180, 180);
     }
 
     /**
