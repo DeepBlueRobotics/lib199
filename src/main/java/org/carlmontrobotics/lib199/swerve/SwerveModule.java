@@ -47,7 +47,7 @@ public class SwerveModule implements Sendable {
     private SimpleMotorFeedforward forwardSimpleMotorFF, backwardSimpleMotorFF, turnSimpleMotorFeedforward;
     private double desiredSpeed, lastAngle, maxAchievableTurnVelocityDps, maxAchievableTurnAccelerationMps2, turnToleranceDeg, angleDiff;
 
-    private double turnSpeedCorrectionDps, turnVolts;
+    private double turnSpeedCorrectionVolts, turnVolts;
 
     public SwerveModule(SwerveConfig config, ModuleType type, CANSparkMax drive, CANSparkMax turn, CANcoder turnEncoder,
                         int arrIndex, Supplier<Float> pitchDegSupplier, Supplier<Float> rollDegSupplier) {
@@ -179,10 +179,9 @@ public class SwerveModule implements Sendable {
             double optimalTurnVelocityDps = Math.abs(MathUtil.inputModulus(goal.position-measuredAngleDegs, -180, 180))/period;
             setMaxTurnVelocity(Math.min(maxAchievableTurnVelocityDps, optimalTurnVelocityDps));
 
-            //turnSpeedCorrectionDps = turnPIDController.calculate(measuredAngleDegs) * turnSimpleMotorFeedforward.maxAchievableVelocity(12,0);
-            turnSpeedCorrectionDps = turnPIDController.calculate(measuredAngleDegs);
+            double turnSpeedCorrectionVolts = turnPIDController.calculate(measuredAngleDegs);
             TrapezoidProfile.State state = turnPIDController.getSetpoint();
-            turnVolts = turnSimpleMotorFeedforward.calculate(prevTurnVelocity, (state.velocity-prevTurnVelocity) / period) + turnSpeedCorrectionDps;
+            turnVolts = turnSimpleMotorFeedforward.calculate(prevTurnVelocity, (state.velocity-prevTurnVelocity) / period) + turnSpeedCorrectionVolts;
             if (!turnPIDController.atGoal()) {
                 turn.setVoltage(MathUtil.clamp(turnVolts, -12.0, 12.0));
             } else {
@@ -314,7 +313,7 @@ public class SwerveModule implements Sendable {
         SmartDashboard.putNumber(moduleString + "Antigravitational Acceleration", calculateAntiGravitationalA(pitchDegSupplier.get(), rollDegSupplier.get()));
         SmartDashboard.putBoolean(moduleString + " Turn is at Goal", turnPIDController.atGoal());
         
-        SmartDashboard.putNumber(moduleString + "Turn PID Output", turnSpeedCorrectionDps);
+        SmartDashboard.putNumber(moduleString + "Turn PID Output (Volts)", turnSpeedCorrectionVolts);
         SmartDashboard.putNumber(moduleString + "Turn FF Output", turnVolts);
         
     }
@@ -360,7 +359,7 @@ public class SwerveModule implements Sendable {
         builder.addDoubleProperty("Desired Speed (mps)", drivePIDController::getSetpoint, null);
         builder.addDoubleProperty("Angle Diff (deg)", () -> angleDiff, null);
 
-        builder.addDoubleProperty("Turn PID Output", () -> turnSpeedCorrectionDps, null);
+        builder.addDoubleProperty("Turn PID Output", () -> turnSpeedCorrectionVolts, null);
         builder.addDoubleProperty("Turn FF Output", () -> turnVolts, null);
     }
 }
