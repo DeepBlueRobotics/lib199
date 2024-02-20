@@ -362,6 +362,6 @@ public class SwerveModule implements Sendable {
 
         builder.addDoubleProperty("Turn PID Output", () -> turnSpeedCorrectionVolts, null);
         builder.addDoubleProperty("Turn FF Output", () -> turnFFVolts, null);
-        builder.addDoubleProperty("Turn Total Outpu", () -> turnVolts, null);
+        builder.addDoubleProperty("Turn Total Output", () -> turnVolts, null);
     }
 }
