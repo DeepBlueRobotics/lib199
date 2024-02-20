@@ -47,7 +47,7 @@ public class SwerveModule implements Sendable {
     private SimpleMotorFeedforward forwardSimpleMotorFF, backwardSimpleMotorFF, turnSimpleMotorFeedforward;
     private double desiredSpeed, lastAngle, maxAchievableTurnVelocityDps, maxAchievableTurnAccelerationMps2, turnToleranceDeg, angleDiff;
 
-    private double turnSpeedCorrectionVolts, turnVolts;
+    private double turnSpeedCorrectionVolts, turnFFVolts, turnVolts;
 
     public SwerveModule(SwerveConfig config, ModuleType type, CANSparkMax drive, CANSparkMax turn, CANcoder turnEncoder,
                         int arrIndex, Supplier<Float> pitchDegSupplier, Supplier<Float> rollDegSupplier) {
@@ -181,7 +181,8 @@ public class SwerveModule implements Sendable {
 
             double turnSpeedCorrectionVolts = turnPIDController.calculate(measuredAngleDegs);
             TrapezoidProfile.State state = turnPIDController.getSetpoint();
-            turnVolts = turnSimpleMotorFeedforward.calculate(prevTurnVelocity, (state.velocity-prevTurnVelocity) / period) + turnSpeedCorrectionVolts;
+            turnFFVolts = turnSimpleMotorFeedforward.calculate(prevTurnVelocity, (state.velocity-prevTurnVelocity) / period);
+            turnVolts = turnFFVolts + turnSpeedCorrectionVolts;
             if (!turnPIDController.atGoal()) {
                 turn.setVoltage(MathUtil.clamp(turnVolts, -12.0, 12.0));
             } else {
@@ -298,7 +299,7 @@ public class SwerveModule implements Sendable {
         // Display the position of the quadrature encoder.
         SmartDashboard.putNumber(moduleString + " Incremental Position", turnEncoder.getPosition().getValue());
         // Display the position of the analog encoder.
-        SmartDashboard.putNumber(moduleString + " Absolute Angle (deg)", turnEncoder.getAbsolutePosition().getValue());
+        SmartDashboard.putNumber(moduleString + " Absolute Angle (deg)", Units.rotationsToDegrees(turnEncoder.getAbsolutePosition().getValue()));
         // Display the module angle as calculated using the absolute encoder.
         SmartDashboard.putNumber(moduleString + " Turn Measured Pos (deg)", getModuleAngle());
         SmartDashboard.putNumber(moduleString + " Encoder Position", drive.getEncoder().getPosition());
@@ -314,8 +315,8 @@ public class SwerveModule implements Sendable {
         SmartDashboard.putBoolean(moduleString + " Turn is at Goal", turnPIDController.atGoal());
         
         SmartDashboard.putNumber(moduleString + "Turn PID Output (Volts)", turnSpeedCorrectionVolts);
-        SmartDashboard.putNumber(moduleString + "Turn FF Output", turnVolts);
-        
+        SmartDashboard.putNumber(moduleString + "Turn FF Output (Volts)", turnFFVolts);
+        SmartDashboard.putNumber(moduleString + "Turn Total Output (Volts)", turnVolts);
     }
 
     public void toggleMode() {
@@ -344,7 +345,7 @@ public class SwerveModule implements Sendable {
         builder.setSafeState(() -> setSpeed(0));
         builder.setSmartDashboardType("SwerveModule");
         builder.addDoubleProperty("Incremental Position", () -> turnEncoder.getPosition().getValue(), null);
-        builder.addDoubleProperty("Absolute Angle (deg)", () -> turnEncoder.getAbsolutePosition().getValue(), null);
+        builder.addDoubleProperty("Absolute Angle (deg)", () -> Units.rotationsToDegrees(turnEncoder.getAbsolutePosition().getValue()), null);
         builder.addDoubleProperty("Turn Measured Pos (deg)", this::getModuleAngle, null);
         builder.addDoubleProperty("Encoder Position", drive.getEncoder()::getPosition, null);
         // Display the speed that the robot thinks it is travelling at.
@@ -360,6 +361,7 @@ public class SwerveModule implements Sendable {
         builder.addDoubleProperty("Angle Diff (deg)", () -> angleDiff, null);
 
         builder.addDoubleProperty("Turn PID Output", () -> turnSpeedCorrectionVolts, null);
-        builder.addDoubleProperty("Turn FF Output", () -> turnVolts, null);
+        builder.addDoubleProperty("Turn FF Output", () -> turnFFVolts, null);
+        builder.addDoubleProperty("Turn Total Outpu", () -> turnVolts, null);
     }
 }
