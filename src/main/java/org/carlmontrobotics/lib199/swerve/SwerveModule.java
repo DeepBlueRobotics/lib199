@@ -45,7 +45,7 @@ public class SwerveModule implements Sendable {
     private boolean reversed;
     private Timer timer;
     private SimpleMotorFeedforward forwardSimpleMotorFF, backwardSimpleMotorFF, turnSimpleMotorFeedforward;
-    private double desiredSpeed, lastAngle, maxAchievableTurnVelocityDps, maxAchievableTurnAccelerationMps2, turnToleranceDeg, angleDiff;
+    private double desiredSpeed, lastAngle, maxAchievableTurnVelocityRps, maxAchievableTurnAccelerationRps2, turnToleranceDeg, angleDiff;
 
     private double turnSpeedCorrectionVolts, turnFFVolts, turnVolts;
 
@@ -98,13 +98,13 @@ public class SwerveModule implements Sendable {
         // Voltage = kS + kV * velocity + kA * acceleration
         // Assume cruising at maximum velocity --> 12 = kS + kV * max velocity + kA * 0 --> max velocity = (12 - kS) / kV
         // Limit the velocity by a factor of 0.5
-        maxAchievableTurnVelocityDps = 0.5 * turnSimpleMotorFeedforward.maxAchievableVelocity(12.0, 0);
+        maxAchievableTurnVelocityRps = 0.5 * turnSimpleMotorFeedforward.maxAchievableVelocity(12.0, 0);
         // Assume accelerating while at limited speed --> 12 = kS + kV * limited speed + kA * acceleration
         // acceleration = (12 - kS - kV * limiedSpeed) / kA
         turnToleranceDeg = 3 * 360/4096.0; /* degree offset for 3 CANCoder counts */
         SmartDashboard.putNumber("Swerve Turn Tolerance", turnToleranceDeg);
-        maxAchievableTurnAccelerationMps2 = 0.5 * turnSimpleMotorFeedforward.maxAchievableAcceleration(12.0, maxAchievableTurnVelocityDps);
-        turnConstraints = new TrapezoidProfile.Constraints(maxAchievableTurnVelocityDps, maxAchievableTurnAccelerationMps2);
+        maxAchievableTurnAccelerationRps2 = 0.5 * turnSimpleMotorFeedforward.maxAchievableAcceleration(12.0, maxAchievableTurnVelocityRps);
+        turnConstraints = new TrapezoidProfile.Constraints(maxAchievableTurnVelocityRps, maxAchievableTurnAccelerationRps2);
         lastAngle = 0.0;
         turnPIDController = new ProfiledPIDController(config.turnkP[arrIndex], 
                                               config.turnkI[arrIndex],
@@ -176,10 +176,10 @@ public class SwerveModule implements Sendable {
             goal = new TrapezoidProfile.State(goal.position, goal.velocity);
 
             double period = turnPIDController.getPeriod();
-            double optimalTurnVelocityDps = Math.abs(MathUtil.inputModulus(goal.position-measuredAngleDegs, -180, 180))/period;
-            setMaxTurnVelocity(Math.min(maxAchievableTurnVelocityDps, optimalTurnVelocityDps));
+            double optimalTurnVelocityRps = Math.abs(MathUtil.inputModulus(goal.position-measuredAngleDegs, -180, 180))/period;
+            setMaxTurnVelocity(Math.min(maxAchievableTurnVelocityRps, optimalTurnVelocityRps));
 
-            double turnSpeedCorrectionVolts = turnPIDController.calculate(measuredAngleDegs);
+            turnSpeedCorrectionVolts = turnPIDController.calculate(Units.degreesToRotations(measuredAngleDegs));
             TrapezoidProfile.State state = turnPIDController.getSetpoint();
             turnFFVolts = turnSimpleMotorFeedforward.calculate(prevTurnVelocity, (state.velocity-prevTurnVelocity) / period);
             turnVolts = turnFFVolts + turnSpeedCorrectionVolts;
@@ -203,7 +203,7 @@ public class SwerveModule implements Sendable {
         setSpeed(speedMps);
         if(speedMps != 0.0) {
             //SmartDashboard.putNumber(moduleString + " Target Angle (deg)", angle);
-            angle = MathUtil.inputModulus(angle, -180, 180);
+            angle = MathUtil.inputModulus(Units.degreesToRotations(angle), -0.5, 0.5);
             setAngle(angle);
         }
     }
@@ -236,7 +236,7 @@ public class SwerveModule implements Sendable {
 
     /**
      * Sets the angle for the turn motor controller.
-     * @param angle     The desired angle, between 180 degrees clockwise and 180 degrees counterclockwise.
+     * @param angle     The desired angle, between -1/2 rotations clockwise and 1/2 rotations counterclockwise.
      */
     private void setAngle(double angle) {
         double deltaTime = timer.get();
