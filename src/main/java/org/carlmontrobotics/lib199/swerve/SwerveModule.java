@@ -45,7 +45,7 @@ public class SwerveModule implements Sendable {
     private boolean reversed;
     private Timer timer;
     private SimpleMotorFeedforward forwardSimpleMotorFF, backwardSimpleMotorFF, turnSimpleMotorFeedforward;
-    private double desiredSpeed, lastAngle, maxAchievableTurnVelocityRps, maxAchievableTurnAccelerationRps2, turnToleranceRot, angleDiff;
+    private double desiredSpeed, lastAngle, maxAchievableTurnVelocityRps, maxAchievableTurnAccelerationRps2, turnToleranceRot, angleDiffRot;
 
     private double turnSpeedCorrectionVolts, turnFFVolts, turnVolts;
 
@@ -243,13 +243,13 @@ public class SwerveModule implements Sendable {
         timer.reset();
         timer.start();
         double maxDeltaTheta = Math.asin(deltaTime*config.autoCentripetalAccel/(Math.abs(getCurrentSpeed())+0.0001));
-        setMaxTurnVelocity(Units.radiansToRotations(maxDeltaTheta*180/Math.PI));
+        setMaxTurnVelocity(Units.degreesToRotations(maxDeltaTheta*180/Math.PI));
         //SmartDashboard.putNumber(moduleString + "Target Angle:", 360 * angle * (reversed ? -1 : 1));
 
         // Find the minimum distance to travel from lastAngle to angle and determine the
         // correct direction to trvel the minimum distance. This is used in order to accurately
         // calculate the goal velocity.
-        angleDiff = MathUtil.inputModulus(angle - lastAngle, -180, 180);
+        angleDiffRot = MathUtil.inputModulus(angle - lastAngle, -1/2, 1/2);
         // SmartDashboard.putNumber(moduleString + " angleDiff (deg)", angleDiff);
 
         turnPIDController.setGoal(new TrapezoidProfile.State(angle * (reversed ? -1 : 1), 0));
@@ -362,7 +362,7 @@ public class SwerveModule implements Sendable {
         builder.addBooleanProperty("Turn is at Goal", turnPIDController::atGoal, null);
         builder.addDoubleProperty("Error (deg)", turnPIDController::getPositionError, null);
         builder.addDoubleProperty("Desired Speed (mps)", drivePIDController::getSetpoint, null);
-        builder.addDoubleProperty("Angle Diff (deg)", () -> angleDiff, null);
+        builder.addDoubleProperty("Angle Diff (deg)", () -> angleDiffRot, null);
 
         builder.addDoubleProperty("Turn PID Output", () -> turnSpeedCorrectionVolts, null);
         builder.addDoubleProperty("Turn FF Output", () -> turnFFVolts, null);
