@@ -246,6 +246,7 @@ public class SwerveModule implements Sendable {
      */
     private void setAngle(double angle) {
         double deltaTime = timer.get();
+        SmartDashboard.putNumber("deltatime", deltaTime);
         timer.reset();
         timer.start();
         double maxDeltaTheta = Math.asin(deltaTime*config.autoCentripetalAccel/(Math.abs(getCurrentSpeed())+0.0001));
