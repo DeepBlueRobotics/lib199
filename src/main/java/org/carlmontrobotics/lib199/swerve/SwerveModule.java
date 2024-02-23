@@ -173,11 +173,15 @@ public class SwerveModule implements Sendable {
         {
             double measuredAngleRots = Units.degreesToRotations(getModuleAngle());
             TrapezoidProfile.State goal = turnPIDController.getGoal();
+            SmartDashboard.putNumber("goaltrap.position", goal.position);
+            SmartDashboard.putNumber("goaltrap.velocity", goal.velocity);
             goal = new TrapezoidProfile.State(goal.position, goal.velocity);
 
             double period = turnPIDController.getPeriod();
             double optimalTurnVelocityRps = Math.abs(MathUtil.inputModulus(goal.position-measuredAngleRots, -.5, .5))/period;
             setMaxTurnVelocity(Math.min(maxAchievableTurnVelocityRps, optimalTurnVelocityRps));
+            SmartDashboard.putNumber("maxAcheivableTurnVelcoityRPS", maxAchievableTurnVelocityRps);
+            SmartDashboard.putNumber("optimalTurnVelocityRPS", optimalTurnVelocityRps);
 
             turnSpeedCorrectionVolts = turnPIDController.calculate(measuredAngleRots);
             TrapezoidProfile.State state = turnPIDController.getSetpoint();
@@ -342,6 +346,8 @@ public class SwerveModule implements Sendable {
      */
     public void setMaxTurnVelocity(double maxVel) {
         turnConstraints = new TrapezoidProfile.Constraints(maxVel, turnConstraints.maxAcceleration);
+        SmartDashboard.putNumber("trap.maxvel", maxVel);
+        SmartDashboard.putNumber("trap.maxAccel", turnConstraints.maxAcceleration);
         turnPIDController.setConstraints(turnConstraints);
     }
 
