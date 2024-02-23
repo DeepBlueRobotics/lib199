@@ -176,8 +176,8 @@ public class SwerveModule implements Sendable {
             goal = new TrapezoidProfile.State(goal.position, goal.velocity);
 
             double period = turnPIDController.getPeriod();
-            //double optimalTurnVelocityRps = Math.abs(MathUtil.inputModulus(goal.position-measuredAngleRots, -.5, .5))/period;
-            //setMaxTurnVelocity(Math.min(maxAchievableTurnVelocityRps, optimalTurnVelocityRps));
+            double optimalTurnVelocityRps = Math.abs(MathUtil.inputModulus(goal.position-measuredAngleRots, -.5, .5))/period;
+            setMaxTurnVelocity(Math.min(maxAchievableTurnVelocityRps, optimalTurnVelocityRps));
 
             turnSpeedCorrectionVolts = turnPIDController.calculate(measuredAngleRots);
             TrapezoidProfile.State state = turnPIDController.getSetpoint();
