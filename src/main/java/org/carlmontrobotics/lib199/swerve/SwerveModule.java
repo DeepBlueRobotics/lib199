@@ -180,8 +180,8 @@ public class SwerveModule implements Sendable {
             //setMaxTurnVelocity(Math.min(maxAchievableTurnVelocityRps, optimalTurnVelocityRps));
             SmartDashboard.putNumber("goal position", goal.position);
             SmartDashboard.putNumber("goal velocity", goal.velocity);
-            SmartDashboard.putNumber("Trapezoid position constraint", turnConstraints.maxVelocity);
-            SmartDashboard.putNumber("Trapezoid velocity constraint", turnConstraints.maxAcceleration);
+            SmartDashboard.putNumber("Trapezoid velocity constraint", turnConstraints.maxVelocity);
+            SmartDashboard.putNumber("Trapezoid accel constraint", turnConstraints.maxAcceleration);
 
             turnSpeedCorrectionVolts = turnPIDController.calculate(measuredAngleRots);
             TrapezoidProfile.State state = turnPIDController.getSetpoint();
@@ -246,7 +246,12 @@ public class SwerveModule implements Sendable {
         double deltaTime = timer.get();
         timer.reset();
         timer.start();
+        SmartDashboard.putNumber("Delta time", deltaTime);
+        SmartDashboard.putNumber("Centropetal acceleration", config.autoCentripetalAccel);
+        SmartDashboard.putNumber("current speed", Math.abs(getCurrentSpeed()));
         double maxDeltaTheta = Math.asin(deltaTime*config.autoCentripetalAccel/(Math.abs(getCurrentSpeed())+0.0001));
+        SmartDashboard.putNumber("maxDeltaTheta (radians)", maxDeltaTheta);
+
         setMaxTurnVelocity(Units.degreesToRotations(maxDeltaTheta*180/Math.PI));
         //SmartDashboard.putNumber(moduleString + "Target Angle:", 360 * angle * (reversed ? -1 : 1));
 
