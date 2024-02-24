@@ -182,8 +182,13 @@ public class SwerveModule implements Sendable {
 
             double period = turnPIDController.getPeriod();
             double optimalTurnVelocityRps = Math.abs(MathUtil.inputModulus(goal.position-measuredAngleRots, -.5, .5))/period;
+            
             double maxOverShootDegree = 1;
-            int numPeriods = 2;
+            SmartDashboard.putNumber("maxOverShootDegree", maxOverShootDegree);
+            maxOverShootDegree = SmartDashboard.getNumber("maxOverShootDegree",maxOverShootDegree);
+            int numPeriods = 1;
+            SmartDashboard.putNumber("num periods",numPeriods);
+            numPeriods =(int) SmartDashboard.getNumber("num periods",numPeriods);
             maxControllableAccerlationRps2 = (2*(maxOverShootDegree/360))/Math.pow(period*numPeriods,2);
             setMaxTurnVelocity(Math.min(Math.min(maxAchievableTurnVelocityRps, optimalTurnVelocityRps), maxTurnVelocityWithoutTippingRps));
             SmartDashboard.putNumber("maxAcheivableTurnVelcoityRPS", maxAchievableTurnVelocityRps);
