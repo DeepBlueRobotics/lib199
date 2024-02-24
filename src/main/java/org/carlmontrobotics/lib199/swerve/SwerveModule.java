@@ -55,7 +55,8 @@ public class SwerveModule implements Sendable {
         //SmartDashboard.putNumber("Target Angle (deg)", 0.0);
         this.timer = new Timer();
         timer.start();
-
+        SmartDashboard.putNumber("num periods",1);
+        SmartDashboard.putNumber("maxOverShootDegree",1);
         this.config = config;
         this.type = type;
         this.drive = drive;
@@ -135,6 +136,7 @@ public class SwerveModule implements Sendable {
         SmartDashboard.putData(this);
 
         SendableRegistry.addLW(this, "SwerveModule", type.toString());
+
     }
 
     public ModuleType getType() {
@@ -184,10 +186,8 @@ public class SwerveModule implements Sendable {
             double optimalTurnVelocityRps = Math.abs(MathUtil.inputModulus(goal.position-measuredAngleRots, -.5, .5))/period;
             
             double maxOverShootDegree = 1;
-            SmartDashboard.putNumber("maxOverShootDegree", maxOverShootDegree);
             maxOverShootDegree = SmartDashboard.getNumber("maxOverShootDegree",maxOverShootDegree);
             int numPeriods = 1;
-            SmartDashboard.putNumber("num periods",numPeriods);
             numPeriods =(int) SmartDashboard.getNumber("num periods",numPeriods);
             maxControllableAccerlationRps2 = (2*(maxOverShootDegree/360))/Math.pow(period*numPeriods,2);
             setMaxTurnVelocity(Math.min(Math.min(maxAchievableTurnVelocityRps, optimalTurnVelocityRps), maxTurnVelocityWithoutTippingRps));
