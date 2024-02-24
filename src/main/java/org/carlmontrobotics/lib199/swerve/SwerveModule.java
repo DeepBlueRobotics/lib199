@@ -261,7 +261,7 @@ public class SwerveModule implements Sendable {
         timer.reset();
         timer.start();
         double maxDeltaTheta = Math.atan2(deltaTime*config.autoCentripetalAccel,(Math.abs(getCurrentSpeed())));
-        maxTurnVelocityWithoutTippingRps = Units.degreesToRotations(maxDeltaTheta*180/Math.PI);
+        maxTurnVelocityWithoutTippingRps = Units.degreesToRotations(maxDeltaTheta*180/Math.PI)/deltaTime;
         //SmartDashboard.putNumber(moduleString + "Target Angle:", 360 * angle * (reversed ? -1 : 1));
 
         // Find the minimum distance to travel from lastAngle to angle and determine the
