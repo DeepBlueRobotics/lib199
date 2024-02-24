@@ -45,10 +45,11 @@ public class SwerveModule implements Sendable {
     private boolean reversed;
     private Timer timer;
     private SimpleMotorFeedforward forwardSimpleMotorFF, backwardSimpleMotorFF, turnSimpleMotorFeedforward;
+    private double maxControllableAccerlationRps2;
     private double desiredSpeed, lastAngle, maxAchievableTurnVelocityRps, maxAchievableTurnAccelerationRps2, turnToleranceRot, angleDiffRot;
 
     private double turnSpeedCorrectionVolts, turnFFVolts, turnVolts;
-
+    private double maxTurnVelocityWithoutTippingRps;
     public SwerveModule(SwerveConfig config, ModuleType type, CANSparkMax drive, CANSparkMax turn, CANcoder turnEncoder,
                         int arrIndex, Supplier<Float> pitchDegSupplier, Supplier<Float> rollDegSupplier) {
         //SmartDashboard.putNumber("Target Angle (deg)", 0.0);
@@ -64,7 +65,7 @@ public class SwerveModule implements Sendable {
         drive.getEncoder().setPositionConversionFactor(positionConstant);
         drive.getEncoder().setVelocityConversionFactor(positionConstant / 60);
         turn.setInverted(config.turnInversion[arrIndex]);
-
+        maxControllableAccerlationRps2 = 0;
         final double normalForceNewtons = 83.2 /* lbf */ * 4.4482 /* N/lbf */ / 4 /* numModules */;
         double wheelTorqueLimitNewtonMeters = normalForceNewtons * config.mu * config.wheelDiameterMeters / 2;
         double motorTorqueLimitNewtonMeters = wheelTorqueLimitNewtonMeters / config.driveGearing;
@@ -74,7 +75,7 @@ public class SwerveModule implements Sendable {
         double currentLimitAmps = neoFreeCurrentAmps + 2*motorTorqueLimitNewtonMeters / neoStallTorqueNewtonMeters * (neoStallCurrentAmps-neoFreeCurrentAmps);
         SmartDashboard.putNumber(type.toString() + " current limit (amps)", currentLimitAmps);
         drive.setSmartCurrentLimit((int)Math.min(50, currentLimitAmps));
-
+        
         this.forwardSimpleMotorFF = new SimpleMotorFeedforward(config.kForwardVolts[arrIndex],
                                                                 config.kForwardVels[arrIndex],
                                                                 config.kForwardAccels[arrIndex]);
@@ -99,11 +100,13 @@ public class SwerveModule implements Sendable {
         // Assume cruising at maximum velocity --> 12 = kS + kV * max velocity + kA * 0 --> max velocity = (12 - kS) / kV
         // Limit the velocity by a factor of 0.5
         maxAchievableTurnVelocityRps = 0.5 * turnSimpleMotorFeedforward.maxAchievableVelocity(12.0, 0);
+        maxTurnVelocityWithoutTippingRps = maxAchievableTurnVelocityRps;
         // Assume accelerating while at limited speed --> 12 = kS + kV * limited speed + kA * acceleration
         // acceleration = (12 - kS - kV * limiedSpeed) / kA
         turnToleranceRot = Units.degreesToRotations(3 * 360/4096.0); /* degree offset for 3 CANCoder counts */
         SmartDashboard.putNumber("Swerve Turn Tolerance", turnToleranceRot);
         maxAchievableTurnAccelerationRps2 = 0.5 * turnSimpleMotorFeedforward.maxAchievableAcceleration(12.0, maxAchievableTurnVelocityRps);
+
         turnConstraints = new TrapezoidProfile.Constraints(maxAchievableTurnVelocityRps, maxAchievableTurnAccelerationRps2);
         lastAngle = 0.0;
         turnPIDController = new ProfiledPIDController(config.turnkP[arrIndex], 
@@ -179,7 +182,10 @@ public class SwerveModule implements Sendable {
 
             double period = turnPIDController.getPeriod();
             double optimalTurnVelocityRps = Math.abs(MathUtil.inputModulus(goal.position-measuredAngleRots, -.5, .5))/period;
-            setMaxTurnVelocity(Math.min(maxAchievableTurnVelocityRps, optimalTurnVelocityRps));
+            double maxOverShootDegree = 1;
+            int numPeriods = 2;
+            maxControllableAccerlationRps2 = (2*(maxOverShootDegree/360))/Math.pow(period*numPeriods,2);
+            setMaxTurnVelocity(Math.min(Math.min(maxAchievableTurnVelocityRps, optimalTurnVelocityRps), maxTurnVelocityWithoutTippingRps));
             SmartDashboard.putNumber("maxAcheivableTurnVelcoityRPS", maxAchievableTurnVelocityRps);
             SmartDashboard.putNumber("optimalTurnVelocityRPS", optimalTurnVelocityRps);
 
@@ -249,8 +255,8 @@ public class SwerveModule implements Sendable {
         SmartDashboard.putNumber("config.autoCentripetalAccel", config.autoCentripetalAccel);
         timer.reset();
         timer.start();
-        double maxDeltaTheta = Math.asin(deltaTime*config.autoCentripetalAccel/(Math.abs(getCurrentSpeed())+0.0001));
-        setMaxTurnVelocity(Units.degreesToRotations(maxDeltaTheta*180/Math.PI));
+        double maxDeltaTheta = Math.atan2(deltaTime*config.autoCentripetalAccel,(Math.abs(getCurrentSpeed())));
+        maxTurnVelocityWithoutTippingRps = Units.degreesToRotations(maxDeltaTheta*180/Math.PI);
         //SmartDashboard.putNumber(moduleString + "Target Angle:", 360 * angle * (reversed ? -1 : 1));
 
         // Find the minimum distance to travel from lastAngle to angle and determine the
@@ -346,7 +352,7 @@ public class SwerveModule implements Sendable {
      * @param maxVel velocity in rot/s
      */
     public void setMaxTurnVelocity(double maxVel) {
-        turnConstraints = new TrapezoidProfile.Constraints(maxVel, turnConstraints.maxAcceleration);
+        turnConstraints = new TrapezoidProfile.Constraints(maxVel, Math.min(maxControllableAccerlationRps2,maxAchievableTurnAccelerationRps2));
         SmartDashboard.putNumber("trap.maxvel", maxVel);
         SmartDashboard.putNumber("trap.maxAccel", turnConstraints.maxAcceleration);
         turnPIDController.setConstraints(turnConstraints);
