@@ -130,6 +130,9 @@ public class SwerveModule implements Sendable {
 
         this.rollDegSupplier = rollDegSupplier;
         this.pitchDegSupplier = pitchDegSupplier;
+        SmartDashboard.putNumber(moduleString + " Swerve kS", turnSimpleMotorFeedforward.ks);
+        SmartDashboard.putNumber(moduleString + " Swerve kV", turnSimpleMotorFeedforward.kv);
+        SmartDashboard.putNumber(moduleString + " Swerve kA", turnSimpleMotorFeedforward.ka);
 
         SmartDashboard.putNumber(moduleString + " Swerve kP", turnPIDController.getP());
         SmartDashboard.putNumber(moduleString +" Swerve kD", turnPIDController.getD());
@@ -175,6 +178,14 @@ public class SwerveModule implements Sendable {
         double turnTolerance = SmartDashboard.getNumber(moduleString + " Swerve Turn Tolerance", turnToleranceRot);
         if (turnPIDController.getPositionTolerance() != turnTolerance) {
             turnPIDController.setTolerance(turnTolerance);
+        }
+        double kS = SmartDashboard.getNumber(moduleString + " Swerve kS", turnSimpleMotorFeedforward.ks);
+        double kV = SmartDashboard.getNumber(moduleString + " Swerve kV", turnSimpleMotorFeedforward.kv);
+        double kA = SmartDashboard.getNumber(moduleString + " Swerve kA", turnSimpleMotorFeedforward.ka);
+        if (turnSimpleMotorFeedforward.ks != kS || turnSimpleMotorFeedforward.kv != kV || turnSimpleMotorFeedforward.ka != kA) {
+            turnSimpleMotorFeedforward = new SimpleMotorFeedforward(kS, kV, kA);
+            maxAchievableTurnVelocityRps = 0.5 * turnSimpleMotorFeedforward.maxAchievableVelocity(12.0, 0);
+            maxAchievableTurnAccelerationRps2 = 0.5 * turnSimpleMotorFeedforward.maxAchievableAcceleration(12.0, maxAchievableTurnVelocityRps);
         }
 
         // Turn Control
