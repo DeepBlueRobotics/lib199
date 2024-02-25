@@ -53,6 +53,7 @@ public class SwerveModule implements Sendable {
     public SwerveModule(SwerveConfig config, ModuleType type, CANSparkMax drive, CANSparkMax turn, CANcoder turnEncoder,
                         int arrIndex, Supplier<Float> pitchDegSupplier, Supplier<Float> rollDegSupplier) {
         //SmartDashboard.putNumber("Target Angle (deg)", 0.0);
+        String moduleString = type.toString();
         this.timer = new Timer();
         timer.start();
         SmartDashboard.putNumber("num periods",1);
@@ -105,7 +106,6 @@ public class SwerveModule implements Sendable {
         // Assume accelerating while at limited speed --> 12 = kS + kV * limited speed + kA * acceleration
         // acceleration = (12 - kS - kV * limiedSpeed) / kA
         turnToleranceRot = Units.degreesToRotations(3 * 360/4096.0); /* degree offset for 3 CANCoder counts */
-        SmartDashboard.putNumber("Swerve Turn Tolerance", turnToleranceRot);
         maxAchievableTurnAccelerationRps2 = 0.5 * turnSimpleMotorFeedforward.maxAchievableAcceleration(12.0, maxAchievableTurnVelocityRps);
 
         turnConstraints = new TrapezoidProfile.Constraints(maxAchievableTurnVelocityRps, maxAchievableTurnAccelerationRps2);
@@ -131,8 +131,10 @@ public class SwerveModule implements Sendable {
         this.rollDegSupplier = rollDegSupplier;
         this.pitchDegSupplier = pitchDegSupplier;
 
-        SmartDashboard.putNumber("Swerve kP", turnPIDController.getP());
-        SmartDashboard.putNumber("Swerve kD", turnPIDController.getD());
+        SmartDashboard.putNumber(moduleString + " Swerve kP", turnPIDController.getP());
+        SmartDashboard.putNumber(moduleString +" Swerve kD", turnPIDController.getD());
+        SmartDashboard.putNumber(moduleString + " Swerve Turn Tolerance", turnToleranceRot);
+
         SmartDashboard.putData(this);
 
         SendableRegistry.addLW(this, "SwerveModule", type.toString());
@@ -160,16 +162,17 @@ public class SwerveModule implements Sendable {
         }
         
         updateSmartDashboard();
+        String moduleString = type.toString();
 
-        double kP = SmartDashboard.getNumber("Swerve kP", turnPIDController.getP());
+        double kP = SmartDashboard.getNumber(moduleString + " Swerve kP", turnPIDController.getP());
         if (turnPIDController.getP() != kP) {
             turnPIDController.setP(kP);
         }
-        double kD = SmartDashboard.getNumber("Swerve kD", turnPIDController.getD());
+        double kD = SmartDashboard.getNumber(moduleString + " Swerve kD", turnPIDController.getD());
         if (turnPIDController.getD() != kD) {
             turnPIDController.setD(kD);
         }
-        double turnTolerance = SmartDashboard.getNumber("Swerve Turn Tolerance", turnToleranceRot);
+        double turnTolerance = SmartDashboard.getNumber(moduleString + " Swerve Turn Tolerance", turnToleranceRot);
         if (turnPIDController.getPositionTolerance() != turnTolerance) {
             turnPIDController.setTolerance(turnTolerance);
         }
@@ -178,8 +181,8 @@ public class SwerveModule implements Sendable {
         {
             double measuredAngleRots = Units.degreesToRotations(getModuleAngle());
             TrapezoidProfile.State goal = turnPIDController.getGoal();
-            SmartDashboard.putNumber("goaltrap.position", goal.position);
-            SmartDashboard.putNumber("goaltrap.velocity", goal.velocity);
+            SmartDashboard.putNumber(moduleString + " goaltrap.position", goal.position);
+            SmartDashboard.putNumber(moduleString + " goaltrap.velocity", goal.velocity);
             goal = new TrapezoidProfile.State(goal.position, goal.velocity);
 
             double period = turnPIDController.getPeriod();
@@ -191,6 +194,7 @@ public class SwerveModule implements Sendable {
             numPeriods =(int) SmartDashboard.getNumber("num periods",numPeriods);
             maxControllableAccerlationRps2 = (2*(maxOverShootDegree/360))/Math.pow(period*numPeriods,2);
             setMaxTurnVelocity(Math.min(Math.min(maxAchievableTurnVelocityRps, optimalTurnVelocityRps), maxTurnVelocityWithoutTippingRps));
+            SmartDashboard.putNumber("maxTurnVelocityWithoutTippingRps", maxTurnVelocityWithoutTippingRps);
             SmartDashboard.putNumber("maxAcheivableTurnVelcoityRPS", maxAchievableTurnVelocityRps);
             SmartDashboard.putNumber("optimalTurnVelocityRPS", optimalTurnVelocityRps);
 
