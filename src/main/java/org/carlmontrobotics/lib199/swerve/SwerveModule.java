@@ -85,7 +85,7 @@ public class SwerveModule implements Sendable {
                                                                 config.kBackwardVels[arrIndex],
                                                                 config.kBackwardAccels[arrIndex]);
 
-        drivePIDController = new PIDController(2 * config.drivekP[arrIndex],
+        drivePIDController = new PIDController(config.drivekP[arrIndex],
                                                config.drivekI[arrIndex],
                                                config.drivekD[arrIndex]);
     
