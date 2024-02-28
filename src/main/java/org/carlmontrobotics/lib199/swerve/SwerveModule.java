@@ -147,26 +147,33 @@ public class SwerveModule implements Sendable {
     public ModuleType getType() {
         return type;
     }
-    public void driverPerodic() {
-         double actualSpeed = getCurrentSpeed();
-            double targetVoltage = (actualSpeed >= 0 ? forwardSimpleMotorFF :
-                                    backwardSimpleMotorFF).calculate(desiredSpeed, calculateAntiGravitationalA(pitchDegSupplier.get(), rollDegSupplier.get()));//clippedAcceleration);
+    public void drivePeriodic() {
+        double actualSpeed = getCurrentSpeed();
+        double targetVoltage = (actualSpeed >= 0 ? forwardSimpleMotorFF :
+                                backwardSimpleMotorFF).calculate(desiredSpeed, calculateAntiGravitationalA(pitchDegSupplier.get(), rollDegSupplier.get()));//clippedAcceleration);
 
-            // Use robot characterization as a simple physical model to account for internal resistance, frcition, etc.
-            // Add a PID adjustment for error correction (also "drives" the actual speed to the desired speed)
-            targetVoltage += drivePIDController.calculate(actualSpeed, desiredSpeed);
-            double appliedVoltage = MathUtil.clamp(targetVoltage, -12, 12);
-            drive.setVoltage(appliedVoltage);
+        // Use robot characterization as a simple physical model to account for internal resistance, frcition, etc.
+        // Add a PID adjustment for error correction (also "drives" the actual speed to the desired speed)
+        targetVoltage += drivePIDController.calculate(actualSpeed, desiredSpeed);
+        double appliedVoltage = MathUtil.clamp(targetVoltage, -12, 12);
+        drive.setVoltage(appliedVoltage);
     }
     private double prevTurnVelocity = 0;
     public void periodic() {
-        
-        //Drive Control
+        //driver control
         {
-           
-        }
-        
-        updateSmartDashboard();
+            double actualSpeed = getCurrentSpeed();
+        double targetVoltage = (actualSpeed >= 0 ? forwardSimpleMotorFF :
+                                backwardSimpleMotorFF).calculate(desiredSpeed, calculateAntiGravitationalA(pitchDegSupplier.get(), rollDegSupplier.get()));//clippedAcceleration);
+
+        // Use robot characterization as a simple physical model to account for internal resistance, frcition, etc.
+        // Add a PID adjustment for error correction (also "drives" the actual speed to the desired speed)
+        targetVoltage += drivePIDController.calculate(actualSpeed, desiredSpeed);
+        double appliedVoltage = MathUtil.clamp(targetVoltage, -12, 12);
+        drive.setVoltage(appliedVoltage);
+        //turn control
+        {
+            updateSmartDashboard();
         String moduleString = type.toString();
 
         double kP = SmartDashboard.getNumber(moduleString + " Swerve kP", turnPIDController.getP());
@@ -225,7 +232,69 @@ public class SwerveModule implements Sendable {
             }
             prevTurnVelocity = state.velocity;
         }
-        
+        }
+        }
+    }
+    public void turnPeriodic() {
+        updateSmartDashboard();
+        String moduleString = type.toString();
+
+        double kP = SmartDashboard.getNumber(moduleString + " Swerve kP", turnPIDController.getP());
+        if (turnPIDController.getP() != kP) {
+            turnPIDController.setP(kP);
+        }
+        double kD = SmartDashboard.getNumber(moduleString + " Swerve kD", turnPIDController.getD());
+        if (turnPIDController.getD() != kD) {
+            turnPIDController.setD(kD);
+        }
+        double turnTolerance = SmartDashboard.getNumber(moduleString + " Swerve Turn Tolerance", turnToleranceRot);
+        if (turnPIDController.getPositionTolerance() != turnTolerance) {
+            turnPIDController.setTolerance(turnTolerance);
+        }
+        double kS = SmartDashboard.getNumber(moduleString + " Swerve kS", turnSimpleMotorFeedforward.ks);
+        double kV = SmartDashboard.getNumber(moduleString + " Swerve kV", turnSimpleMotorFeedforward.kv);
+        double kA = SmartDashboard.getNumber(moduleString + " Swerve kA", turnSimpleMotorFeedforward.ka);
+        if (turnSimpleMotorFeedforward.ks != kS || turnSimpleMotorFeedforward.kv != kV || turnSimpleMotorFeedforward.ka != kA) {
+            turnSimpleMotorFeedforward = new SimpleMotorFeedforward(kS, kV, kA);
+            maxAchievableTurnVelocityRps = 0.5 * turnSimpleMotorFeedforward.maxAchievableVelocity(12.0, 0);
+            maxAchievableTurnAccelerationRps2 = 0.5 * turnSimpleMotorFeedforward.maxAchievableAcceleration(12.0, maxAchievableTurnVelocityRps);
+        }
+
+        // Turn Control
+        {
+            double measuredAngleRots = Units.degreesToRotations(getModuleAngle());
+            TrapezoidProfile.State goal = turnPIDController.getGoal();
+            SmartDashboard.putNumber(moduleString + " goaltrap.position", goal.position);
+            SmartDashboard.putNumber(moduleString + " goaltrap.velocity", goal.velocity);
+            goal = new TrapezoidProfile.State(goal.position, goal.velocity);
+
+            double period = turnPIDController.getPeriod();
+            double optimalTurnVelocityRps = Math.abs(MathUtil.inputModulus(goal.position-measuredAngleRots, -.5, .5))/period;
+            
+            double maxOverShootDegree = 1;
+            maxOverShootDegree = SmartDashboard.getNumber("maxOverShootDegree",maxOverShootDegree);
+            int numPeriods = 1;
+            numPeriods =(int) SmartDashboard.getNumber("num periods",numPeriods);
+            maxControllableAccerlationRps2 = (2*(maxOverShootDegree/360))/Math.pow(period*numPeriods,2);
+            setMaxTurnVelocity(Math.min(Math.min(maxAchievableTurnVelocityRps, optimalTurnVelocityRps), maxTurnVelocityWithoutTippingRps));
+            SmartDashboard.putNumber("maxTurnVelocityWithoutTippingRps", maxTurnVelocityWithoutTippingRps);
+            SmartDashboard.putNumber("maxAcheivableTurnVelcoityRPS", maxAchievableTurnVelocityRps);
+            SmartDashboard.putNumber("optimalTurnVelocityRPS", optimalTurnVelocityRps);
+            
+            turnSpeedCorrectionVolts = turnPIDController.calculate(measuredAngleRots);
+            TrapezoidProfile.State state = turnPIDController.getSetpoint();
+
+            SmartDashboard.putNumber("previous turn Velocity", prevTurnVelocity);
+            SmartDashboard.putNumber("state velocity",state.velocity);
+            turnFFVolts = turnSimpleMotorFeedforward.calculate(state.velocity, 0);//(state.velocity-prevTurnVelocity) / period);
+            turnVolts = turnFFVolts + turnSpeedCorrectionVolts;
+            if (!turnPIDController.atGoal()) {
+                turn.setVoltage(MathUtil.clamp(turnVolts, -12.0, 12.0));
+            } else {
+                turn.setVoltage(turnSimpleMotorFeedforward.calculate(goal.velocity));
+            }
+            prevTurnVelocity = state.velocity;
+        }   
     }
 
     /**
