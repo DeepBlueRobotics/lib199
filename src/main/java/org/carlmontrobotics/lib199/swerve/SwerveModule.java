@@ -147,13 +147,8 @@ public class SwerveModule implements Sendable {
     public ModuleType getType() {
         return type;
     }
-
-    private double prevTurnVelocity = 0;
-    public void periodic() {
-        
-        //Drive Control
-        {
-            double actualSpeed = getCurrentSpeed();
+    public void driverPerodic() {
+         double actualSpeed = getCurrentSpeed();
             double targetVoltage = (actualSpeed >= 0 ? forwardSimpleMotorFF :
                                     backwardSimpleMotorFF).calculate(desiredSpeed, calculateAntiGravitationalA(pitchDegSupplier.get(), rollDegSupplier.get()));//clippedAcceleration);
 
@@ -162,6 +157,13 @@ public class SwerveModule implements Sendable {
             targetVoltage += drivePIDController.calculate(actualSpeed, desiredSpeed);
             double appliedVoltage = MathUtil.clamp(targetVoltage, -12, 12);
             drive.setVoltage(appliedVoltage);
+    }
+    private double prevTurnVelocity = 0;
+    public void periodic() {
+        
+        //Drive Control
+        {
+           
         }
         
         updateSmartDashboard();
