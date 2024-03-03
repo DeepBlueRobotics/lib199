@@ -88,7 +88,10 @@ public class SwerveModule implements Sendable {
         drivePIDController = new PIDController(config.drivekP[arrIndex],
                                                config.drivekI[arrIndex],
                                                config.drivekD[arrIndex]);
-    
+        
+        /* offset for 3 CANcoder counts */
+        double toleranceCountsPerS = (3 * positionConstant * drive.getEncoder().getCountsPerRevolution()) / Units.millisecondsToSeconds(drive.getEncoder().getMeasurementPeriod() * drive.getEncoder().getAverageDepth());
+        drivePIDController.setTolerance(toleranceCountsPerS);
 
         //System.out.println("Velocity Constant: " + (positionConstant / 60));
 
@@ -159,7 +162,7 @@ public class SwerveModule implements Sendable {
         double actualSpeed = getCurrentSpeed();
         double targetVoltage = (actualSpeed >= 0 ? forwardSimpleMotorFF :
                                 backwardSimpleMotorFF).calculate(desiredSpeed, calculateAntiGravitationalA(pitchDegSupplier.get(), rollDegSupplier.get()));//clippedAcceleration);
-
+        
         // Use robot characterization as a simple physical model to account for internal resistance, frcition, etc.
         // Add a PID adjustment for error correction (also "drives" the actual speed to the desired speed)
         targetVoltage += drivePIDController.calculate(actualSpeed, desiredSpeed);
