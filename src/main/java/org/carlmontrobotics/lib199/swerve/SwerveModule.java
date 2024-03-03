@@ -3,6 +3,8 @@ package org.carlmontrobotics.lib199.swerve;
 
 import java.util.function.Supplier;
 
+import org.mockito.internal.reporting.SmartPrinter;
+
 import com.ctre.phoenix6.signals.AbsoluteSensorRangeValue;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.hardware.CANcoder;
@@ -342,6 +344,25 @@ public class SwerveModule implements Sendable {
         SmartDashboard.putNumber(moduleString + "Turn Total Output (Volts)", turnVolts);
 
         // tuning PID + FF values
+        double drivekP = SmartDashboard.getNumber(moduleString + " Drive kP", drivePIDController.getP());
+        if (drivePIDController.getP() != drivekP) {
+            drivePIDController.setP(drivekP);
+        }
+        double drivekD = SmartDashboard.getNumber(moduleString + " Drive kD", drivePIDController.getD());
+        if (drivePIDController.getD() != drivekD) {
+            drivePIDController.setD(drivekD);
+        }
+        double driveTolerance = SmartDashboard.getNumber(moduleString + " Drive Tolerance", drivePIDController.getPositionTolerance());
+        if (turnPIDController.getPositionTolerance() != driveTolerance) {
+            turnPIDController.setTolerance(driveTolerance);
+        }
+        double drivekS = SmartDashboard.getNumber(moduleString + " Drive kS", forwardSimpleMotorFF.ks);
+        double drivekV = SmartDashboard.getNumber(moduleString + " Drive kV", forwardSimpleMotorFF.kv);
+        double drivekA = SmartDashboard.getNumber(moduleString + " Drive kA", forwardSimpleMotorFF.ka);
+        if (forwardSimpleMotorFF.ks != drivekS || forwardSimpleMotorFF.kv != drivekV || forwardSimpleMotorFF.ka != drivekA) {
+            forwardSimpleMotorFF = new SimpleMotorFeedforward(drivekS, drivekV, drivekA);
+            backwardSimpleMotorFF = new SimpleMotorFeedforward(drivekS, drivekV, drivekA);
+        }
         double kP = SmartDashboard.getNumber(moduleString + " Swerve kP", turnPIDController.getP());
         if (turnPIDController.getP() != kP) {
             turnPIDController.setP(kP);
