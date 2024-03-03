@@ -159,14 +159,20 @@ public class SwerveModule implements Sendable {
     }
 
     public void drivePeriodic() {
+        String moduleString = type.toString();
         double actualSpeed = getCurrentSpeed();
         double targetVoltage = (actualSpeed >= 0 ? forwardSimpleMotorFF :
                                 backwardSimpleMotorFF).calculate(desiredSpeed, calculateAntiGravitationalA(pitchDegSupplier.get(), rollDegSupplier.get()));//clippedAcceleration);
         
         // Use robot characterization as a simple physical model to account for internal resistance, frcition, etc.
         // Add a PID adjustment for error correction (also "drives" the actual speed to the desired speed)
-        targetVoltage += drivePIDController.calculate(actualSpeed, desiredSpeed);
+        double pidVolts = drivePIDController.calculate(actualSpeed, desiredSpeed);
+        targetVoltage += pidVolts;
+        SmartDashboard.putBoolean(moduleString + " is within drive tolerance", drivePIDController.atSetpoint());
+        SmartDashboard.putNumber(moduleString + " pidVolts", pidVolts);
         double appliedVoltage = MathUtil.clamp(targetVoltage, -12, 12);
+        SmartDashboard.putNumber(moduleString + " appliedVoltage", appliedVoltage);
+
         drive.setVoltage(appliedVoltage);
     }
 
