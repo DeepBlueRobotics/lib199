@@ -175,7 +175,10 @@ public class SwerveModule implements Sendable {
         
         // Use robot characterization as a simple physical model to account for internal resistance, frcition, etc.
         // Add a PID adjustment for error correction (also "drives" the actual speed to the desired speed)
-        double pidVolts = drivePIDController.calculate(actualSpeed, desiredSpeed);
+        double pidVolts = 0;
+        if (!drivePIDController.atSetpoint()) {
+            pidVolts = drivePIDController.calculate(actualSpeed, desiredSpeed);
+        }
         targetVoltage += pidVolts;
         SmartDashboard.putBoolean(moduleString + " is within drive tolerance", drivePIDController.atSetpoint());
         SmartDashboard.putNumber(moduleString + " pidVolts", pidVolts);
