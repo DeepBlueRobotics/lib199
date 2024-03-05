@@ -340,6 +340,7 @@ public class SwerveModule implements Sendable {
         SmartDashboard.putNumber(moduleString + " Encoder Position", drive.getEncoder().getPosition());
         // Display the speed that the robot thinks it is travelling at.
         SmartDashboard.putNumber(moduleString + " Current Speed", getCurrentSpeed());
+        SmartDashboard.putNumber(moduleString + " Drive is at Goal", drivePIDController.atSetpoint());
         SmartDashboard.putNumber(moduleString + " Turn Setpoint Pos (deg)", turnPIDController.getSetpoint().position);
         SmartDashboard.putNumber(moduleString + " Turn Setpoint Vel (dps)", turnPIDController.getSetpoint().velocity);
         SmartDashboard.putNumber(moduleString + " Turn Goal Pos (deg)", turnPIDController.getGoal().position);
