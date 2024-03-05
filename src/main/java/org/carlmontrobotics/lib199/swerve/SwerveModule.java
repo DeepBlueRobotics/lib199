@@ -92,8 +92,8 @@ public class SwerveModule implements Sendable {
                                                config.drivekD[arrIndex]);
         
         /* offset for 1 CANcoder count */
-        double toleranceCountsPerS = (1 / drive.getEncoder().getCountsPerRevolution() * positionConstant) / Units.millisecondsToSeconds(drive.getEncoder().getMeasurementPeriod() * drive.getEncoder().getAverageDepth());
-        drivePIDController.setTolerance(toleranceCountsPerS);
+        double toleranceMPerS = (1.0 / (double)(drive.getEncoder().getCountsPerRevolution()) * positionConstant) / Units.millisecondsToSeconds(drive.getEncoder().getMeasurementPeriod() * drive.getEncoder().getAverageDepth());
+        drivePIDController.setTolerance(toleranceMPerS);
 
         //System.out.println("Velocity Constant: " + (positionConstant / 60));
 
@@ -148,7 +148,7 @@ public class SwerveModule implements Sendable {
         SmartDashboard.getNumber(moduleString + " Drive kS", drivePIDController.getP());
         SmartDashboard.getNumber(moduleString + " Drive kV", drivePIDController.getP());
         SmartDashboard.getNumber(moduleString + " Drive kA", drivePIDController.getP());
-        SmartDashboard.putNumber(moduleString + " Swerve Drive Tolerance", turnToleranceRot);
+        SmartDashboard.putNumber(moduleString + " Drive Tolerance", turnToleranceRot);
 
         SmartDashboard.putData(this);
 
