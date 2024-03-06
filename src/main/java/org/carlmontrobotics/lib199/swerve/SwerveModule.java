@@ -143,11 +143,11 @@ public class SwerveModule implements Sendable {
         SmartDashboard.putNumber(moduleString +" Swerve kD", turnPIDController.getD());
         SmartDashboard.putNumber(moduleString + " Swerve Turn Tolerance", turnToleranceRot);
 
-        SmartDashboard.getNumber(moduleString + " Drive kP", drivePIDController.getP());
-        SmartDashboard.getNumber(moduleString + " Drive kD", drivePIDController.getP());
-        SmartDashboard.getNumber(moduleString + " Drive kS", drivePIDController.getP());
-        SmartDashboard.getNumber(moduleString + " Drive kV", drivePIDController.getP());
-        SmartDashboard.getNumber(moduleString + " Drive kA", drivePIDController.getP());
+        SmartDashboard.putNumber(moduleString + " Drive kP", drivePIDController.getP());
+        SmartDashboard.putNumber(moduleString + " Drive kD", drivePIDController.getP());
+        SmartDashboard.putNumber(moduleString + " Drive kS", drivePIDController.getP());
+        SmartDashboard.putNumber(moduleString + " Drive kV", drivePIDController.getP());
+        SmartDashboard.putNumber(moduleString + " Drive kA", drivePIDController.getP());
         SmartDashboard.putNumber(moduleString + " Drive Tolerance", turnToleranceRot);
 
         SmartDashboard.putData(this);
