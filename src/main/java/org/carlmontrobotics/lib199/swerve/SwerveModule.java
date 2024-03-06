@@ -48,7 +48,7 @@ public class SwerveModule implements Sendable {
     private Timer timer;
     private SimpleMotorFeedforward forwardSimpleMotorFF, backwardSimpleMotorFF, turnSimpleMotorFeedforward;
     private double maxControllableAccerlationRps2;
-    private double desiredSpeed, lastAngle, maxAchievableTurnVelocityRps, maxAchievableTurnAccelerationRps2, turnToleranceRot, angleDiffRot;
+    private double desiredSpeed, lastAngle, maxAchievableTurnVelocityRps, maxAchievableTurnAccelerationRps2, drivetoleranceMPerS, turnToleranceRot, angleDiffRot;
 
     private double turnSpeedCorrectionVolts, turnFFVolts, turnVolts;
     private double maxTurnVelocityWithoutTippingRps;
@@ -92,8 +92,8 @@ public class SwerveModule implements Sendable {
                                                config.drivekD[arrIndex]);
         
         /* offset for 1 CANcoder count */
-        double toleranceMPerS = (1.0 / (double)(drive.getEncoder().getCountsPerRevolution()) * positionConstant) / Units.millisecondsToSeconds(drive.getEncoder().getMeasurementPeriod() * drive.getEncoder().getAverageDepth());
-        drivePIDController.setTolerance(toleranceMPerS);
+        drivetoleranceMPerS = (1.0 / (double)(drive.getEncoder().getCountsPerRevolution()) * positionConstant) / Units.millisecondsToSeconds(drive.getEncoder().getMeasurementPeriod() * drive.getEncoder().getAverageDepth());
+        drivePIDController.setTolerance(drivetoleranceMPerS);
 
         //System.out.println("Velocity Constant: " + (positionConstant / 60));
 
@@ -175,11 +175,11 @@ public class SwerveModule implements Sendable {
         
         // Use robot characterization as a simple physical model to account for internal resistance, frcition, etc.
         // Add a PID adjustment for error correction (also "drives" the actual speed to the desired speed)
-        double pidVolts = 0;
+        double pidVolts = drivePIDController.calculate(actualSpeed, desiredSpeed);
         SmartDashboard.putNumber(moduleString + "Actual Speed", actualSpeed);
         SmartDashboard.putNumber(moduleString + "Desired Speed", desiredSpeed);
-        if (!drivePIDController.atSetpoint()) {
-            pidVolts = drivePIDController.calculate(actualSpeed, desiredSpeed);
+        if (drivePIDController.atSetpoint()) {
+            pidVolts = 0;
         }
         targetVoltage += pidVolts;
         SmartDashboard.putBoolean(moduleString + " is within drive tolerance", drivePIDController.atSetpoint());
