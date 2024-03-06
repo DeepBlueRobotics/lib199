@@ -144,10 +144,10 @@ public class SwerveModule implements Sendable {
         SmartDashboard.putNumber(moduleString + " Swerve Turn Tolerance", turnToleranceRot);
 
         SmartDashboard.putNumber(moduleString + " Drive kP", drivePIDController.getP());
-        SmartDashboard.putNumber(moduleString + " Drive kD", drivePIDController.getP());
-        SmartDashboard.putNumber(moduleString + " Drive kS", drivePIDController.getP());
-        SmartDashboard.putNumber(moduleString + " Drive kV", drivePIDController.getP());
-        SmartDashboard.putNumber(moduleString + " Drive kA", drivePIDController.getP());
+        SmartDashboard.putNumber(moduleString + " Drive kD", drivePIDController.getD());
+        SmartDashboard.putNumber(moduleString + " Drive kS", forwardSimpleMotorFF.ks);
+        SmartDashboard.putNumber(moduleString + " Drive kV", forwardSimpleMotorFF.kv);
+        SmartDashboard.putNumber(moduleString + " Drive kA", forwardSimpleMotorFF.ka);
         SmartDashboard.putNumber(moduleString + " Drive Tolerance", turnToleranceRot);
 
         SmartDashboard.putData(this);
@@ -176,6 +176,8 @@ public class SwerveModule implements Sendable {
         // Use robot characterization as a simple physical model to account for internal resistance, frcition, etc.
         // Add a PID adjustment for error correction (also "drives" the actual speed to the desired speed)
         double pidVolts = 0;
+        SmartDashboard.putNumber(moduleString + "Actual Speed", actualSpeed);
+        SmartDashboard.putNumber(moduleString + "Desired Speed", desiredSpeed);
         if (!drivePIDController.atSetpoint()) {
             pidVolts = drivePIDController.calculate(actualSpeed, desiredSpeed);
         }
