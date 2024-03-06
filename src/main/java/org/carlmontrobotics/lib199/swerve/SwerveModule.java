@@ -366,8 +366,8 @@ public class SwerveModule implements Sendable {
             drivePIDController.setD(drivekD);
         }
         double driveTolerance = SmartDashboard.getNumber(moduleString + " Drive Tolerance", drivePIDController.getPositionTolerance());
-        if (turnPIDController.getPositionTolerance() != driveTolerance) {
-            turnPIDController.setTolerance(driveTolerance);
+        if (drivePIDController.getPositionTolerance() != driveTolerance) {
+            drivePIDController.setTolerance(driveTolerance);
         }
         double drivekS = SmartDashboard.getNumber(moduleString + " Drive kS", forwardSimpleMotorFF.ks);
         double drivekV = SmartDashboard.getNumber(moduleString + " Drive kV", forwardSimpleMotorFF.kv);
