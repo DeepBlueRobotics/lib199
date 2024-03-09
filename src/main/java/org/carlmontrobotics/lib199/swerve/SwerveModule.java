@@ -52,7 +52,7 @@ public class SwerveModule implements Sendable {
     private Timer timer;
     private SimpleMotorFeedforward forwardSimpleMotorFF, turnSimpleMotorFeedforward;
     private double maxControllableAccerlationRps2;
-    private double desiredSpeed, lastAngle, maxAchievableTurnVelocityRps, maxAchievableTurnAccelerationRps2, turnToleranceRot, angleDiffRot;
+    private double desiredSpeed, lastAngle, maxAchievableTurnVelocityRps, maxAchievableTurnAccelerationRps2, drivetoleranceMPerS, turnToleranceRot, angleDiffRot;
     private double positionConstant;
 
     private double turnSpeedCorrectionVolts, turnFFVolts, turnVolts;
@@ -93,6 +93,7 @@ public class SwerveModule implements Sendable {
         drivePIDController.setFF((forwardSimpleMotorFF.kv/12) * drive.getEncoder().getVelocityConversionFactor());
         /* offset for 1 CANcoder count */
         //System.out.println("Velocity Constant: " + (positionConstant / 60));
+        drivetoleranceMPerS = (1.0 / (double)(drive.getEncoder().getCountsPerRevolution()) * positionConstant) / Units.millisecondsToSeconds(drive.getEncoder().getMeasurementPeriod() * drive.getEncoder().getAverageDepth());
 
         this.turn = turn;
 
@@ -171,8 +172,11 @@ public class SwerveModule implements Sendable {
         // Use robot characterization as a simple physical model to account for internal resistance, frcition, etc.
         // Add a PID adjustment for error correction (also "drives" the actual speed to the desired speed)
         //Switching to SparkPIDController to fix the large error and slow update time. use WPIlib pid controller to calculate the next voltage and plug it into the set refernece for SparkPIDController to drive using a SParkPID for faster update times
-        drivePIDController.setReference(desiredSpeed / drive.getEncoder().getVelocityConversionFactor(), CANSparkBase.ControlType.kVelocity,0);//Math.copySign(forwardSimpleMotorFF.ks,desiredSpeed),ArbFFUnits.kVoltage);//drivePIDController.calculate(actualSpeed, desiredSpeed);
-        
+        if (desiredSpeed < drivetoleranceMPerS) {
+            drivePIDController.setReference(desiredSpeed / drive.getEncoder().getVelocityConversionFactor(), CANSparkBase.ControlType.kVelocity,0);
+        } else {
+            drivePIDController.setReference(desiredSpeed / drive.getEncoder().getVelocityConversionFactor(), CANSparkBase.ControlType.kVelocity,0, Math.copySign(forwardSimpleMotorFF.ks,desiredSpeed), ArbFFUnits.kVoltage);
+        }
         SmartDashboard.putNumber(moduleString + "Actual Speed", actualSpeed);
         SmartDashboard.putNumber(moduleString + "Desired Speed", desiredSpeed);
         
