@@ -11,6 +11,7 @@ import com.ctre.phoenix6.hardware.CANcoder;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.SparkPIDController;
 import com.revrobotics.CANSparkBase.IdleMode;
+import com.revrobotics.SparkPIDController.ArbFFUnits;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
@@ -66,7 +67,6 @@ public class SwerveModule implements Sendable {
         this.config = config;
         this.type = type;
         this.drive = drive;
-
         double positionConstant = config.wheelDiameterMeters * Math.PI / config.driveGearing;
         drive.setInverted(config.driveInversion[arrIndex]);
         drive.getEncoder().setPositionConversionFactor(positionConstant);
@@ -96,6 +96,8 @@ public class SwerveModule implements Sendable {
         drivePIDController.setP(config.drivekP[arrIndex]);
         drivePIDController.setI(config.drivekI[arrIndex]);
         drivePIDController.setD(config.drivekD[arrIndex]);
+        
+        drivePIDController.setFF(forwardSimpleMotorFF.kv);
         /* offset for 1 CANcoder count */
         drivetoleranceMPerS = (1.0 / (double)(drive.getEncoder().getCountsPerRevolution()) * positionConstant) / Units.millisecondsToSeconds(drive.getEncoder().getMeasurementPeriod() * drive.getEncoder().getAverageDepth());
         drivePIDController.setIZone(drivetoleranceMPerS);
@@ -158,7 +160,7 @@ public class SwerveModule implements Sendable {
         SmartDashboard.putData(this);
 
         SendableRegistry.addLW(this, "SwerveModule", type.toString());
-
+        
     }
 
     public ModuleType getType() {
@@ -182,7 +184,7 @@ public class SwerveModule implements Sendable {
         // Add a PID adjustment for error correction (also "drives" the actual speed to the desired speed)
         //Switching to SparkPIDController to fix the large error and slow update time. use WPIlib pid controller to calculate the next voltage and plug it into the set refernece for SparkPIDController to drive using a SParkPID for faster update times
         double nextVoltage = drivePIDController2.calculate(actualSpeed,desiredSpeed);
-        drivePIDController.setReference(nextVoltage, CANSparkBase.ControlType.kVoltage,0,forwardSimpleMotorFF.calculate(desiredSpeed));//drivePIDController.calculate(actualSpeed, desiredSpeed);
+        drivePIDController.setReference(nextVoltage, CANSparkBase.ControlType.kVelocity,0,Math.copySign(forwardSimpleMotorFF.ks,nextVoltage));//drivePIDController.calculate(actualSpeed, desiredSpeed);
         
         SmartDashboard.putNumber(moduleString + "Actual Speed", actualSpeed);
         SmartDashboard.putNumber(moduleString + "Desired Speed", desiredSpeed);
