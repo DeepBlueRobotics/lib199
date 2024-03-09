@@ -89,8 +89,8 @@ public class SwerveModule implements Sendable {
                                                                 config.kForwardAccels[arrIndex]);
         
         drivePIDController = drive.getPIDController();
-        drivePIDController.setP((config.drivekP[arrIndex]/12)/drive.getEncoder().getVelocityConversionFactor());
-        drivePIDController.setFF((forwardSimpleMotorFF.kv/12)/drive.getEncoder().getVelocityConversionFactor());
+        drivePIDController.setP((config.drivekP[arrIndex]/12) * drive.getEncoder().getVelocityConversionFactor());
+        drivePIDController.setFF((forwardSimpleMotorFF.kv/12) * drive.getEncoder().getVelocityConversionFactor());
         /* offset for 1 CANcoder count */
         //System.out.println("Velocity Constant: " + (positionConstant / 60));
 
