@@ -172,7 +172,7 @@ public class SwerveModule implements Sendable {
         // Use robot characterization as a simple physical model to account for internal resistance, frcition, etc.
         // Add a PID adjustment for error correction (also "drives" the actual speed to the desired speed)
         //Switching to SparkPIDController to fix the large error and slow update time. use WPIlib pid controller to calculate the next voltage and plug it into the set refernece for SparkPIDController to drive using a SParkPID for faster update times
-        if (desiredSpeed < drivetoleranceMPerS) {
+        if (Math.abs(desiredSpeed) < drivetoleranceMPerS) {
             drivePIDController.setReference(desiredSpeed / drive.getEncoder().getVelocityConversionFactor(), CANSparkBase.ControlType.kVelocity,0);
         } else {
             drivePIDController.setReference(desiredSpeed / drive.getEncoder().getVelocityConversionFactor(), CANSparkBase.ControlType.kVelocity,0, Math.copySign(forwardSimpleMotorFF.ks,desiredSpeed), ArbFFUnits.kVoltage);
