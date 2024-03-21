@@ -109,14 +109,15 @@ tasks.withType(JavaCompile) {
     options.compilerArgs.add '-XDstringConcat=inline'
 }
 
+// Allow the generated javadocs to link to the documentation of WPILib and vendor libraries
 javadoc {
     options.with {
         links 'https://github.wpilib.org/allwpilib/docs/release/java/'
-	links 'https://www.kauailabs.com/public_files/navx-mxp/apidocs/java/'
-	links 'https://pathplanner.dev/api/java/'
-	links 'https://api.ctr-electronics.com/phoenix/release/java/'
-	links 'https://www.playingwithfusion.com/frc/2022/javadoc/'
-	links 'https://codedocs.revrobotics.com/java/'
+        links 'https://www.kauailabs.com/public_files/navx-mxp/apidocs/java/'
+        links 'https://pathplanner.dev/api/java/'
+        links 'https://api.ctr-electronics.com/phoenix/release/java/'
+        links 'https://www.playingwithfusion.com/frc/2022/javadoc/'
+        links 'https://codedocs.revrobotics.com/java/'
     }
 }
 
