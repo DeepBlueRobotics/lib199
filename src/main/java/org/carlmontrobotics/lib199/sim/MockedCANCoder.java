@@ -34,7 +34,7 @@ public class MockedCANCoder {
     }
 
     public void update() {
-        sim.setRawPosition((int) (position.get() * kCANCoderCPR));
+        sim.setRawPosition(position.get() / kCANCoderCPR);
     }
 
     public void setGearing(double gearing) {
