@@ -1,6 +1,9 @@
 package org.carlmontrobotics.lib199.swerve;
 
 
+import static edu.wpi.first.units.Units.Kilogram;
+import static edu.wpi.first.units.Units.Pounds;
+
 import java.util.function.Supplier;
 
 import org.mockito.internal.reporting.SmartPrinter;
@@ -20,6 +23,8 @@ import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.units.Mass;
+import edu.wpi.first.units.Measure;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.util.sendable.SendableRegistry;
@@ -448,5 +453,27 @@ public class SwerveModule implements Sendable {
         builder.addDoubleProperty("Turn PID Output", () -> turnSpeedCorrectionVolts, null);
         builder.addDoubleProperty("Turn FF Output", () -> turnFFVolts, null);
         builder.addDoubleProperty("Turn Total Output", () -> turnVolts, null);
+    }
+
+    /**
+     * Create and return a SwerveModuleSim that simulates the physics of this swerve module.
+     * 
+     * @param massOnWheel the mass on the wheel of this module (typically the mass of the robot divided by the number of modules)
+     * @param turnGearing the gearing reduction between the turn motor and the module
+     * @param turnMoiKgM2 the moment of inertia of the part of the module turned by the turn motor (in kg m^2)
+     * @return a SwerveModuleSim that simulates the physics of this swerve module.
+     */
+    public SwerveModuleSim createSim(Measure<Mass> massOnWheel, double turnGearing, double turnMoiKgM2) {
+        double driveMoiKgM2 =  massOnWheel.in(Kilogram) * Math.pow(config.wheelDiameterMeters/2, 2);
+        return new SwerveModuleSim(drive.getDeviceId(), config.driveGearing, drive.getInverted(), driveMoiKgM2, 
+            turn.getDeviceId(), turnEncoder.getDeviceID(), turnGearing, turn.getInverted(), turnMoiKgM2);
+    }
+
+    /**
+     * 
+     * @return a SwerveModuleSim that simulates this swerve module assuming it is one of 4 MK4i modules on our 114 lb 2024 robot.
+     */
+    public SwerveModuleSim createSim() {
+        return createSim(Pounds.of(114.0/4), 150.0/7, 0.0313);
     }
 }
