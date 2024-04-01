@@ -89,6 +89,10 @@ public class MockSparkMax {
         isInverted = inverted;
     }
 
+    public boolean getInverted() {
+        return isInverted;
+    }
+
     public REVLibError restoreFactoryDefaults() {
         return REVLibError.kOk;
     }
