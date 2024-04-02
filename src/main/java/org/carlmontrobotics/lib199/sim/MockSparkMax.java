@@ -7,6 +7,7 @@ import org.carlmontrobotics.lib199.DummySparkMaxAnswer;
 import org.carlmontrobotics.lib199.Mocks;
 import org.carlmontrobotics.lib199.REVLibErrorAnswer;
 
+import com.revrobotics.AbsoluteEncoder;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkBase.ExternalFollower;
 import com.revrobotics.CANSparkBase.IdleMode;
@@ -27,6 +28,7 @@ public class MockSparkMax {
     private final SimDevice motor;
     private final SimDouble speed;
     private RelativeEncoder encoder;
+    private AbsoluteEncoder absoluteEncoder;
     private SparkPIDController pidController;
     private boolean isInverted;
     // Since we need to keep a record of all the motor's followers
@@ -37,6 +39,7 @@ public class MockSparkMax {
         motor = SimDevice.create("SparkMax", port);
         speed = motor.createDouble("Motor Output", Direction.kOutput, 0);
         encoder = Mocks.createMock(RelativeEncoder.class, new MockedSparkEncoder(port), new REVLibErrorAnswer());
+        absoluteEncoder = Mocks.createMock(AbsoluteEncoder.class, new MockedSparkAbsoluteEncoder(port), new REVLibErrorAnswer());
         pidController = Mocks.createMock(SparkPIDController.class, new MockedSparkMaxPIDController(), new REVLibErrorAnswer());
         isInverted = false;
     }
