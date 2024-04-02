@@ -76,11 +76,6 @@ dependencies {
     implementation group: 'org.apache.commons', name: 'commons-csv', version: '1.6'
 }
 
-test {
-    useJUnitPlatform()
-    systemProperty 'junit.jupiter.extensions.autodetection.enabled', 'true'
-}
-
 // Simulation configuration (e.g. environment variables).
 wpi.sim.addGui().defaultEnabled = true
 wpi.sim.addDriverstation()
