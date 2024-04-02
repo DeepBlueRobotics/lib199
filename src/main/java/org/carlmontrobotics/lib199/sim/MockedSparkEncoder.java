@@ -73,7 +73,7 @@ public class MockedSparkEncoder implements AutoCloseable, Runnable {
         double dCount = curCount - lastCount;
         lastTime = t;
         lastCount = curCount;
-        double newVelocity = velocityConversionFactor * ( dCount / dt ) / countsPerRevolution;
+        double newVelocity = velocityConversionFactor * ( dCount / dt ) / countsPerRevolution * 60;
         velocity = Double.isNaN(newVelocity) ? 0 : newVelocity;
     }
 
