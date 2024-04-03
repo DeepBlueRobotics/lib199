@@ -14,6 +14,8 @@ import com.revrobotics.CANSparkBase.IdleMode;
 import com.revrobotics.CANSparkLowLevel.MotorType;
 import com.revrobotics.REVLibError;
 import com.revrobotics.RelativeEncoder;
+import com.revrobotics.SparkAbsoluteEncoder;
+import com.revrobotics.SparkMaxAbsoluteEncoder;
 import com.revrobotics.SparkPIDController;
 
 import edu.wpi.first.hal.SimDevice;
@@ -28,7 +30,7 @@ public class MockSparkMax {
     private final SimDevice motor;
     private final SimDouble speed;
     private RelativeEncoder encoder;
-    private AbsoluteEncoder absoluteEncoder;
+    private SparkAbsoluteEncoder absoluteEncoder;
     private SparkPIDController pidController;
     private boolean isInverted;
     // Since we need to keep a record of all the motor's followers
@@ -39,7 +41,7 @@ public class MockSparkMax {
         motor = SimDevice.create("SparkMax", port);
         speed = motor.createDouble("Motor Output", Direction.kOutput, 0);
         encoder = Mocks.createMock(RelativeEncoder.class, new MockedSparkEncoder(port), new REVLibErrorAnswer());
-        absoluteEncoder = Mocks.createMock(AbsoluteEncoder.class, new MockedSparkAbsoluteEncoder(port), new REVLibErrorAnswer());
+        absoluteEncoder = Mocks.createMock(SparkAbsoluteEncoder.class, new MockedSparkAbsoluteEncoder(port), new REVLibErrorAnswer());
         pidController = Mocks.createMock(SparkPIDController.class, new MockedSparkMaxPIDController(), new REVLibErrorAnswer());
         isInverted = false;
     }
@@ -86,6 +88,18 @@ public class MockSparkMax {
 
     public RelativeEncoder getEncoder() {
         return encoder;
+    }
+
+    public SparkAbsoluteEncoder getAbsoluteEncoder() {
+        return absoluteEncoder;
+    }
+
+    public SparkAbsoluteEncoder getAbsoluteEncoder(SparkMaxAbsoluteEncoder.Type encoderType) {
+        return absoluteEncoder;
+    }
+
+    public SparkAbsoluteEncoder getAbsoluteEncoder(SparkAbsoluteEncoder.Type encoderType) {
+        return absoluteEncoder;
     }
 
     public void setInverted(boolean inverted) {
