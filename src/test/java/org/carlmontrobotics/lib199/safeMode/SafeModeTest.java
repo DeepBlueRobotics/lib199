@@ -9,6 +9,8 @@ import java.util.function.IntSupplier;
 import java.util.function.LongSupplier;
 import java.util.function.Supplier;
 
+import org.carlmontrobotics.lib199.testUtils.TestRules;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -16,6 +18,8 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
 public class SafeModeTest {
 
+    @ClassRule
+    public static TestRules.InitializeHAL classRule = new TestRules.InitializeHAL(); 
     // Test SafeMode.java using JUnit
 
     @Test
