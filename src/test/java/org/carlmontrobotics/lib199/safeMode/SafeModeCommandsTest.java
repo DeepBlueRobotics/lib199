@@ -4,12 +4,17 @@ import static org.junit.Assert.*;
 
 import java.util.function.Function;
 
+import org.carlmontrobotics.lib199.testUtils.TestRules;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
 public class SafeModeCommandsTest {
+
+    @ClassRule
+    public static TestRules.InitializeHAL classRule = new TestRules.InitializeHAL(); 
 
     @Test
     public void testSafeCommand() {

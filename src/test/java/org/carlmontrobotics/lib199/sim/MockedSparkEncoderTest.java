@@ -13,7 +13,7 @@ import com.revrobotics.RelativeEncoder;
 import org.carlmontrobotics.lib199.Mocks;
 import org.carlmontrobotics.lib199.REVLibErrorAnswer;
 import org.carlmontrobotics.lib199.testUtils.SafelyClosable;
-import org.carlmontrobotics.lib199.testUtils.SimDeviceTestRule;
+import org.carlmontrobotics.lib199.testUtils.TestRules;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -24,9 +24,9 @@ import edu.wpi.first.wpilibj.simulation.SimDeviceSim;
 public class MockedSparkEncoderTest {
 
     @ClassRule
-    public static SimDeviceTestRule.Class simClassRule = new SimDeviceTestRule.Class(); 
+    public static TestRules.InitializeHAL simClassRule = new TestRules.InitializeHAL(); 
     @Rule
-    public SimDeviceTestRule.Test simTestRule = new SimDeviceTestRule.Test(); 
+    public TestRules.ResetSimDeviceSimData simTestRule = new TestRules.ResetSimDeviceSimData(); 
 
     @Test
     public void testDeviceCreation() {
