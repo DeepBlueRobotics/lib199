@@ -5,7 +5,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mockingDetails; 
 
 import org.carlmontrobotics.lib199.testUtils.ErrStreamTest;
-import org.carlmontrobotics.lib199.testUtils.SimDeviceTestRule;
+import org.carlmontrobotics.lib199.testUtils.TestRules;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -15,9 +15,9 @@ import com.playingwithfusion.TimeOfFlight;
 public class SensorFactoryTest extends ErrStreamTest {
 
     @ClassRule
-    public static SimDeviceTestRule.Class simClassRule = new SimDeviceTestRule.Class();
+    public static TestRules.InitializeHAL classRule = new TestRules.InitializeHAL(); 
     @Rule
-    public SimDeviceTestRule.Test simTestRule = new SimDeviceTestRule.Test();
+    public TestRules.ResetSimDeviceSimData testRule = new TestRules.ResetSimDeviceSimData(); 
 
     @Test
     // AutoClosable.close() throws Exception
