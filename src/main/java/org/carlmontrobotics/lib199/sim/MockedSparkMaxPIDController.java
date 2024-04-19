@@ -8,9 +8,12 @@ import com.revrobotics.SparkPIDController;
 import com.revrobotics.CANSparkBase.ControlType;
 import com.revrobotics.SparkPIDController.ArbFFUnits;
 
+import edu.wpi.first.hal.SimBoolean;
 import edu.wpi.first.hal.SimDevice;
 import edu.wpi.first.hal.SimDouble;
 import edu.wpi.first.hal.SimEnum;
+import edu.wpi.first.hal.SimInt;
+import edu.wpi.first.hal.SimLong;
 import edu.wpi.first.hal.SimDevice.Direction;
 import edu.wpi.first.math.controller.PIDController;
 
@@ -18,8 +21,11 @@ public class MockedSparkMaxPIDController {
     private PIDController pidController;
     private int portNumber;
     SimDevice pidControllerSim;
-    SimDouble velocitySim;
+    SimBoolean isUpdatingReferenceSim;
+    SimLong numUpdatesSim;
+    SimDouble referenceSim;
     SimEnum controlTypeSim;
+    SimInt slotSim;
     SimDouble arbFFSim;
     SimEnum arbFFUnitsSim;
 
@@ -28,15 +34,19 @@ public class MockedSparkMaxPIDController {
         pidController = new PIDController(0.0, 0.0, 0.0);
         pidControllerSim = SimDevice.create("SparkPIDController", portNumber);
 
-        velocitySim = pidControllerSim.createDouble("velocity", Direction.kBidir, 0);
+        isUpdatingReferenceSim = pidControllerSim.createBoolean("isUpdating", Direction.kOutput, false);
+        numUpdatesSim = pidControllerSim.createLong("numUpdates", Direction.kOutput, 0);
+
+        referenceSim = pidControllerSim.createDouble("reference", Direction.kOutput, 0);
 
         String[] controlTypeNames = Arrays.stream(ControlType.values()).map(ControlType::name).toArray(String[]::new);
-        controlTypeSim = pidControllerSim.createEnum("controlType", Direction.kBidir, controlTypeNames, ControlType.kDutyCycle.ordinal());
+        controlTypeSim = pidControllerSim.createEnum("controlType", Direction.kOutput, controlTypeNames, ControlType.kDutyCycle.ordinal());
 
-        arbFFSim = pidControllerSim.createDouble("arbFF", Direction.kBidir, 0);
+        slotSim = pidControllerSim.createInt("slot", Direction.kOutput, 0);
+        arbFFSim = pidControllerSim.createDouble("arbFF", Direction.kOutput, 0);
 
         String[] arbFFUnitNames = Arrays.stream(ArbFFUnits.values()).map(ArbFFUnits::name).toArray(String[]::new);
-        arbFFUnitsSim = pidControllerSim.createEnum("arbFFUnits", Direction.kBidir, arbFFUnitNames, ArbFFUnits.kVoltage.ordinal());
+        arbFFUnitsSim = pidControllerSim.createEnum("arbFFUnits", Direction.kOutput, arbFFUnitNames, ArbFFUnits.kVoltage.ordinal());
     }
 
     @Deprecated
@@ -45,13 +55,16 @@ public class MockedSparkMaxPIDController {
     }
 
     public REVLibError setReference​(double value, CANSparkBase.ControlType ctrl, int pidSlot, double arbFeedforward, SparkPIDController.ArbFFUnits arbFFUnits) {
-        controlTypeSim.set(ctrl.ordinal());
-        arbFFSim.set(arbFeedforward);
-        arbFFUnitsSim.set(arbFFUnits.ordinal());
-        switch (ctrl) {
-            case kVelocity:
-                velocitySim.set(value);
-                break;
+        isUpdatingReferenceSim.set(true);
+        try {
+            referenceSim.set(value);
+            controlTypeSim.set(ctrl.ordinal());
+            slotSim.set(pidSlot);
+            arbFFSim.set(arbFeedforward);
+            arbFFUnitsSim.set(arbFFUnits.ordinal());
+        } finally {
+            numUpdatesSim.set(numUpdatesSim.get()+1);
+            isUpdatingReferenceSim.set(false);
         }
         return REVLibError.kOk;
     }

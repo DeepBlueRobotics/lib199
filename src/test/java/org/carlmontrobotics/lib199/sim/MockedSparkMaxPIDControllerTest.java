@@ -15,8 +15,13 @@ import com.revrobotics.SparkPIDController;
 import com.revrobotics.CANSparkBase.ControlType;
 import com.revrobotics.SparkPIDController.ArbFFUnits;
 
+import edu.wpi.first.hal.HALValue;
+import edu.wpi.first.hal.SimBoolean;
 import edu.wpi.first.hal.SimDouble;
 import edu.wpi.first.hal.SimEnum;
+import edu.wpi.first.hal.SimInt;
+import edu.wpi.first.hal.SimLong;
+import edu.wpi.first.hal.simulation.SimValueCallback;
 import edu.wpi.first.wpilibj.simulation.SimDeviceSim;
 
 import org.carlmontrobotics.lib199.Mocks;
@@ -33,6 +38,7 @@ public class MockedSparkMaxPIDControllerTest {
     @Rule
     public TestRules.ResetSimDeviceSimData testRule = new TestRules.ResetSimDeviceSimData(); 
 
+    private int numChangesToIsUpdating = 0;
 
     @Test
     public void testResponses() {
@@ -44,21 +50,66 @@ public class MockedSparkMaxPIDControllerTest {
 
 
         SimDeviceSim pidControllerSim = new SimDeviceSim("SparkPIDController", 1);
-        SimDouble velocitySim = pidControllerSim.getDouble("velocity");
+        SimBoolean isUpdatingSim = pidControllerSim.getBoolean("isUpdating");
+        SimLong numUpdatesSim = pidControllerSim.getLong("numUpdates");
+        SimDouble referenceSim = pidControllerSim.getDouble("reference");
         SimEnum controlTypeSim = pidControllerSim.getEnum("controlType");
+        SimInt slotSim = pidControllerSim.getInt("slot");
         SimDouble arbFFSim = pidControllerSim.getDouble("arbFF");
         SimEnum arbFFUnitsSim = pidControllerSim.getEnum("arbFFUnits");
 
-        assertThat(velocitySim.get(), is(0.0));
+        pidControllerSim.registerValueChangedCallback(isUpdatingSim, new SimValueCallback() {
+            @Override
+            public void callback(String name, int handle, int direction, HALValue value) {
+                numChangesToIsUpdating++;
+            }
+        }, false);
+
+        // Defaults
+        assertThat(numChangesToIsUpdating, is(0));
+        assertThat(isUpdatingSim.get(), is(false));
+        assertThat(numUpdatesSim.get(), is(0L));
+        assertThat(referenceSim.get(), is(0.0));
         assertThat(controlTypeSim.get(), is(ControlType.kDutyCycle.ordinal()));
+        assertThat(slotSim.get(), is(0));
         assertThat(arbFFSim.get(), is(0.0));
         assertThat(arbFFUnitsSim.get(), is(ArbFFUnits.kVoltage.ordinal()));
 
+        // Velocity control
         assertEquals(REVLibError.kOk, mock.setReference(0.5, ControlType.kVelocity, 1, 0.25, ArbFFUnits.kPercentOut));
-        assertThat(velocitySim.get(), is(0.5));
+        assertThat(numChangesToIsUpdating, is(2));
+        assertThat(isUpdatingSim.get(), is(false));
+        assertThat(numUpdatesSim.get(), is(1L));
+        assertThat(referenceSim.get(), is(0.5));
         assertThat(controlTypeSim.get(), is(ControlType.kVelocity.ordinal()));
+        assertThat(slotSim.get(), is(1));
         assertThat(arbFFSim.get(), is(0.25));
         assertThat(arbFFUnitsSim.get(), is(ArbFFUnits.kPercentOut.ordinal()));
+        assertThat(numUpdatesSim.get(), is(1L));
+
+        // Duty-cycle control (the default)
+        assertEquals(REVLibError.kOk, mock.setReference(0.6, ControlType.kDutyCycle, 1, 0.35, ArbFFUnits.kVoltage));
+        assertThat(numChangesToIsUpdating, is(4));
+        assertThat(isUpdatingSim.get(), is(false));
+        assertThat(numUpdatesSim.get(), is(2L));
+        assertThat(referenceSim.get(), is(0.6));
+        assertThat(controlTypeSim.get(), is(ControlType.kDutyCycle.ordinal()));
+        assertThat(slotSim.get(), is(1));
+        assertThat(arbFFSim.get(), is(0.35));
+        assertThat(arbFFUnitsSim.get(), is(ArbFFUnits.kVoltage.ordinal()));
+        assertThat(numUpdatesSim.get(), is(2L));
+
+        // Position control with slot 2
+        assertEquals(REVLibError.kOk, mock.setReference(0.5, ControlType.kPosition, 2, 0.25, ArbFFUnits.kPercentOut));
+        assertThat(numChangesToIsUpdating, is(6));
+        assertThat(isUpdatingSim.get(), is(false));
+        assertThat(numUpdatesSim.get(), is(3L));
+        assertThat(referenceSim.get(), is(0.5));
+        assertThat(controlTypeSim.get(), is(ControlType.kPosition.ordinal()));
+        assertThat(slotSim.get(), is(2));
+        assertThat(arbFFSim.get(), is(0.25));
+        assertThat(arbFFUnitsSim.get(), is(ArbFFUnits.kPercentOut.ordinal()));
+        assertThat(numUpdatesSim.get(), is(3L));
     }
 
     private void assertSlotValueUpdate(Function<Double, REVLibError> setFunc, BiFunction<Double, Integer, REVLibError> slotSetFunc, Supplier<Double> getFunc, Function<Integer, Double> slotGetFunc) {
