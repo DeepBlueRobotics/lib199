@@ -85,7 +85,7 @@ public final class Mocks {
     public static <T, U> T createMock(Class<T> classToMock, U implClass, Answer<Object> defaultAnswer, Class<?>... interfaces) {
         HashMap<Method, InvokableMethod> methods = new HashMap<>();
         for(Method m: listMethods(classToMock, interfaces)) {
-            if(Modifier.isStatic(m.getModifiers()) || Modifier.isFinal(m.getModifiers())) {
+            if(Modifier.isStatic(m.getModifiers())) {
                 continue;
             }
             try {
