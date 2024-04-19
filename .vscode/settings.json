@@ -7,7 +7,7 @@
     "**/.hg": true,
     "**/CVS": true,
     "**/.DS_Store": true,
-    "bin/": true,
+"bin/": true,
     "**/.classpath": true,
     "**/.project": true,
     "**/.settings": true,
@@ -22,8 +22,10 @@
       "env": {
         "LD_LIBRARY_PATH": "${workspaceFolder}/build/jni/release" ,
         "DYLD_LIBRARY_PATH": "${workspaceFolder}/build/jni/release"
-      }
+      },
+      "preLaunchTask": "gradle: assemble"
     },
   ],
-  "java.test.defaultConfig": "WPIlibUnitTests"
+  "java.test.defaultConfig": "WPIlibUnitTests",
+  "java.gradle.buildServer.enabled":"on"
 }
