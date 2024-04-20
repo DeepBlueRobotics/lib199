@@ -44,11 +44,6 @@ public class MockedSparkMaxPIDControllerTest {
     public void testResponses() {
         SparkPIDController mock = Mocks.createMock(SparkPIDController.class, new MockedSparkMaxPIDController(1), 
             new REVLibErrorAnswer(), CANPIDController.class, SparkMaxPIDController.class);
-        assertSlotValueUpdate(mock::setP, mock::setP, mock::getP, mock::getP);
-        assertSlotValueUpdate(mock::setI, mock::setI, mock::getI, mock::getI);
-        assertSlotValueUpdate(mock::setD, mock::setD, mock::getD, mock::getD);
-
-
         SimDeviceSim pidControllerSim = new SimDeviceSim("SparkPIDController", 1);
         SimBoolean isUpdatingSim = pidControllerSim.getBoolean("isUpdating");
         SimLong numUpdatesSim = pidControllerSim.getLong("numUpdates");
@@ -57,13 +52,19 @@ public class MockedSparkMaxPIDControllerTest {
         SimInt slotSim = pidControllerSim.getInt("slot");
         SimDouble arbFFSim = pidControllerSim.getDouble("arbFF");
         SimEnum arbFFUnitsSim = pidControllerSim.getEnum("arbFFUnits");
-
         pidControllerSim.registerValueChangedCallback(isUpdatingSim, new SimValueCallback() {
             @Override
             public void callback(String name, int handle, int direction, HALValue value) {
                 numChangesToIsUpdating++;
             }
         }, false);
+
+        assertSlotValueUpdate(pidControllerSim, "p", mock::setP, mock::setP, mock::getP, mock::getP, 
+            (slot) -> pidControllerSim.getDouble(String.format("p[%d]", slot)).get());
+        assertSlotValueUpdate(pidControllerSim, "i", mock::setI, mock::setI, mock::getI, mock::getI,
+            (slot) -> pidControllerSim.getDouble(String.format("i[%d]", slot)).get());
+        assertSlotValueUpdate(pidControllerSim, "d", mock::setD, mock::setD, mock::getD, mock::getD,
+            (slot) -> pidControllerSim.getDouble(String.format("d[%d]", slot)).get());
 
         // Defaults
         assertThat(numChangesToIsUpdating, is(0));
@@ -112,31 +113,21 @@ public class MockedSparkMaxPIDControllerTest {
         assertThat(numUpdatesSim.get(), is(3L));
     }
 
-    private void assertSlotValueUpdate(Function<Double, REVLibError> setFunc, BiFunction<Double, Integer, REVLibError> slotSetFunc, Supplier<Double> getFunc, Function<Integer, Double> slotGetFunc) {
-        assertSlotValueUpdate(setFunc, getFunc, slotGetFunc);
-        assertSlotValueUpdate(v -> slotSetFunc.apply(v, 0), getFunc, slotGetFunc);
-        assertSlotValueUpdate(v -> slotSetFunc.apply(v, 1), getFunc, slotGetFunc);
-        assertSlotValueUpdate(v -> slotSetFunc.apply(v, 2), getFunc, slotGetFunc);
-    }
-
-    private void assertSlotValueUpdate(Function<Double, REVLibError> setFunc, Supplier<Double> getFunc, Function<Integer, Double> slotGetFunc) {
-        assertEquals(REVLibError.kOk, setFunc.apply(0.0));
-        assertSlotValueGet(0, getFunc, slotGetFunc);
+    private void assertSlotValueUpdate(SimDeviceSim pidControllerSim, String paramName, Function<Double, REVLibError> setFunc, BiFunction<Double, Integer, REVLibError> slotSetFunc, Supplier<Double> getFunc, Function<Integer, Double> slotGetFunc, Function<Integer, Double> simValueGetFunc) {
         assertEquals(REVLibError.kOk, setFunc.apply(1.0));
-        assertSlotValueGet(1, getFunc, slotGetFunc);
-        assertEquals(REVLibError.kOk, setFunc.apply(0.5));
-        assertSlotValueGet(0.5, getFunc, slotGetFunc);
-        assertEquals(REVLibError.kOk, setFunc.apply(-0.5));
-        assertSlotValueGet(-0.5, getFunc, slotGetFunc);
-        assertEquals(REVLibError.kOk, setFunc.apply(-1.0));
-        assertSlotValueGet(-1, getFunc, slotGetFunc);
+        assertThat(getFunc.get(), is(1.0));
+        assertEquals(REVLibError.kOk, slotSetFunc.apply(2.0, 0));
+        assertEquals(REVLibError.kOk, slotSetFunc.apply(3.0, 1));
+        assertEquals(REVLibError.kOk, slotSetFunc.apply(4.0, 2));
+        assertEquals(REVLibError.kOk, slotSetFunc.apply(5.0, 3));
+        assertThat(getFunc.get(), is(2.0));
+        assertThat(slotGetFunc.apply(0), is(2.0));
+        assertThat(slotGetFunc.apply(1), is(3.0));
+        assertThat(slotGetFunc.apply(2), is(4.0));
+        assertThat(slotGetFunc.apply(3), is(5.0));
+        assertThat(simValueGetFunc.apply(0), is(2.0));
+        assertThat(simValueGetFunc.apply(1), is(3.0));
+        assertThat(simValueGetFunc.apply(2), is(4.0));
+        assertThat(simValueGetFunc.apply(3), is(5.0));
     }
-
-    private void assertSlotValueGet(double expected, Supplier<Double> getFunc, Function<Integer, Double> slotGetFunc) {
-        assertEquals(expected, getFunc.get(), 0.01);
-        assertEquals(expected, slotGetFunc.apply(0), 0.01);
-        assertEquals(expected, slotGetFunc.apply(1), 0.01);
-        assertEquals(expected, slotGetFunc.apply(2), 0.01);
-    }
-
 }

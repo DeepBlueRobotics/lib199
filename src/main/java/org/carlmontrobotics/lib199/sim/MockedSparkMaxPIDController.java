@@ -15,24 +15,35 @@ import edu.wpi.first.hal.SimEnum;
 import edu.wpi.first.hal.SimInt;
 import edu.wpi.first.hal.SimLong;
 import edu.wpi.first.hal.SimDevice.Direction;
-import edu.wpi.first.math.controller.PIDController;
 
 public class MockedSparkMaxPIDController {
-    private PIDController pidController;
+    private static class ControlParameters {
+        SimDouble pSim, iSim, dSim;
+
+        ControlParameters(SimDevice device, int slot) {
+            pSim = device.createDouble(String.format("p[%d]", slot), Direction.kOutput, 0);
+            iSim = device.createDouble(String.format("i[%d]", slot), Direction.kOutput, 0);
+            dSim = device.createDouble(String.format("d[%d]", slot), Direction.kOutput, 0);
+        }
+    }
+    private ControlParameters[] controlParams = new ControlParameters[4];
+
     private int portNumber;
-    SimDevice pidControllerSim;
-    SimBoolean isUpdatingReferenceSim;
-    SimLong numUpdatesSim;
-    SimDouble referenceSim;
-    SimEnum controlTypeSim;
-    SimInt slotSim;
-    SimDouble arbFFSim;
-    SimEnum arbFFUnitsSim;
+    private SimDevice pidControllerSim;
+    private SimBoolean isUpdatingReferenceSim;
+    private SimLong numUpdatesSim;
+    private SimDouble referenceSim;
+    private SimEnum controlTypeSim;
+    private SimInt slotSim;
+    private SimDouble arbFFSim;
+    private SimEnum arbFFUnitsSim;
 
     public MockedSparkMaxPIDController(int portNumber) {
         this.portNumber = portNumber;
-        pidController = new PIDController(0.0, 0.0, 0.0);
         pidControllerSim = SimDevice.create("SparkPIDController", portNumber);
+        for (int i : new int[] {0, 1, 2, 3}) {
+            controlParams[i] = new ControlParameters(pidControllerSim, i);
+        }
 
         isUpdatingReferenceSim = pidControllerSim.createBoolean("isUpdating", Direction.kOutput, false);
         numUpdatesSim = pidControllerSim.createLong("numUpdates", Direction.kOutput, 0);
@@ -70,53 +81,53 @@ public class MockedSparkMaxPIDController {
     }
 
     public REVLibError setP(double gain) {
-        pidController.setP(gain);
-        return REVLibError.kOk;
+        return setP(gain, 0);
     }
 
     public REVLibError setP(double gain, int slotID) {
-        return setP(gain);
+        controlParams[slotID].pSim.set(gain);
+        return REVLibError.kOk;
     }
 
     public double getP() {
-        return pidController.getP();
+        return getP(0);
     }
 
     public double getP(int slotID) {
-        return getP();
+        return controlParams[slotID].pSim.get();
     }
 
     public REVLibError setI(double gain) {
-        pidController.setI(gain);
-        return REVLibError.kOk;
+        return setI(gain, 0);
     }
 
     public REVLibError setI(double gain, int slotID) {
-        return setI(gain);
-    }
-
-    public double getI() {
-        return pidController.getI();
-    }
-
-    public double getI(int slotID) {
-        return getI();
-    }
-
-    public REVLibError setD(double gain) {
-        pidController.setD(gain);
+        controlParams[slotID].iSim.set(gain);
         return REVLibError.kOk;
     }
 
+    public double getI() {
+        return getI(0);
+    }
+
+    public double getI(int slotID) {
+        return controlParams[slotID].iSim.get();
+    }
+
+    public REVLibError setD(double gain) {
+        return setD(gain, 0);
+    }
+
     public REVLibError setD(double gain, int slotID) {
-        return setD(gain);
+        controlParams[slotID].dSim.set(gain);
+        return REVLibError.kOk;
     }
 
     public double getD() {
-        return pidController.getD();
+        return getD(0);
     }
 
     public double getD(int slotID) {
-        return getD();
+        return controlParams[slotID].dSim.get();
     }
 }
