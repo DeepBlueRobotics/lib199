@@ -88,7 +88,7 @@ public class MockedEncoder implements AbsoluteEncoder, AnalogInput, AutoCloseabl
     @Override
     public double getPosition() {
         if (absolute) {
-            return MathUtil.inputModulus(getRawPosition(), 0, positionConversionFactor) + positionOffset;
+            return MathUtil.inputModulus(getRawPosition() + positionOffset, 0, positionConversionFactor);
         } else {
             return getRawPosition() + positionOffset;
         }
