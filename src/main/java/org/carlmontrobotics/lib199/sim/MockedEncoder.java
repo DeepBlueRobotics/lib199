@@ -165,7 +165,9 @@ public class MockedEncoder implements AbsoluteEncoder, AnalogInput, AutoCloseabl
 
     @Override
     public double getVoltage() {
-        return MathUtil.inputModulus(position.get() / countsOrVoltsPerRev, 0, 1) * ANALOG_SENSOR_MAX_VOLTAGE;
+        // This method only makes sense for an analog sensor and for an analog sensor, 
+        // position.get() is supposed to return volts.
+        return position.get();
     }
 
 }
