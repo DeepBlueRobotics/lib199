@@ -172,7 +172,7 @@ public class MockedSparkMaxPIDController {
         return positionPIDWrappingMinInput;
     }
 
-    public REVLibError setPositionPIDWrappingEnable(boolean enable) {
+    public REVLibError setPositionPIDWrappingEnabled(boolean enable) {
         if(enable == positionPIDWrappingEnabled) return REVLibError.kOk;
         positionPIDWrappingEnabled = enable;
         slots.values().forEach(slot -> {
