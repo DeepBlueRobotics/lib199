@@ -24,12 +24,11 @@ public class MockedEncoder implements AbsoluteEncoder, AnalogInput, AutoCloseabl
 
     public static final int NEO_BUILTIN_ENCODER_CPR = 42;
     public static final double ANALOG_SENSOR_MAX_VOLTAGE = 3.3;
-    public static final int ANALOG_SENSOR_CPR = 8192;
 
     public final SimDevice device;
     protected final SimDouble position;
     protected final SimDouble velocity;
-    protected final int countsPerRev;
+    protected final double countsOrVoltsPerRev;
     protected final boolean absolute;
     protected double positionConversionFactor = 1.0;
     protected double velocityConversionFactor = 1.0;
@@ -38,16 +37,16 @@ public class MockedEncoder implements AbsoluteEncoder, AnalogInput, AutoCloseabl
 
     /**
      * @param device The device to retrieve position and velocity data from
-     * @param countsPerRev The cpr of the simulated encoder
+     * @param countsOrVoltsPerRev The cpr of the simulated encoder
      * @param absolute Whether the encoder is an absolute encoder.
      * This flag caps the position to one rotation via. {@link MathUtil#inputModulus(double, double, double)},
      * disables {@link #setPosition(double)}, and enables {@link #setZeroOffset(double)}.
      */
-    public MockedEncoder(SimDevice device, int countsPerRev, boolean absolute) {
+    public MockedEncoder(SimDevice device, double countsOrVoltsPerRev, boolean absolute) {
         this.device = device;
         position = device.createDouble("Position", Direction.kInput, 0);
         velocity = device.createDouble("Velocity", Direction.kInput, 0);
-        this.countsPerRev = countsPerRev;
+        this.countsOrVoltsPerRev = countsOrVoltsPerRev;
         this.absolute = absolute;
     }
 
@@ -75,14 +74,14 @@ public class MockedEncoder implements AbsoluteEncoder, AnalogInput, AutoCloseabl
 
     @Override
     public int getCountsPerRevolution() {
-        return countsPerRev;
+        return (int)countsOrVoltsPerRev;
     }
 
     /**
      * @return The current position of the encoder, not accounting for the position offset ({@link #setPosition(double)} and {@link #setZeroOffset(double)})
      */
     public double getRawPosition() {
-        return position.get() * (inverted ? -1 : 1) * positionConversionFactor / countsPerRev;
+        return position.get() * (inverted ? -1 : 1) * positionConversionFactor / countsOrVoltsPerRev;
     }
 
     @Override
@@ -96,7 +95,7 @@ public class MockedEncoder implements AbsoluteEncoder, AnalogInput, AutoCloseabl
 
     @Override
     public double getVelocity() {
-        return velocity.get() * (inverted ? -1 : 1) * velocityConversionFactor / countsPerRev;
+        return velocity.get() * (inverted ? -1 : 1) * velocityConversionFactor / countsOrVoltsPerRev;
     }
 
     @Override
@@ -166,7 +165,7 @@ public class MockedEncoder implements AbsoluteEncoder, AnalogInput, AutoCloseabl
 
     @Override
     public double getVoltage() {
-        return MathUtil.inputModulus(position.get() / countsPerRev, 0, 1) * ANALOG_SENSOR_MAX_VOLTAGE;
+        return MathUtil.inputModulus(position.get() / countsOrVoltsPerRev, 0, 1) * ANALOG_SENSOR_MAX_VOLTAGE;
     }
 
 }

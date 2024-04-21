@@ -245,7 +245,7 @@ public class MockSparkMax extends MockedMotorBase {
      */
     public synchronized SparkMaxAnalogSensor getAnalog(SparkMaxAnalogSensor.Mode mode) {
         if(analogSensor == null) {
-            MockedEncoder analogSensorImpl = new MockedEncoder(SimDevice.create(device.getName() + "_AnalogSensor"), MockedEncoder.ANALOG_SENSOR_CPR, true);
+            MockedEncoder analogSensorImpl = new MockedEncoder(SimDevice.create(device.getName() + "_AnalogSensor"), MockedEncoder.ANALOG_SENSOR_MAX_VOLTAGE, true);
             analogSensor = Mocks.createMock(SparkMaxAnalogSensor.class, analogSensorImpl, new REVLibErrorAnswer());
         }
         return analogSensor;
