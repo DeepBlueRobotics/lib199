@@ -86,8 +86,8 @@ public class MockSparkMax extends MockedMotorBase {
      * to follow the inversion state of the motor and its {@code setInverted} method will be disabled.
      * @return the simulated {@link CANSparkMax}
      */
-    public static CANSparkMax createMockSparkMax(int portPWM, MotorType type) {
-        return Mocks.createMock(CANSparkMax.class, new MockSparkMax(portPWM, type), new DummySparkMaxAnswer());
+    public static CANSparkMax createMockSparkMax(int port, MotorType type) {
+        return Mocks.createMock(CANSparkMax.class, new MockSparkMax(port, type), new DummySparkMaxAnswer());
     }
 
     @Override
