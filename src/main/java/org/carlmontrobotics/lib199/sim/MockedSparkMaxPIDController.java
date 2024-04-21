@@ -172,11 +172,9 @@ public class MockedSparkMaxPIDController {
         return positionPIDWrappingMinInput;
     }
 
-    public REVLibError setPositionPIDWrappingEnabled(boolean enable) {
-        if(enable == positionPIDWrappingEnabled) return REVLibError.kOk;
-        positionPIDWrappingEnabled = enable;
+    private void updatePIDWrapping() {
         slots.values().forEach(slot -> {
-            if(enable) {
+            if(positionPIDWrappingEnabled) {
                 slot.pidController.enableContinuousInput(positionPIDWrappingMinInput, positionPIDWrappingMaxInput);
                 slot.profiledPIDController.enableContinuousInput(positionPIDWrappingMinInput, positionPIDWrappingMaxInput);
             } else {
@@ -184,26 +182,26 @@ public class MockedSparkMaxPIDController {
                 slot.profiledPIDController.disableContinuousInput();
             }
         });
+    }
+
+    public REVLibError setPositionPIDWrappingEnabled(boolean enable) {
+        if(enable == positionPIDWrappingEnabled) return REVLibError.kOk;
+        positionPIDWrappingEnabled = enable;
+        updatePIDWrapping();
         return REVLibError.kOk;
     }
 
     public REVLibError setPositionPIDWrappingMaxInput(double max) {
         if(max == positionPIDWrappingMaxInput) return REVLibError.kOk;
         positionPIDWrappingMaxInput = max;
-        slots.values().forEach(slot -> {
-            slot.pidController.enableContinuousInput(positionPIDWrappingMinInput, positionPIDWrappingMaxInput);
-            slot.profiledPIDController.enableContinuousInput(positionPIDWrappingMinInput, positionPIDWrappingMaxInput);
-        });
+        updatePIDWrapping();
         return REVLibError.kOk;
     }
 
     public REVLibError setPositionPIDWrappingMinInput(double min) {
         if(min == positionPIDWrappingMinInput) return REVLibError.kOk;
         positionPIDWrappingMinInput = min;
-        slots.values().forEach(slot -> {
-            slot.pidController.enableContinuousInput(positionPIDWrappingMinInput, positionPIDWrappingMaxInput);
-            slot.profiledPIDController.enableContinuousInput(positionPIDWrappingMinInput, positionPIDWrappingMaxInput);
-        });
+        updatePIDWrapping();
         return REVLibError.kOk;
     }
 
