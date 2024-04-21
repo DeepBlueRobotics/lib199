@@ -75,7 +75,7 @@ public class MockedSparkMaxPIDController {
     public void setDutyCycle(double speed) {
         setpoint = speed;
         controlType = CANSparkMax.ControlType.kDutyCycle;
-        leader = null;
+        stopFollowing();
         motor.setClosedLoopControl(false);
     }
 
@@ -83,6 +83,10 @@ public class MockedSparkMaxPIDController {
         this.leader = leader;
         invertLeader = invert;
         motor.setClosedLoopControl(false);
+    }
+
+    public void stopFollowing() {
+        this.leader = null;
     }
 
     public boolean isFollower() {
@@ -247,7 +251,8 @@ public class MockedSparkMaxPIDController {
         if (sensor instanceof SparkMaxRelativeEncoder
             || sensor instanceof SparkMaxAlternateEncoder
             || sensor instanceof SparkMaxAnalogSensor
-            || sensor instanceof SparkMaxAbsoluteEncoder) {
+            || sensor instanceof SparkMaxAbsoluteEncoder
+            || sensor instanceof MockedEncoder) {
             if (sensor instanceof SparkMaxRelativeEncoder) {
                 SparkMaxRelativeEncoder encoder = (SparkMaxRelativeEncoder) sensor;
                 feedbackDevice = new FeedbackDevice() {
@@ -284,8 +289,20 @@ public class MockedSparkMaxPIDController {
                         return encoder.getVelocity();
                     }
                 };
-            } else {
+            } else if (sensor instanceof SparkMaxAbsoluteEncoder) {
                 SparkMaxAbsoluteEncoder encoder = (SparkMaxAbsoluteEncoder) sensor;
+                feedbackDevice = new FeedbackDevice() {
+                    @Override
+                    public double getPosition() {
+                        return encoder.getPosition();
+                    }
+
+                    public double getVelocity() {
+                        return encoder.getVelocity();
+                    }
+                };
+            } else {
+                MockedEncoder encoder = (MockedEncoder) sensor;
                 feedbackDevice = new FeedbackDevice() {
                     @Override
                     public double getPosition() {

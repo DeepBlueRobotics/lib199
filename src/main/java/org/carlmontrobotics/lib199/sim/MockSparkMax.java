@@ -114,16 +114,20 @@ public class MockSparkMax extends MockedMotorBase {
         MotorController controller = null;
         // Because ExternalFollower does not implement equals, this could result in bugs if the user passes in a custom ExternalFollower object,
         // but I think that it's unlikely and users should use the builtin definitions anyway
-        if(leader.equals(ExternalFollower.kFollowerSparkMax)) {
-            controller = getControllerWithId(deviceID);
-        } else if(leader.equals(ExternalFollower.kFollowerPhoenix)) {
-            // controller = MockPhoenixController.getControllerWithId(deviceID);
+        if(leader.equals(ExternalFollower.kFollowerDisabled)) {
+            pidControllerImpl.stopFollowing();
+        } else {
+            if(leader.equals(ExternalFollower.kFollowerSparkMax)) {
+                controller = getControllerWithId(deviceID);
+            } else if(leader.equals(ExternalFollower.kFollowerPhoenix)) {
+                // controller = MockPhoenixController.getControllerWithId(deviceID);
+            }
+            if(controller == null) {
+                System.err.println("Error: Attempted to follow unknown motor controller: " + leader + " " + deviceID);
+                return REVLibError.kFollowConfigMismatch;
+            }
+            pidControllerImpl.follow(controller, invert);    
         }
-        if(controller == null) {
-            System.err.println("Error: Attempted to follow unknown motor controller: " + leader + " " + deviceID);
-            return REVLibError.kFollowConfigMismatch;
-        }
-        pidControllerImpl.follow(controller, invert);
         return REVLibError.kOk;
     }
 
