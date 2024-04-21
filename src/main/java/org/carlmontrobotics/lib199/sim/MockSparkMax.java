@@ -126,7 +126,7 @@ public class MockSparkMax extends MockedMotorBase {
                 System.err.println("Error: Attempted to follow unknown motor controller: " + leader + " " + deviceID);
                 return REVLibError.kFollowConfigMismatch;
             }
-            pidControllerImpl.follow(controller, invert);    
+            pidControllerImpl.follow(controller, invert);
         }
         return REVLibError.kOk;
     }

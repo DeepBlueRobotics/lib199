@@ -51,12 +51,12 @@ public class MockedEncoder implements AbsoluteEncoder, AnalogInput, AutoCloseabl
     }
 
     @Override
-    public REVLibError setPosition(double position) {
+    public REVLibError setPosition(double newPosition) {
         if (absolute) {
             System.err.println("(MockedEncoder) setPosition cannot be called on an absolute encoder");
             return REVLibError.kParamAccessMode;
         }
-        positionOffset = position - getRawPosition();
+        positionOffset = newPosition - getRawPosition();
         return REVLibError.kOk;
     }
 
