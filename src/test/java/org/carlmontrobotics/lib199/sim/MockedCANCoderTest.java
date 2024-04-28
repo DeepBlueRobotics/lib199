@@ -30,13 +30,18 @@ public class MockedCANCoderTest {
         // Consider the current position to be 0 rotations.
         canCoder.setPosition(0.0);
 
+        // Wait for the CANCoder to update the position. This appears to happen on a separate thread.
+        canCoder.getPosition().waitForUpdate(1.0);
+        canCoder.getPosition().waitForUpdate(1.0);
+        // Verify that the position was correctly reset
+        assertEquals(0.0, canCoder.getPosition().getValueAsDouble(), 0.001);
+
         // Set the position to 0.42 rotations via the SimDevice interface
         SimDeviceSim canCoderSim = new SimDeviceSim("CANCoder", 0);
         canCoderSim.getDouble("count").set(0.42 * MockedCANCoder.kCANCoderCPR);
 
-        // Wait for the CANCoder to update the position. This appears to happen on a separate thread.
         canCoder.getPosition().waitForUpdate(1.0);
-
+        canCoder.getPosition().waitForUpdate(1.0);
         assertEquals(0.42, canCoder.getPosition().getValueAsDouble(), 0.001);
     }
 
