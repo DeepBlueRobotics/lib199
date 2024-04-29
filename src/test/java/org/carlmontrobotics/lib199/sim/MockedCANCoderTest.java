@@ -12,12 +12,14 @@ import com.ctre.phoenix6.hardware.CANcoder;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.simulation.SimDeviceSim;
 import junit.framework.AssertionFailedError;
+
 @RunWith(Parameterized.class)
 public class MockedCANCoderTest {
+
     @ClassRule
-    public static TestRules.InitializeHAL simClassRule = new TestRules.InitializeHAL(); 
+    public static TestRules.InitializeHAL simClassRule = new TestRules.InitializeHAL();
     @Rule
-    public TestRules.ResetSimDeviceSimData simTestRule = new TestRules.ResetSimDeviceSimData(); 
+    public TestRules.ResetSimDeviceSimData simTestRule = new TestRules.ResetSimDeviceSimData();
 
     // Dummy parameter array to make it easy to run this test class repeatedly.
     @Parameterized.Parameters
@@ -25,13 +27,13 @@ public class MockedCANCoderTest {
         return new Object[NUM_REPS][0];
     }
 
-    // Number of times to repeated run this test class
+    // Number of times to repeatedly run this test class
     private static final int NUM_REPS = 1;
 
-    // Set up a SimDevice for the CANcoder
     @Test
-    public void testCountUpdatesPosition() throws InterruptedException {
+    public void testCountUpdatesPosition() {
         try (CANcoder canCoder = new CANcoder(0)) {
+            // Set up a SimDevice for the CANcoder
             new MockedCANCoder(canCoder);
 
             // Consider the current position to be 0 rotations.
@@ -39,13 +41,13 @@ public class MockedCANCoderTest {
 
             double timeoutSec = 0.04;
             double delta = 0.001;
-    
+
             assertPositionEqualsWithinTime(canCoder, 0.0, timeoutSec, delta);
-    
+
             // Set the position to 0.42 rotations via the SimDevice interface
             SimDeviceSim canCoderSim = new SimDeviceSim("CANCoder", 0);
             canCoderSim.getDouble("count").set(0.42 * MockedCANCoder.kCANCoderCPR);
-        
+
             assertPositionEqualsWithinTime(canCoder, 0.42, timeoutSec, delta);
         }
     }
@@ -62,4 +64,5 @@ public class MockedCANCoderTest {
         }
         throw new AssertionFailedError("Position further than %g from %g for more than %g secs".formatted(delta, expected, timeoutSec));
     }
+
 }
