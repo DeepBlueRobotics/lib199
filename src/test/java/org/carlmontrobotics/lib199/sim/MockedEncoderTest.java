@@ -18,10 +18,11 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 
+import edu.wpi.first.hal.SimDevice;
 import edu.wpi.first.hal.SimDouble;
 import edu.wpi.first.wpilibj.simulation.SimDeviceSim;
 
-public class MockedSparkEncoderTest {
+public class MockedEncoderTest {
 
     @ClassRule
     public static TestRules.InitializeHAL simClassRule = new TestRules.InitializeHAL(); 
@@ -36,15 +37,15 @@ public class MockedSparkEncoderTest {
     }
 
     private void assertTestDeviceCreation(int id) {
-        String deviceName = String.format("RelativeEncoder[%d]", id);
+        String deviceName = String.format("testDevice[%d]", id);
         assertFalse(simDeviceExists(deviceName));
         try(SafelyClosable closableEncoder = createEncoder(id)) {
             assertTrue(simDeviceExists(deviceName));
-            SimDeviceSim sim = new SimDeviceSim("RelativeEncoder", id);
+            SimDeviceSim sim = new SimDeviceSim("testDevice", id);
             assertEquals(1, Stream.of(sim.enumerateValues())
                 .map(info -> info.name)
                 .distinct()
-                .filter(name -> name.equals("count")).count());
+                .filter(name -> name.equals("Position")).count());
         }
         assertFalse(simDeviceExists(deviceName));
     }
@@ -61,19 +62,19 @@ public class MockedSparkEncoderTest {
     private void testFunctionalityWithPositionConversionFactor(double factor, RelativeEncoder enc, SimDouble count) {
         assertEquals(REVLibError.kOk, enc.setPositionConversionFactor(factor));
         assertEquals(factor, enc.getPositionConversionFactor(), 0.01);
-        testCount(10, enc, factor, count);
-        testCount(0, enc, factor, count);
-        testCount(-10, enc, factor, count);
+        testPosition(10, enc, factor, count);
+        testPosition(0, enc, factor, count);
+        testPosition(-10, enc, factor, count);
     }
 
-    private void testCount(double position, RelativeEncoder enc, double conversionFactor, SimDouble count) {
+    private void testPosition(double position, RelativeEncoder enc, double conversionFactor, SimDouble positionSim) {
         // This test fails with a delta of 0.01
         assertEquals(REVLibError.kOk, enc.setPosition(position));
         assertEquals(position, enc.getPosition(), 0.02);
         assertEquals(REVLibError.kOk, enc.setPosition(0));
         assertEquals(0, enc.getPosition(), 0.02);
-        count.set(position * 4096);
-        assertEquals(position * conversionFactor, enc.getPosition(), 0.02);
+        positionSim.set(position / enc.getPositionConversionFactor() * enc.getCountsPerRevolution() + positionSim.get());
+        assertEquals(position, enc.getPosition(), 0.02);
     }
 
     private boolean simDeviceExists(String deviceName) {
@@ -85,9 +86,10 @@ public class MockedSparkEncoderTest {
     }
 
     private SafelyClosable createEncoder(int deviceId) {
+        SimDevice device = SimDevice.create("testDevice", deviceId);
         return (SafelyClosable)Mocks.createMock(
             RelativeEncoder.class,
-            new MockedSparkEncoder(deviceId),
+            new MockedEncoder(device, 4096, false),
             new REVLibErrorAnswer(),
             SafelyClosable.class);
     }
@@ -100,8 +102,8 @@ public class MockedSparkEncoderTest {
 
     private void withEncoder(int id, EncoderTest func) {
         try(SafelyClosable encoder = createEncoder(id)) {
-            SimDeviceSim sim = new SimDeviceSim("RelativeEncoder", id);
-            SimDouble count = sim.getDouble("count");
+            SimDeviceSim sim = new SimDeviceSim("testDevice", id);
+            SimDouble count = sim.getDouble("Position");
             assertNotNull(count);
             func.test((RelativeEncoder)encoder, sim, count);
         }
