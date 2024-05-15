@@ -66,7 +66,7 @@ public class SwerveModuleSim {
 
         turnPhysicsSim.setInputVoltage(DriverStation.isEnabled() ? turnMotorSim.getDouble("Speed").get()*12.0 : 0.0);
         turnPhysicsSim.update(dtSecs);
-        turnEncoderSim.getDouble("count").set(MathUtil.inputModulus((turnInversion ? -1.0: 1.0) * turnPhysicsSim.getAngularPositionRotations(), -0.5, 0.5)*MockedCANCoder.kCANCoderCPR);
+        turnEncoderSim.getDouble("count").set(MathUtil.inputModulus(turnPhysicsSim.getAngularPositionRotations(), -0.5, 0.5)*MockedCANCoder.kCANCoderCPR);
     }
 
     /**
