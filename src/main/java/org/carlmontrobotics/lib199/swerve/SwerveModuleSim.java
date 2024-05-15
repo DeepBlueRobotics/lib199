@@ -34,7 +34,7 @@ public class SwerveModuleSim {
     public SwerveModuleSim(int drivePortNum, double driveGearing, boolean driveInversion, double driveMoiKgM2, 
                             int turnMotorPortNum, int turnEncoderPortNum, double turnGearing, boolean turnInversion, double turnMoiKgM2) {
         driveMotorSim = new SimDeviceSim("SparkMax", drivePortNum);
-        driveEncoderSim = new SimDeviceSim("RelativeEncoder", drivePortNum);
+        driveEncoderSim = new SimDeviceSim(driveMotorSim.getName() + "_RelativeEncoder", drivePortNum);
         drivePhysicsSim = new DCMotorSim(DCMotor.getNEO(1), driveGearing, driveMoiKgM2);
         this.driveGearing = driveGearing;
         this.driveInversion = driveInversion;
