@@ -53,7 +53,7 @@ public class SwerveModuleSim {
     public void update(double dtSecs) {
         drivePhysicsSim.setInputVoltage(DriverStation.isEnabled() ? driveMotorSim.getDouble("Motor Output").get()*12.0 : 0.0);
         drivePhysicsSim.update(dtSecs);
-        driveEncoderSim.getDouble("count").set((driveInversion ? -1.0: 1.0) * drivePhysicsSim.getAngularPositionRotations()*4096*driveGearing);
+        driveEncoderSim.getDouble("Position").set((driveInversion ? -1.0: 1.0) * drivePhysicsSim.getAngularPositionRotations()*4096*driveGearing);
 
         turnPhysicsSim.setInputVoltage(DriverStation.isEnabled() ? turnMotorSim.getDouble("Motor Output").get()*12.0 : 0.0);
         turnPhysicsSim.update(dtSecs);
