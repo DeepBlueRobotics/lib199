@@ -96,7 +96,6 @@ public class MockSparkMax extends MockedMotorBase {
     @Override
     public void set(double speed) {
         speed *= voltageCompensationNominalVoltage / defaultNominalVoltage;
-        speed = (isInverted ? -1.0 : 1.0) * speed;
         pidControllerImpl.setDutyCycle(speed);
     }
 
