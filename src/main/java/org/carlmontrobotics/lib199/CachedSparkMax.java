@@ -2,13 +2,13 @@ package org.carlmontrobotics.lib199;
 
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.RelativeEncoder;
-import com.revrobotics.SparkMaxPIDController;
+import com.revrobotics.SparkPIDController;
 
 @Deprecated
 public class CachedSparkMax extends CANSparkMax {
 
     private RelativeEncoder encoder;
-    private SparkMaxPIDController pidController;
+    private SparkPIDController pidController;
 
     public CachedSparkMax(int deviceId, MotorType type) {
         super(deviceId, type);
@@ -22,7 +22,7 @@ public class CachedSparkMax extends CANSparkMax {
     }
 
     @Override
-    public SparkMaxPIDController getPIDController() {
+    public SparkPIDController getPIDController() {
         return pidController == null ? (pidController = super.getPIDController()) : pidController;
     }
 

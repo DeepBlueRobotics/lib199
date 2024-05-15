@@ -8,7 +8,7 @@ import com.ctre.phoenix.motorcontrol.can.BaseMotorController;
 
 import org.carlmontrobotics.lib199.Mocks;
 import org.carlmontrobotics.lib199.testUtils.SafelyClosable;
-import org.carlmontrobotics.lib199.testUtils.SimDeviceTestRule;
+import org.carlmontrobotics.lib199.testUtils.TestRules;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -20,9 +20,9 @@ import edu.wpi.first.wpilibj.simulation.PWMSim;
 public abstract class MockPheonixControllerTest {
     
     @ClassRule
-    public static SimDeviceTestRule.Class simClassRule = new SimDeviceTestRule.Class();
+    public static TestRules.InitializeHAL simClassRule = new TestRules.InitializeHAL();
     @Rule
-    public SimDeviceTestRule.Test simTestRule = new SimDeviceTestRule.Test();
+    public TestRules.ResetSimDeviceSimData simTestRule = new TestRules.ResetSimDeviceSimData();
 
     protected abstract BaseMotorController createController(int portPWM);
 
