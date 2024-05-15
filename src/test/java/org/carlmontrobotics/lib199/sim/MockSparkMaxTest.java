@@ -32,7 +32,7 @@ public class MockSparkMaxTest {
     @Test
     public void testHasEncoder() {
         var mockSpark = new MockSparkMax(0, MotorType.kBrushless);
-        SimDeviceSim simSpark = new SimDeviceSim("SparkMax[0]");
+        SimDeviceSim simSpark = new SimDeviceSim("SparkMax", 0);
         assertNotNull(simSpark);
         SimDeviceSim simEncoder = new SimDeviceSim(simSpark.getName() + "_RelativeEncoder");
         assertNotNull(simEncoder);

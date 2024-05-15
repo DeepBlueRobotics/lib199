@@ -1,5 +1,6 @@
 package org.carlmontrobotics.lib199.swerve;
 
+import edu.wpi.first.hal.SimDouble;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.Distance;
@@ -53,7 +54,12 @@ public class SwerveModuleSim {
     public void update(double dtSecs) {
         drivePhysicsSim.setInputVoltage(DriverStation.isEnabled() ? driveMotorSim.getDouble("Motor Output").get()*12.0 : 0.0);
         drivePhysicsSim.update(dtSecs);
-        driveEncoderSim.getDouble("Position").set((driveInversion ? -1.0: 1.0) * drivePhysicsSim.getAngularPositionRotations()*4096*driveGearing);
+        SimDouble positionSim = driveEncoderSim.getDouble("Position");
+        if (positionSim == null) {
+            System.err.println("Could not find Position for " + driveEncoderSim.getName());
+            return;
+        }
+        positionSim.set((driveInversion ? -1.0: 1.0) * drivePhysicsSim.getAngularPositionRotations()*4096*driveGearing);
 
         turnPhysicsSim.setInputVoltage(DriverStation.isEnabled() ? turnMotorSim.getDouble("Motor Output").get()*12.0 : 0.0);
         turnPhysicsSim.update(dtSecs);
