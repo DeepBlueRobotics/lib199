@@ -52,7 +52,7 @@ public class SwerveModuleSim {
      * @param dtSecs seconds to step the simulation forward.
      */
     public void update(double dtSecs) {
-        drivePhysicsSim.setInputVoltage(DriverStation.isEnabled() ? driveMotorSim.getDouble("Motor Output").get()*12.0 : 0.0);
+        drivePhysicsSim.setInputVoltage(DriverStation.isEnabled() ? driveMotorSim.getDouble("Speed").get()*12.0 : 0.0);
         drivePhysicsSim.update(dtSecs);
         SimDouble positionSim = driveEncoderSim.getDouble("Position");
         // if (positionSim == null) {
@@ -61,7 +61,7 @@ public class SwerveModuleSim {
         // }
         positionSim.set((driveInversion ? -1.0: 1.0) * drivePhysicsSim.getAngularPositionRotations()*4096*driveGearing);
 
-        turnPhysicsSim.setInputVoltage(DriverStation.isEnabled() ? turnMotorSim.getDouble("Motor Output").get()*12.0 : 0.0);
+        turnPhysicsSim.setInputVoltage(DriverStation.isEnabled() ? turnMotorSim.getDouble("Speed").get()*12.0 : 0.0);
         turnPhysicsSim.update(dtSecs);
         turnEncoderSim.getDouble("count").set(MathUtil.inputModulus((turnInversion ? -1.0: 1.0) * turnPhysicsSim.getAngularPositionRotations(), -0.5, 0.5)*4096);
     }
