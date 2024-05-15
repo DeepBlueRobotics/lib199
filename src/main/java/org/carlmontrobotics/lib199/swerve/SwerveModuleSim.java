@@ -55,10 +55,10 @@ public class SwerveModuleSim {
         drivePhysicsSim.setInputVoltage(DriverStation.isEnabled() ? driveMotorSim.getDouble("Motor Output").get()*12.0 : 0.0);
         drivePhysicsSim.update(dtSecs);
         SimDouble positionSim = driveEncoderSim.getDouble("Position");
-        if (positionSim == null) {
-            System.err.println("Could not find Position for " + driveEncoderSim.getName());
-            return;
-        }
+        // if (positionSim == null) {
+        //     System.err.println("Could not find Position for " + driveEncoderSim.getName());
+        //     return;
+        // }
         positionSim.set((driveInversion ? -1.0: 1.0) * drivePhysicsSim.getAngularPositionRotations()*4096*driveGearing);
 
         turnPhysicsSim.setInputVoltage(DriverStation.isEnabled() ? turnMotorSim.getDouble("Motor Output").get()*12.0 : 0.0);
