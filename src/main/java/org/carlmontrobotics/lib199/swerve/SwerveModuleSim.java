@@ -1,5 +1,8 @@
 package org.carlmontrobotics.lib199.swerve;
 
+import org.carlmontrobotics.lib199.sim.MockedCANCoder;
+import org.carlmontrobotics.lib199.sim.MockedEncoder;
+
 import edu.wpi.first.hal.SimDouble;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.system.plant.DCMotor;
@@ -59,11 +62,11 @@ public class SwerveModuleSim {
         //     System.err.println("Could not find Position for " + driveEncoderSim.getName());
         //     return;
         // }
-        positionSim.set((driveInversion ? -1.0: 1.0) * drivePhysicsSim.getAngularPositionRotations()*4096*driveGearing);
+        positionSim.set((driveInversion ? -1.0: 1.0) * drivePhysicsSim.getAngularPositionRotations()*MockedEncoder.NEO_BUILTIN_ENCODER_CPR*driveGearing);
 
         turnPhysicsSim.setInputVoltage(DriverStation.isEnabled() ? turnMotorSim.getDouble("Speed").get()*12.0 : 0.0);
         turnPhysicsSim.update(dtSecs);
-        turnEncoderSim.getDouble("count").set(MathUtil.inputModulus((turnInversion ? -1.0: 1.0) * turnPhysicsSim.getAngularPositionRotations(), -0.5, 0.5)*4096);
+        turnEncoderSim.getDouble("count").set(MathUtil.inputModulus((turnInversion ? -1.0: 1.0) * turnPhysicsSim.getAngularPositionRotations(), -0.5, 0.5)*MockedCANCoder.kCANCoderCPR);
     }
 
     /**
