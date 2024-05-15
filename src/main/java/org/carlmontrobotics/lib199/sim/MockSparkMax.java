@@ -3,6 +3,7 @@ package org.carlmontrobotics.lib199.sim;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.carlmontrobotics.lib199.DummySparkMaxAnswer;
+import org.carlmontrobotics.lib199.Lib199Subsystem;
 import org.carlmontrobotics.lib199.Mocks;
 import org.carlmontrobotics.lib199.REVLibErrorAnswer;
 
@@ -64,6 +65,8 @@ public class MockSparkMax extends MockedMotorBase {
         pidController.setFeedbackDevice(encoder);
 
         controllers.put(port, this);
+
+        Lib199Subsystem.registerAsyncSimulationPeriodic(this);
     }
 
     @Override

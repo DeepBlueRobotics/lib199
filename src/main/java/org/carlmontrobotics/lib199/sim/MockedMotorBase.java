@@ -50,8 +50,6 @@ public abstract class MockedMotorBase implements AutoCloseable, MotorController,
         neutralDeadband = device.createDouble("Neutral Deadband", Direction.kOutput, 0.04);
         brakeModeEnabled = device.createBoolean("Brake Mode", Direction.kOutput, true);
         currentDraw = device.createDouble("Current Draw", Direction.kInput, 0.0);
-
-        Lib199Subsystem.registerAsyncSimulationPeriodic(this);
     }
 
     /**
