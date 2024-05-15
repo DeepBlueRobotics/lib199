@@ -66,7 +66,11 @@ public class SwerveModuleSim {
 
         turnPhysicsSim.setInputVoltage(DriverStation.isEnabled() ? turnMotorSim.getDouble("Speed").get()*12.0 : 0.0);
         turnPhysicsSim.update(dtSecs);
-        turnEncoderSim.getDouble("count").set(MathUtil.inputModulus(turnPhysicsSim.getAngularPositionRotations(), -0.5, 0.5)*MockedCANCoder.kCANCoderCPR);
+        // The -1.0 below is to account for the fact that the CANCoder is mounted such that turning the wheel CCW (as viewed from above) causes
+        // the encoder value to decrease. However the turnPhysicsSim's angular position will *increase* under those circumstances.
+        // Note that this is independent of turnInversion. turnInversion controls which direction a positive voltage will cause the turn motor
+        // to spin. turnInversion should be used to set the motor's inversion so that a positive voltage will spin the wheel CCW (as viewed from above).
+        turnEncoderSim.getDouble("count").set(MathUtil.inputModulus(-1.0 * turnPhysicsSim.getAngularPositionRotations(), -0.5, 0.5)*MockedCANCoder.kCANCoderCPR);
     }
 
     /**
