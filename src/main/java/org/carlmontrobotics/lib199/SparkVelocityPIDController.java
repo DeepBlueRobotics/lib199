@@ -1,9 +1,9 @@
 package org.carlmontrobotics.lib199;
 
 import com.revrobotics.CANSparkMax;
-import com.revrobotics.CANSparkMax.ControlType;
+import com.revrobotics.CANSparkBase.ControlType;
 import com.revrobotics.RelativeEncoder;
-import com.revrobotics.SparkMaxPIDController;
+import com.revrobotics.SparkPIDController;
 
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
@@ -13,7 +13,7 @@ public class SparkVelocityPIDController implements Sendable {
 
     @SuppressWarnings("unused")
     private final CANSparkMax spark;
-    private final SparkMaxPIDController pidController;
+    private final SparkPIDController pidController;
     private final RelativeEncoder encoder;
     private final String name;
     private double targetSpeed, tolerance;

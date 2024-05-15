@@ -2,14 +2,17 @@ package org.carlmontrobotics.lib199.sim;
 
 import java.util.HashMap;
 
-import com.ctre.phoenix.sensors.CANCoder;
-import com.ctre.phoenix.sensors.CANCoderSimCollection;
+import com.ctre.phoenix6.hardware.CANcoder;
+import com.ctre.phoenix6.sim.CANcoderSimState;
 
 import org.carlmontrobotics.lib199.Lib199Subsystem;
 
+import edu.wpi.first.hal.HALValue;
 import edu.wpi.first.hal.SimDevice;
 import edu.wpi.first.hal.SimDevice.Direction;
+import edu.wpi.first.hal.simulation.SimValueCallback;
 import edu.wpi.first.hal.SimDouble;
+import edu.wpi.first.wpilibj.simulation.SimDeviceSim;
 
 public class MockedCANCoder {
 
@@ -19,22 +22,25 @@ public class MockedCANCoder {
 
     private int port;
     private SimDevice device;
+    private SimDeviceSim deviceSim;
     private SimDouble position; // Rotations - Continuous
     private SimDouble gearing;
-    private CANCoderSimCollection sim;
+    private CANcoderSimState sim;
 
-    public MockedCANCoder(CANCoder canCoder) {
+    public MockedCANCoder(CANcoder canCoder) {
         port = canCoder.getDeviceID();
         device = SimDevice.create("CANCoder", port);
         position = device.createDouble("count", Direction.kInput, 0);
         gearing = device.createDouble("gearing", Direction.kOutput, 1);
-        sim = canCoder.getSimCollection();
-        Lib199Subsystem.registerAsyncSimulationPeriodic(this::update);
+        sim = canCoder.getSimState();
+        deviceSim = new SimDeviceSim("CANCoder", port);
+        deviceSim.registerValueChangedCallback(position, new SimValueCallback() {
+            @Override
+            public void callback(String name, int handle, int direction, HALValue value) {
+                sim.setRawPosition(value.getDouble() / kCANCoderCPR);
+            }
+        }, true);
         sims.put(port, this);
-    }
-
-    public void update() {
-        sim.setRawPosition((int) (position.get() * kCANCoderCPR));
     }
 
     public void setGearing(double gearing) {

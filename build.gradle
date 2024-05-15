@@ -1,11 +1,14 @@
 plugins {
     id "java"
-    id "edu.wpi.first.GradleRIO" version "2023.4.3"
+    id "edu.wpi.first.GradleRIO" version "2024.3.1"
     id "maven-publish"
+    id "eclipse"
 }
 
-sourceCompatibility = JavaVersion.VERSION_11
-targetCompatibility = JavaVersion.VERSION_11
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
 
 group 'org.carlmontrobotics'
 
@@ -49,7 +52,7 @@ wpi.java.debugJni = false
 def includeDesktopSupport = true
 
 // Defining my dependencies. In this case, WPILib (+ friends), and vendor libraries.
-// Also defines JUnit 4.
+// Also defines JUnit 5.
 dependencies {
     implementation wpi.java.deps.wpilib()
     implementation wpi.java.vendor.java()
@@ -68,8 +71,9 @@ dependencies {
     nativeRelease wpi.java.vendor.jniRelease(wpi.platforms.desktop)
     simulationRelease wpi.sim.enableRelease()
 
-    testImplementation 'junit:junit:4.12'
-    implementation 'org.mockito:mockito-core:3.6.0'
+    testImplementation 'junit:junit:4.13.2'
+
+    implementation 'org.mockito:mockito-core:5.11.0'
     implementation group: 'org.apache.commons', name: 'commons-csv', version: '1.6'
 }
 
@@ -77,15 +81,18 @@ dependencies {
 wpi.sim.addGui().defaultEnabled = true
 wpi.sim.addDriverstation()
 
-// Setting up my Jar File. In this case, adding all libraries into the main jar ('fat jar')
-// in order to make them all available at runtime. Also adding the manifest so WPILib
-// knows where to look for our Robot Class.
+// Setting up my Jar File. 
 jar {
-    from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
-    manifest edu.wpi.first.gradlerio.GradleRIOPlugin.javaManifest(ROBOT_MAIN_CLASS)
-    duplicatesStrategy = DuplicatesStrategy.INCLUDE
-}
+    // Note: Do NOT add all the libraries to the jar. Doing so will cause robot programs to have
+    // 2 copies of each of the libraries classes, one from lib199 and one from the robot program.
+    from sourceSets.main.allSource
 
+    // Add the manifest so WPILib knows where to look for our Robot Class.
+    manifest edu.wpi.first.gradlerio.GradleRIOPlugin.javaManifest(ROBOT_MAIN_CLASS)
+
+    // There shouldn't be any duplicate classes.
+    duplicatesStrategy = DuplicatesStrategy.FAIL
+}
 
 publishing {
     publications {
@@ -108,3 +115,16 @@ wpi.java.configureTestTasks(test)
 tasks.withType(JavaCompile) {
     options.compilerArgs.add '-XDstringConcat=inline'
 }
+
+// Allow the generated javadocs to link to the documentation of WPILib and vendor libraries
+javadoc {
+    options.with {
+        links 'https://github.wpilib.org/allwpilib/docs/release/java/'
+        links 'https://www.kauailabs.com/public_files/navx-mxp/apidocs/java/'
+        links 'https://pathplanner.dev/api/java/'
+        links 'https://api.ctr-electronics.com/phoenix/release/java/'
+        links 'https://www.playingwithfusion.com/frc/2022/javadoc/'
+        links 'https://codedocs.revrobotics.com/java/'
+    }
+}
+

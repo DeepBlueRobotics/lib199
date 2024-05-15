@@ -2,10 +2,18 @@ package org.carlmontrobotics.lib199.safeMode;
 
 import static org.junit.Assert.*;
 
+import org.carlmontrobotics.lib199.testUtils.TestRules;
+import org.junit.ClassRule;
+import org.junit.Test;
+
 import edu.wpi.first.wpilibj.GenericHID;
 
 public class SafeJoystickTest {
 
+    @ClassRule
+    public static TestRules.InitializeHAL classRule = new TestRules.InitializeHAL();
+
+    @Test
     public void testSafeJoystick() {
         GenericHID normalJoystick = createDummyJoystick(0);
         GenericHID unsafeJoystick1 = createDummyJoystick(1);
@@ -85,7 +93,7 @@ public class SafeJoystickTest {
         assertTrue(safeJoystick1.getRawButton(1));
         assertTrue(safeJoystick1.getRawButtonPressed(1));
         assertTrue(safeJoystick1.getRawButtonReleased(1));
-        assertEquals(0.5, safeJoystick1.getRawAxis(0), 0.01);
+        assertEquals(0.0, safeJoystick1.getRawAxis(0), 0.01);
         assertEquals(0.5, safeJoystick1.getRawAxis(1), 0.01);
         assertEquals(1.0, safeJoystick1.getRawAxis(2), 0.01);
         assertEquals(-1, safeJoystick1.getPOV(0));

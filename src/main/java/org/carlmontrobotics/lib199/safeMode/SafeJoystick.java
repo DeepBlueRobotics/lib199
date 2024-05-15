@@ -108,7 +108,7 @@ public class SafeJoystick {
      * @param pov The POV to read
      * @return The value of the POV
      */
-    public double getPOV(int pov) {
+    public int getPOV(int pov) {
         if (SafeMode.isEnabled() && safeDisabledPOV.containsKey(pov) && safeDisabledPOV.get(pov).contains(unsafeJoystick.getPOV(pov))) {
             return -1;
         } else {

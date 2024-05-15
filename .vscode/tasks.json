@@ -1,0 +1,22 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "gradle",
+			"id": "assemblelib199",
+			"script": "assemble",
+			"description": "Assembles the outputs of this project.",
+			"project": "lib199",
+			"buildFile": "${workspaceFolder}/build.gradle",
+			"rootProject": "lib199",
+			"projectFolder": "${workspaceFolder}",
+			"workspaceFolder": "${workspaceFolder}",
+			"args": "",
+			"javaDebug": false,
+			"problemMatcher": [
+				"$gradle"
+			],
+			"label": "gradle: assemble"
+		}
+	],
+}
