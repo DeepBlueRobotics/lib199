@@ -17,7 +17,7 @@ public class Lib199Subsystem implements Subsystem {
 
     private static final Thread asyncPeriodicThread;
 
-    public static final long asyncSleepTime = 1;
+    public static final long asyncSleepTime = 20;
 
     static {
         ensureRegistered();
