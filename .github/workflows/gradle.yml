@@ -18,3 +18,10 @@ jobs:
         java-version: 17
     - name: Build with Gradle
       run: ./gradlew build
+    - name: Archive the test report
+      if: ${{ always() }} # Always try to save the report (even if the build fails)
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-report
+        path: build/reports/tests/test
+        if-no-files-found: ignore # If no files were found, the build probably failed
