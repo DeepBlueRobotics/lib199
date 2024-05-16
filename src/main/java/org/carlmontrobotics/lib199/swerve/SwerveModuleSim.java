@@ -3,7 +3,6 @@ package org.carlmontrobotics.lib199.swerve;
 import org.carlmontrobotics.lib199.sim.MockedCANCoder;
 import org.carlmontrobotics.lib199.sim.MockedEncoder;
 
-import edu.wpi.first.hal.SimDouble;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.Distance;
