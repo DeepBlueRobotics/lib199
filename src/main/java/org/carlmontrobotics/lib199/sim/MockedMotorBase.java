@@ -37,8 +37,7 @@ public abstract class MockedMotorBase implements AutoCloseable, MotorController,
     private double requestedSpeedPercent = 0.0;
 
     /**
-     * Initializes a new {@link SimDevice} with the given parameters, creates the necessary sim values, and
-     * registers this class's {@link #run()} method to be called asynchronously via {@link Lib199Subsystem#registerAsyncSimulationPeriodic(Runnable)}.
+     * Initializes a new {@link SimDevice} with the given parameters and creates the necessary sim values.
      *
      * @param type the device type name to pass to {@link SimDevice#create}
      * @param port the device port to pass to {@link SimDevice#create}
