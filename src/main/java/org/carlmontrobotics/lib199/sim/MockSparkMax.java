@@ -3,6 +3,7 @@ package org.carlmontrobotics.lib199.sim;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.carlmontrobotics.lib199.DummySparkMaxAnswer;
+import org.carlmontrobotics.lib199.Lib199Subsystem;
 import org.carlmontrobotics.lib199.Mocks;
 import org.carlmontrobotics.lib199.REVLibErrorAnswer;
 
@@ -38,6 +39,9 @@ public class MockSparkMax extends MockedMotorBase {
     private SparkAnalogSensor analogSensor = null;
 
     /**
+     * Initializes a new {@link SimDevice} with the given parameters and creates the necessary sim values, and
+     * registers this class's {@link #run()} method to be called asynchronously via {@link Lib199Subsystem#registerAsyncSimulationPeriodic(Runnable)}.
+     * 
      * @param port the port to associate this {@code MockSparkMax} with. Will be used to create the {@link SimDevice} and facilitate motor following.
      * @param type the type of the simulated motor. If this is set to {@link MotorType#kBrushless}, the builtin encoder simulation will be configured
      * to follow the inversion state of the motor and its {@code setInverted} method will be disabled.
@@ -64,6 +68,8 @@ public class MockSparkMax extends MockedMotorBase {
         pidController.setFeedbackDevice(encoder);
 
         controllers.put(port, this);
+
+        Lib199Subsystem.registerAsyncSimulationPeriodic(this);
     }
 
     @Override
@@ -93,7 +99,6 @@ public class MockSparkMax extends MockedMotorBase {
     @Override
     public void set(double speed) {
         speed *= voltageCompensationNominalVoltage / defaultNominalVoltage;
-        speed = (isInverted ? -1.0 : 1.0) * speed;
         pidControllerImpl.setDutyCycle(speed);
     }
 

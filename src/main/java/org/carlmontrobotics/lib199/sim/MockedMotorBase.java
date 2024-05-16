@@ -6,7 +6,6 @@ import edu.wpi.first.hal.SimDevice.Direction;
 import edu.wpi.first.hal.SimDouble;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.wpilibj.motorcontrol.MotorController;
-import org.carlmontrobotics.lib199.Lib199Subsystem;
 
 /**
  * Represents a base encoder class which can connect to a DeepBlueSim SimDeviceMotorMediator.
@@ -37,8 +36,7 @@ public abstract class MockedMotorBase implements AutoCloseable, MotorController,
     private double requestedSpeedPercent = 0.0;
 
     /**
-     * Initializes a new {@link SimDevice} with the given parameters, creates the necessary sim values, and
-     * registers this class's {@link #run()} method to be called asynchronously via {@link Lib199Subsystem#registerAsyncSimulationPeriodic(Runnable)}.
+     * Initializes a new {@link SimDevice} with the given parameters and creates the necessary sim values.
      *
      * @param type the device type name to pass to {@link SimDevice#create}
      * @param port the device port to pass to {@link SimDevice#create}
@@ -50,8 +48,6 @@ public abstract class MockedMotorBase implements AutoCloseable, MotorController,
         neutralDeadband = device.createDouble("Neutral Deadband", Direction.kOutput, 0.04);
         brakeModeEnabled = device.createBoolean("Brake Mode", Direction.kOutput, true);
         currentDraw = device.createDouble("Current Draw", Direction.kInput, 0.0);
-
-        Lib199Subsystem.registerAsyncSimulationPeriodic(this);
     }
 
     /**

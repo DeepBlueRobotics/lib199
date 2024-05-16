@@ -24,10 +24,15 @@ public class Lib199Subsystem implements Subsystem {
 
         asyncPeriodicThread = new Thread(() -> {
             while(true) {
-                INSTANCE.asyncPeriodic();
                 try {
-                    Thread.sleep(asyncSleepTime);
-                } catch(InterruptedException e) {}
+                    INSTANCE.asyncPeriodic();
+                    try {
+                        Thread.sleep(asyncSleepTime);
+                    } catch(InterruptedException e) {}
+                } catch (Exception ex) {
+                    System.err.println("Lib199 error running ayncPeriodic() methods: " + ex);
+                    ex.printStackTrace(System.err);
+                }
             }
         });
         asyncPeriodicThread.setDaemon(true);
