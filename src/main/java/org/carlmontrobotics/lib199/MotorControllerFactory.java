@@ -19,7 +19,6 @@ import com.revrobotics.CANSparkFlex;
 import com.revrobotics.CANSparkLowLevel;
 import com.revrobotics.SparkPIDController;
 
-import org.carlmontrobotics.lib199.sim.MockSparkBase;
 import org.carlmontrobotics.lib199.sim.MockSparkFlex;
 import org.carlmontrobotics.lib199.sim.MockSparkMax;
 import org.carlmontrobotics.lib199.sim.MockTalonSRX;

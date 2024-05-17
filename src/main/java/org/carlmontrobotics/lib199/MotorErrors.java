@@ -117,6 +117,12 @@ public final class MotorErrors {
     public static void reportSparkMaxTemp(CANSparkMax spark, TemperatureLimit temperatureLimit) {
         reportSparkMaxTemp(spark, temperatureLimit.limit);
     }
+  
+    public static boolean isSparkMaxOverheated(CANSparkMax spark){
+      int id = spark.getDeviceId();
+      int motorMaxTemp = sparkTemperatureLimits.get(id);
+      return ( spark.getMotorTemperature() >= motorMaxTemp );
+    }
 
     @Deprecated
     public static void reportSparkMaxTemp(CANSparkMax spark, int temperatureLimit) {
