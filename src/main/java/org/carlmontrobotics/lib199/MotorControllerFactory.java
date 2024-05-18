@@ -124,7 +124,7 @@ public class MotorControllerFactory {
     }
 
     configureSpark(spark, config);
-    
+
     return spark;
   }
 
@@ -137,7 +137,7 @@ public class MotorControllerFactory {
     }
 
     configureSpark(spark, config);
-    
+
     return spark;
   }
 

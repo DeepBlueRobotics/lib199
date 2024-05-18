@@ -28,9 +28,9 @@ import edu.wpi.first.wpilibj.simulation.SimDeviceSim;
 public class MockedPlayingWithFusionTimeOfFlightTest {
 
     @ClassRule
-    public static TestRules.InitializeHAL classRule = new TestRules.InitializeHAL(); 
+    public static TestRules.InitializeHAL classRule = new TestRules.InitializeHAL();
     @Rule
-    public TestRules.ResetSimDeviceSimData testRule = new TestRules.ResetSimDeviceSimData(); 
+    public TestRules.ResetSimDeviceSimData testRule = new TestRules.ResetSimDeviceSimData();
 
     @Test
     public void testDeviceCreation() {
@@ -172,5 +172,5 @@ public class MockedPlayingWithFusionTimeOfFlightTest {
     private interface EncoderTest {
         public void test(TimeOfFlight encoder, SimDeviceSim sim);
     }
-    
+
 }

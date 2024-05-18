@@ -79,7 +79,7 @@ public final class MotorErrors {
     public static void checkSparkMaxErrors(CANSparkMax spark) {
         checkSparkErrors((CANSparkBase)spark);
     }
-        
+
     private static String formatFaults(CANSparkBase spark) {
         String out = "";
         for(FaultID fault: FaultID.values()) {
@@ -106,7 +106,7 @@ public final class MotorErrors {
     }
 
     public static void printSparkErrorMessages() {
-        flags.keySet().forEach((spark) -> checkSparkErrors(spark));
+        flags.keySet().forEach(MotorErrors::checkSparkErrors);
     }
 
     public static CANSparkMax createDummySparkMax() {
@@ -117,7 +117,7 @@ public final class MotorErrors {
     public static void reportSparkMaxTemp(CANSparkMax spark, TemperatureLimit temperatureLimit) {
         reportSparkMaxTemp(spark, temperatureLimit.limit);
     }
-  
+
     public static boolean isSparkMaxOverheated(CANSparkMax spark){
       int id = spark.getDeviceId();
       int motorMaxTemp = sparkTemperatureLimits.get(id);
@@ -126,9 +126,9 @@ public final class MotorErrors {
 
     @Deprecated
     public static void reportSparkMaxTemp(CANSparkMax spark, int temperatureLimit) {
-        reportSparkTemp((CANSparkBase)spark, temperatureLimit);
+        reportSparkTemp((CANSparkBase) spark, temperatureLimit);
     }
-    
+
     public static void reportSparkTemp(CANSparkBase spark, int temperatureLimit) {
         int id = spark.getDeviceId();
         temperatureSparks.put(id, spark);

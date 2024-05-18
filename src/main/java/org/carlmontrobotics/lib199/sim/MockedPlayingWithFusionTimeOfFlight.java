@@ -69,7 +69,7 @@ public class MockedPlayingWithFusionTimeOfFlight implements AutoCloseable {
     public double getSampleTime() {
         return sampleTime.get();
     }
-    
+
     public Status getStatus() {
         return Status.values()[status.get()];
     }
