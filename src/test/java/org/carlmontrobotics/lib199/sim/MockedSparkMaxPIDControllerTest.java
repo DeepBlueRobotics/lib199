@@ -15,7 +15,7 @@ import org.carlmontrobotics.lib199.REVLibErrorAnswer;
 import org.junit.Test;
 
 public class MockedSparkMaxPIDControllerTest {
-    
+
     @Test
     public void testResponses() {
         MockSparkMax mockSparkMax = new MockSparkMax(0, MotorType.kBrushless);

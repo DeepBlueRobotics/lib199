@@ -14,9 +14,12 @@ import com.ctre.phoenix6.hardware.CANcoder;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkBase.ExternalFollower;
 import com.revrobotics.CANSparkBase.IdleMode;
+import com.revrobotics.CANSparkBase;
+import com.revrobotics.CANSparkFlex;
 import com.revrobotics.CANSparkLowLevel;
 import com.revrobotics.SparkPIDController;
 
+import org.carlmontrobotics.lib199.sim.MockSparkFlex;
 import org.carlmontrobotics.lib199.sim.MockSparkMax;
 import org.carlmontrobotics.lib199.sim.MockTalonSRX;
 import org.carlmontrobotics.lib199.sim.MockVictorSPX;
@@ -120,7 +123,26 @@ public class MotorControllerFactory {
       spark = MockSparkMax.createMockSparkMax(id, CANSparkLowLevel.MotorType.kBrushless);
     }
 
-    MotorErrors.reportSparkMaxTemp(spark, config.temperatureLimitCelsius);
+    configureSpark(spark, config);
+
+    return spark;
+  }
+
+  public static CANSparkFlex createSparkFlex(int id, MotorConfig config) {
+    CANSparkFlex spark;
+    if (RobotBase.isReal()) {
+      spark = new CANSparkFlex(id, CANSparkLowLevel.MotorType.kBrushless);
+    } else {
+      spark = MockSparkFlex.createMockSparkFlex(id, CANSparkLowLevel.MotorType.kBrushless);
+    }
+
+    configureSpark(spark, config);
+
+    return spark;
+  }
+
+  private static void configureSpark(CANSparkBase spark, MotorConfig config) {
+    MotorErrors.reportSparkTemp(spark, config.temperatureLimitCelsius);
 
     MotorErrors.reportError(spark.restoreFactoryDefaults());
     //MotorErrors.reportError(spark.follow(ExternalFollower.kFollowerDisabled, 0));
@@ -128,7 +150,7 @@ public class MotorControllerFactory {
     MotorErrors.reportError(spark.enableVoltageCompensation(12));
     MotorErrors.reportError(spark.setSmartCurrentLimit(config.currentLimitAmps));
 
-    MotorErrors.checkSparkMaxErrors(spark);
+    MotorErrors.checkSparkErrors(spark);
 
     SparkPIDController controller = spark.getPIDController();
     MotorErrors.reportError(controller.setOutputRange(-1, 1));
@@ -136,8 +158,6 @@ public class MotorControllerFactory {
     MotorErrors.reportError(controller.setI(0));
     MotorErrors.reportError(controller.setD(0));
     MotorErrors.reportError(controller.setFF(0));
-
-    return spark;
   }
 
   /**

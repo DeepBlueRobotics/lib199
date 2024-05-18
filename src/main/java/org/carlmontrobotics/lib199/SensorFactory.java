@@ -1,9 +1,10 @@
 package org.carlmontrobotics.lib199;
 
 import org.carlmontrobotics.lib199.sim.MockedCANCoder;
+import org.carlmontrobotics.lib199.sim.MockedPlayingWithFusionTimeOfFlight;
 
 import com.ctre.phoenix6.hardware.CANcoder;
-
+import com.playingwithfusion.TimeOfFlight;
 
 import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.cscore.UsbCamera;
@@ -59,4 +60,13 @@ public class SensorFactory {
         return cameras;
     }
 
+    public static TimeOfFlight createPlayingWithFusionTimeOfFlight(int portNumber) {
+        TimeOfFlight tof;
+        if (RobotBase.isReal()) {
+            tof = new TimeOfFlight(portNumber);
+        } else {
+            tof = MockedPlayingWithFusionTimeOfFlight.createMock(portNumber);
+        }
+        return tof;
+    }
 }
