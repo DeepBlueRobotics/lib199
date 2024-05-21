@@ -5,8 +5,6 @@ import java.util.HashMap;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.sim.CANcoderSimState;
 
-import org.carlmontrobotics.lib199.Lib199Subsystem;
-
 import edu.wpi.first.hal.HALValue;
 import edu.wpi.first.hal.SimDevice;
 import edu.wpi.first.hal.SimDevice.Direction;
@@ -15,8 +13,6 @@ import edu.wpi.first.hal.SimDouble;
 import edu.wpi.first.wpilibj.simulation.SimDeviceSim;
 
 public class MockedCANCoder {
-
-    public static final double kCANCoderCPR = 4096;
 
     private static final HashMap<Integer, MockedCANCoder> sims = new HashMap<>();
 
@@ -29,15 +25,15 @@ public class MockedCANCoder {
 
     public MockedCANCoder(CANcoder canCoder) {
         port = canCoder.getDeviceID();
-        device = SimDevice.create("CANCoder", port);
-        position = device.createDouble("count", Direction.kInput, 0);
+        device = SimDevice.create("CANDutyCycle:CANCoder", port);
+        position = device.createDouble("position", Direction.kInput, 0);
         gearing = device.createDouble("gearing", Direction.kOutput, 1);
         sim = canCoder.getSimState();
-        deviceSim = new SimDeviceSim("CANCoder", port);
+        deviceSim = new SimDeviceSim("CANDutyCycle:CANCoder", port);
         deviceSim.registerValueChangedCallback(position, new SimValueCallback() {
             @Override
             public void callback(String name, int handle, int direction, HALValue value) {
-                sim.setRawPosition(value.getDouble() / kCANCoderCPR);
+                sim.setRawPosition(value.getDouble());
             }
         }, true);
         sims.put(port, this);

@@ -36,14 +36,14 @@ public class SwerveModuleSim {
      */
     public SwerveModuleSim(int drivePortNum, double driveGearing, boolean driveInversion, double driveMoiKgM2, 
                             int turnMotorPortNum, int turnEncoderPortNum, double turnGearing, boolean turnInversion, double turnMoiKgM2) {
-        driveMotorSim = new SimDeviceSim("SparkMax", drivePortNum);
-        driveEncoderSim = new SimDeviceSim(driveMotorSim.getName() + "_RelativeEncoder");
+        driveMotorSim = new SimDeviceSim("CANMotor:CANSparkMax", drivePortNum);
+        driveEncoderSim = new SimDeviceSim("CANEncoder:CANSparkMax", drivePortNum);
         drivePhysicsSim = new DCMotorSim(DCMotor.getNEO(1), driveGearing, driveMoiKgM2);
         this.driveGearing = driveGearing;
         this.driveInversion = driveInversion;
 
-        turnMotorSim = new SimDeviceSim("SparkMax", turnMotorPortNum);
-        turnEncoderSim = new SimDeviceSim("CANCoder", turnEncoderPortNum);
+        turnMotorSim = new SimDeviceSim("CANMotor:CANSparkMax", turnMotorPortNum);
+        turnEncoderSim = new SimDeviceSim("CANDutyCycle:CANCoder", turnEncoderPortNum);
         turnPhysicsSim = new DCMotorSim(DCMotor.getNEO(1), turnGearing, turnMoiKgM2);
         this.turnGearing = turnGearing;
         this.turnInversion = turnInversion;
@@ -54,18 +54,18 @@ public class SwerveModuleSim {
      * @param dtSecs seconds to step the simulation forward.
      */
     public void update(double dtSecs) {
-        drivePhysicsSim.setInputVoltage(DriverStation.isEnabled() ? driveMotorSim.getDouble("Speed").get()*12.0 : 0.0);
+        drivePhysicsSim.setInputVoltage(DriverStation.isEnabled() ? driveMotorSim.getDouble("percentOutput").get()*12.0 : 0.0);
         drivePhysicsSim.update(dtSecs);
-        driveEncoderSim.getDouble("Position").set(drivePhysicsSim.getAngularPositionRotations()*MockedEncoder.NEO_BUILTIN_ENCODER_CPR*driveGearing);
-        driveEncoderSim.getDouble("Velocity").set(drivePhysicsSim.getAngularVelocityRPM()*MockedEncoder.NEO_BUILTIN_ENCODER_CPR*driveGearing);
+        driveEncoderSim.getDouble("position").set(drivePhysicsSim.getAngularPositionRotations()*driveGearing);
+        driveEncoderSim.getDouble("velocity").set(drivePhysicsSim.getAngularVelocityRPM()/60.0*driveGearing);
 
-        turnPhysicsSim.setInputVoltage(DriverStation.isEnabled() ? turnMotorSim.getDouble("Speed").get()*12.0 : 0.0);
+        turnPhysicsSim.setInputVoltage(DriverStation.isEnabled() ? turnMotorSim.getDouble("percentOutput").get()*12.0 : 0.0);
         turnPhysicsSim.update(dtSecs);
         // The -1.0 below is to account for the fact that the CANCoder is mounted such that turning the wheel CCW (as viewed from above) causes
         // the encoder value to decrease. However the turnPhysicsSim's angular position will *increase* under those circumstances.
         // Note that this is independent of turnInversion. turnInversion controls which direction a positive voltage will cause the turn motor
         // to spin. turnInversion should be used to set the motor's inversion so that a positive voltage will spin the wheel CCW (as viewed from above).
-        turnEncoderSim.getDouble("count").set(MathUtil.inputModulus(-1.0 * turnPhysicsSim.getAngularPositionRotations(), -0.5, 0.5)*MockedCANCoder.kCANCoderCPR);
+        turnEncoderSim.getDouble("position").set(MathUtil.inputModulus(-1.0 * turnPhysicsSim.getAngularPositionRotations(), -0.5, 0.5));
     }
 
     /**

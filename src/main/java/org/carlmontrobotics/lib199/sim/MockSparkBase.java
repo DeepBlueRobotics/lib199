@@ -36,6 +36,7 @@ public class MockSparkBase extends MockedMotorBase {
     private SparkAbsoluteEncoder absoluteEncoder = null;
     private MockedEncoder alternateEncoder = null;
     private SparkAnalogSensor analogSensor = null;
+    private final String name;
 
     /**
      * Initializes a new {@link SimDevice} with the given parameters and creates the necessary sim values, and
@@ -44,14 +45,15 @@ public class MockSparkBase extends MockedMotorBase {
      * @param port the port to associate this {@code MockSparkMax} with. Will be used to create the {@link SimDevice} and facilitate motor following.
      * @param type the type of the simulated motor. If this is set to {@link MotorType#kBrushless}, the builtin encoder simulation will be configured
      * to follow the inversion state of the motor and its {@code setInverted} method will be disabled.
-     * @param name the name of the type of controller ("SparkMax" or "SparkFlex")
+     * @param name the name of the type of controller ("CANSparkMax" or "CANSparkFlex")
      */
-    public MockSparkBase(int port, MotorType type, String name) {
+    public MockSparkBase(int port, MotorType type, String name, int countsPerRev) {
         super(name, port);
         this.type = type;
+        this.name = name;
 
         if(type == MotorType.kBrushless) {
-            encoder = new MockedEncoder(SimDevice.create(device.getName() + "_RelativeEncoder"), MockedEncoder.NEO_BUILTIN_ENCODER_CPR, false) {
+            encoder = new MockedEncoder(SimDevice.create("CANEncoder:%s[%d]".formatted(name, port)), countsPerRev, false, false) {
                 @Override
                 public REVLibError setInverted(boolean inverted) {
                     System.err.println(
@@ -60,7 +62,7 @@ public class MockSparkBase extends MockedMotorBase {
                 }
             };
         } else {
-            encoder = new MockedEncoder(SimDevice.create(device.getName() + "_RelativeEncoder"), MockedEncoder.NEO_BUILTIN_ENCODER_CPR, false);
+            encoder = new MockedEncoder(SimDevice.create("CANEncoder:%s[%d]".formatted(name, port)), countsPerRev, false, false);
         }
 
         pidControllerImpl = new MockedSparkMaxPIDController(this);
@@ -192,9 +194,8 @@ public class MockSparkBase extends MockedMotorBase {
      * @return the simulated encoder
      */
     public synchronized SparkAbsoluteEncoder getAbsoluteEncoder(SparkAbsoluteEncoder.Type encoderType) {
-        System.err.println("WARNING: An absolute encoder was created for a simulated Spark Max. Currently, the only way to specify the CPR is to use the REVHardwareClient. A CPR of " + MockedEncoder.NEO_BUILTIN_ENCODER_CPR + " will be assumed.");
         if(absoluteEncoder == null) {
-            MockedEncoder absoluteEncoderImpl = new MockedEncoder(SimDevice.create(device.getName() + "_AbsoluteEncoder"), MockedEncoder.NEO_BUILTIN_ENCODER_CPR, true);
+            MockedEncoder absoluteEncoderImpl = new MockedEncoder(SimDevice.create("CANDutyCycle:%s[%d]".formatted(name, port)), 0, false, true);
             absoluteEncoder = Mocks.createMock(SparkAbsoluteEncoder.class, absoluteEncoderImpl, new REVLibErrorAnswer());
         }
         return absoluteEncoder;
@@ -223,7 +224,7 @@ public class MockSparkBase extends MockedMotorBase {
      */
     public synchronized RelativeEncoder getAlternateEncoder(SparkMaxAlternateEncoder.Type encoderType, int countsPerRev) {
         if(alternateEncoder == null) {
-            alternateEncoder = new MockedEncoder(SimDevice.create(device.getName() + "_AlternateEncoder"), countsPerRev, false);
+            alternateEncoder = new MockedEncoder(SimDevice.create("CANEncoder:%s[%d]-alternate".formatted(name, port)), 0, false, false);
         }
         return alternateEncoder;
     }
@@ -239,7 +240,7 @@ public class MockSparkBase extends MockedMotorBase {
      */
     public synchronized SparkAnalogSensor getAnalog(SparkAnalogSensor.Mode mode) {
         if(analogSensor == null) {
-            MockedEncoder analogSensorImpl = new MockedEncoder(SimDevice.create(device.getName() + "_AnalogSensor"), MockedEncoder.ANALOG_SENSOR_MAX_VOLTAGE, true);
+            MockedEncoder analogSensorImpl = new MockedEncoder(SimDevice.create("CANAIn:%s[%d]".formatted(name, port)), 0, true, true);
             analogSensor = Mocks.createMock(SparkAnalogSensor.class, analogSensorImpl, new REVLibErrorAnswer());
         }
         return analogSensor;

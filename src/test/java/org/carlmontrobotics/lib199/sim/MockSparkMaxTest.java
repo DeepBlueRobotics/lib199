@@ -21,11 +21,11 @@ public class MockSparkMaxTest {
     @Test
     public void testHasEncoder() {
         var mockSpark = new MockSparkMax(0, MotorType.kBrushless);
-        SimDeviceSim simSpark = new SimDeviceSim("SparkMax", 0);
+        SimDeviceSim simSpark = new SimDeviceSim("CANMotor:CANSparkMax", 0);
         assertNotNull(simSpark);
-        SimDeviceSim simEncoder = new SimDeviceSim(simSpark.getName() + "_RelativeEncoder");
+        SimDeviceSim simEncoder = new SimDeviceSim("CANEncoder:CANSparkMax", 0);
         assertNotNull(simEncoder);
-        SimDouble simPosition = simEncoder.getDouble("Position");
+        SimDouble simPosition = simEncoder.getDouble("position");
         assertNotNull(simPosition);
     }
 }

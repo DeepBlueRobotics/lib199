@@ -42,12 +42,12 @@ public abstract class MockedMotorBase implements AutoCloseable, MotorController,
      * @param port the device port to pass to {@link SimDevice#create}
      */
     public MockedMotorBase(String type, int port) {
-        device = SimDevice.create(type, port);
+        device = SimDevice.create("CANMotor:" + type, port);
         this.port = port;
-        speed = device.createDouble("Speed", Direction.kOutput, 0.0);
-        neutralDeadband = device.createDouble("Neutral Deadband", Direction.kOutput, 0.04);
-        brakeModeEnabled = device.createBoolean("Brake Mode", Direction.kOutput, true);
-        currentDraw = device.createDouble("Current Draw", Direction.kInput, 0.0);
+        speed = device.createDouble("percentOutput", Direction.kOutput, 0.0);
+        neutralDeadband = device.createDouble("neutralDeadband", Direction.kOutput, 0.04);
+        brakeModeEnabled = device.createBoolean("brakeMode", Direction.kOutput, true);
+        currentDraw = device.createDouble("motorCurrent", Direction.kInput, 0.0);
     }
 
     /**

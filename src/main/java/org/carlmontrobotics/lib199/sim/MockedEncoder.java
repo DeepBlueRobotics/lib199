@@ -22,13 +22,13 @@ import edu.wpi.first.hal.SimDouble;
  */
 public class MockedEncoder implements AbsoluteEncoder, AnalogInput, AutoCloseable, RelativeEncoder {
 
-    public static final int NEO_BUILTIN_ENCODER_CPR = 42;
     public static final double ANALOG_SENSOR_MAX_VOLTAGE = 3.3;
 
     public final SimDevice device;
     protected final SimDouble position;
     protected final SimDouble velocity;
-    protected final double countsOrVoltsPerRev;
+    protected final SimDouble voltage;
+    protected final int countsPerRev;
     protected final boolean absolute;
     protected double positionConversionFactor = 1.0;
     protected double velocityConversionFactor = 1.0;
@@ -37,16 +37,22 @@ public class MockedEncoder implements AbsoluteEncoder, AnalogInput, AutoCloseabl
 
     /**
      * @param device The device to retrieve position and velocity data from
-     * @param countsOrVoltsPerRev The cpr of the simulated encoder
+     * @param countsPerRev The value that this.getCountsPerRevolution() should return
+     * @param analog Whether the encoder is an analog sensor
      * @param absolute Whether the encoder is an absolute encoder.
      * This flag caps the position to one rotation via. {@link MathUtil#inputModulus(double, double, double)},
      * disables {@link #setPosition(double)}, and enables {@link #setZeroOffset(double)}.
      */
-    public MockedEncoder(SimDevice device, double countsOrVoltsPerRev, boolean absolute) {
+    public MockedEncoder(SimDevice device, int countsPerRev, boolean analog, boolean absolute) {
         this.device = device;
-        position = device.createDouble("Position", Direction.kInput, 0);
-        velocity = device.createDouble("Velocity", Direction.kInput, 0);
-        this.countsOrVoltsPerRev = countsOrVoltsPerRev;
+        position = device.createDouble("position", Direction.kInput, 0); // Rotations
+        velocity = device.createDouble("velocity", Direction.kInput, 0); // Rotations per *second*
+        if (analog) {
+            voltage = device.createDouble("voltage", Direction.kInput, 0);
+        } else {
+            voltage = null;
+        }
+        this.countsPerRev = countsPerRev;
         this.absolute = absolute;
     }
 
@@ -74,14 +80,15 @@ public class MockedEncoder implements AbsoluteEncoder, AnalogInput, AutoCloseabl
 
     @Override
     public int getCountsPerRevolution() {
-        return (int)countsOrVoltsPerRev;
+        return countsPerRev;
     }
 
     /**
      * @return The current position of the encoder, not accounting for the position offset ({@link #setPosition(double)} and {@link #setZeroOffset(double)})
      */
     public double getRawPosition() {
-        return position.get() * (inverted ? -1 : 1) * positionConversionFactor / countsOrVoltsPerRev;
+        double rotationsOrVolts = voltage != null ? voltage.get() : position.get();
+        return rotationsOrVolts * (inverted ? -1 : 1) * positionConversionFactor;
     }
 
     @Override
@@ -95,7 +102,7 @@ public class MockedEncoder implements AbsoluteEncoder, AnalogInput, AutoCloseabl
 
     @Override
     public double getVelocity() {
-        return velocity.get() * (inverted ? -1 : 1) * velocityConversionFactor / countsOrVoltsPerRev;
+        return velocity.get() * 60 * (inverted ? -1 : 1) * velocityConversionFactor;
     }
 
     @Override
@@ -165,9 +172,7 @@ public class MockedEncoder implements AbsoluteEncoder, AnalogInput, AutoCloseabl
 
     @Override
     public double getVoltage() {
-        // This method only makes sense for an analog sensor and for an analog sensor, 
-        // position.get() is supposed to return volts.
-        return position.get();
+        return voltage.get();
     }
 
 }

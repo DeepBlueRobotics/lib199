@@ -9,7 +9,7 @@ import com.revrobotics.CANSparkMax;
 public class MockSparkMax extends MockSparkBase {
 
     public MockSparkMax(int port, MotorType type) {
-        super(port, type, "SparkMax");
+        super(port, type, "CANSparkMax", 42);
     }
 
     public static CANSparkMax createMockSparkMax(int portPWM, MotorType type) {
