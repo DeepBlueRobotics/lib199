@@ -8,6 +8,7 @@ import com.playingwithfusion.TimeOfFlight.Status;
 import com.playingwithfusion.TimeOfFlight;
 import com.playingwithfusion.TimeOfFlight.RangingMode;
 
+import edu.wpi.first.hal.SimBoolean;
 import edu.wpi.first.hal.SimDevice;
 import edu.wpi.first.hal.SimDevice.Direction;
 import edu.wpi.first.hal.SimDouble;
@@ -20,6 +21,7 @@ public class MockedPlayingWithFusionTimeOfFlight implements AutoCloseable {
     private SimDevice rangeDevice;
     private SimDevice ambientLightLevelDevice;
     private SimDouble range, rangeSigma, sampleTime, ambientLightLevel;
+    private SimBoolean rangeDeviceInit, ambientLightLevelDeviceInit;
     private SimInt roiLeft, roiTop, roiRight, roiBottom;
     private SimEnum status;
     private SimEnum rangingMode;
@@ -46,6 +48,9 @@ public class MockedPlayingWithFusionTimeOfFlight implements AutoCloseable {
         roiTop = rangeDevice.createInt("roiTop", Direction.kOutput, 0);
         roiRight = rangeDevice.createInt("roiRight", Direction.kOutput, 15);
         roiBottom = rangeDevice.createInt("roiBottom", Direction.kOutput, 15);
+
+        rangeDeviceInit = rangeDevice.createBoolean("init", Direction.kOutput, true);
+        ambientLightLevelDeviceInit = ambientLightLevelDevice.createBoolean("init", Direction.kOutput, true);
     }
 
     public static TimeOfFlight createMock(int portNumber) {
@@ -98,7 +103,9 @@ public class MockedPlayingWithFusionTimeOfFlight implements AutoCloseable {
 
     @Override
     public void close() {
+        rangeDeviceInit.set(false);
         rangeDevice.close();
+        ambientLightLevelDeviceInit.set(false);
         ambientLightLevelDevice.close();
     }
 }

@@ -1,5 +1,6 @@
 package org.carlmontrobotics.lib199.sim;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import com.revrobotics.CANSparkLowLevel.MotorType;
@@ -27,5 +28,16 @@ public class MockSparkMaxTest {
         assertNotNull(simEncoder);
         SimDouble simPosition = simEncoder.getDouble("position");
         assertNotNull(simPosition);
+    }
+
+    @Test
+    public void testGetOutputCurrent() {
+        var mockSpark = new MockSparkMax(0, MotorType.kBrushless);
+        SimDeviceSim simSpark = new SimDeviceSim("CANMotor:CANSparkMax", 0);
+        assertNotNull(simSpark);
+        SimDouble simCurrent = simSpark.getDouble("motorCurrent");
+        assertNotNull(simCurrent);
+        simCurrent.set(42.0);
+        assertEquals(42, mockSpark.getOutputCurrent(), 1e-6);
     }
 }

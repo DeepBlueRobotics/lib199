@@ -26,6 +26,7 @@ public abstract class MockedMotorBase implements AutoCloseable, MotorController,
     public final SimDouble neutralDeadband;
     public final SimBoolean brakeModeEnabled;
     public final SimDouble currentDraw;
+    public final SimBoolean init;
     protected SlewRateLimiter rampRateLimiter = null;
     protected boolean isInverted = false;
     protected boolean disabled = false;
@@ -48,6 +49,7 @@ public abstract class MockedMotorBase implements AutoCloseable, MotorController,
         neutralDeadband = device.createDouble("neutralDeadband", Direction.kOutput, 0.04);
         brakeModeEnabled = device.createBoolean("brakeMode", Direction.kOutput, true);
         currentDraw = device.createDouble("motorCurrent", Direction.kInput, 0.0);
+        init = device.createBoolean("init", Direction.kOutput, true);
     }
 
     /**
@@ -205,6 +207,7 @@ public abstract class MockedMotorBase implements AutoCloseable, MotorController,
 
     @Override
     public void close() {
+        init.set(false);
         device.close();
     }
 

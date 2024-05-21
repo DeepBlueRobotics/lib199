@@ -269,6 +269,10 @@ public class MockSparkBase extends MockedMotorBase {
         return REVLibError.kOk;
     }
 
+    public double getOutputCurrent() {
+        return getCurrentDraw();
+    }
+
     @Override
     public void disable() {
         // CANSparkBase sets the motor speed to zero rather than actually disabling the motor

@@ -6,6 +6,7 @@ import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.sim.CANcoderSimState;
 
 import edu.wpi.first.hal.HALValue;
+import edu.wpi.first.hal.SimBoolean;
 import edu.wpi.first.hal.SimDevice;
 import edu.wpi.first.hal.SimDevice.Direction;
 import edu.wpi.first.hal.simulation.SimValueCallback;
@@ -21,6 +22,7 @@ public class MockedCANCoder {
     private SimDeviceSim deviceSim;
     private SimDouble position; // Rotations - Continuous
     private SimDouble gearing;
+    private SimBoolean init;
     private CANcoderSimState sim;
 
     public MockedCANCoder(CANcoder canCoder) {
@@ -37,6 +39,7 @@ public class MockedCANCoder {
             }
         }, true);
         sims.put(port, this);
+        init = device.createBoolean("init", Direction.kOutput, true);
     }
 
     public void setGearing(double gearing) {

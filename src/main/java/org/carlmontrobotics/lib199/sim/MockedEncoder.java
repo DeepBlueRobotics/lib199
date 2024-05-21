@@ -5,6 +5,7 @@ import com.revrobotics.AnalogInput;
 import com.revrobotics.REVLibError;
 import com.revrobotics.RelativeEncoder;
 
+import edu.wpi.first.hal.SimBoolean;
 import edu.wpi.first.hal.SimDevice;
 import edu.wpi.first.hal.SimDevice.Direction;
 import edu.wpi.first.math.MathUtil;
@@ -28,6 +29,7 @@ public class MockedEncoder implements AbsoluteEncoder, AnalogInput, AutoCloseabl
     protected final SimDouble position;
     protected final SimDouble velocity;
     protected final SimDouble voltage;
+    protected final SimBoolean init;
     protected final int countsPerRev;
     protected final boolean absolute;
     protected double positionConversionFactor = 1.0;
@@ -54,6 +56,7 @@ public class MockedEncoder implements AbsoluteEncoder, AnalogInput, AutoCloseabl
         }
         this.countsPerRev = countsPerRev;
         this.absolute = absolute;
+        init = device.createBoolean("init", Direction.kOutput, true);
     }
 
     @Override
@@ -167,6 +170,7 @@ public class MockedEncoder implements AbsoluteEncoder, AnalogInput, AutoCloseabl
 
     @Override
     public void close() {
+        init.set(false);
         device.close();
     }
 
