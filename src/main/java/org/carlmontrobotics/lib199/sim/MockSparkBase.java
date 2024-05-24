@@ -46,6 +46,7 @@ public class MockSparkBase extends MockedMotorBase {
      * @param type the type of the simulated motor. If this is set to {@link MotorType#kBrushless}, the builtin encoder simulation will be configured
      * to follow the inversion state of the motor and its {@code setInverted} method will be disabled.
      * @param name the name of the type of controller ("CANSparkMax" or "CANSparkFlex")
+     * @param countsPerRev the number of counts per revolution of this controller's built-in encoder.
      */
     public MockSparkBase(int port, MotorType type, String name, int countsPerRev) {
         super(name, port);
@@ -53,7 +54,7 @@ public class MockSparkBase extends MockedMotorBase {
         this.name = name;
 
         if(type == MotorType.kBrushless) {
-            encoder = new MockedEncoder(SimDevice.create("CANEncoder:%s[%d]".formatted(name, port)), countsPerRev, false, false) {
+            encoder = new MockedEncoder(SimDevice.create("CANEncoder:" + name, port), countsPerRev, false, false) {
                 @Override
                 public REVLibError setInverted(boolean inverted) {
                     System.err.println(
@@ -62,7 +63,7 @@ public class MockSparkBase extends MockedMotorBase {
                 }
             };
         } else {
-            encoder = new MockedEncoder(SimDevice.create("CANEncoder:%s[%d]".formatted(name, port)), countsPerRev, false, false);
+            encoder = new MockedEncoder(SimDevice.create("CANEncoder:" + name, port), countsPerRev, false, false);
         }
 
         pidControllerImpl = new MockedSparkMaxPIDController(this);
@@ -195,7 +196,13 @@ public class MockSparkBase extends MockedMotorBase {
      */
     public synchronized SparkAbsoluteEncoder getAbsoluteEncoder(SparkAbsoluteEncoder.Type encoderType) {
         if(absoluteEncoder == null) {
-            MockedEncoder absoluteEncoderImpl = new MockedEncoder(SimDevice.create("CANDutyCycle:%s[%d]".formatted(name, port)), 0, false, true);
+            MockedEncoder absoluteEncoderImpl = new MockedEncoder(SimDevice.create("CANDutyCycle:" + name, port), 0, false, true) {
+                @Override
+                public double getVelocity() {
+                    // A SparkAbsoluteEncoder returns a velocity in rps, not rpm.
+                    return super.getVelocity() / 60.0;
+                }            
+            };
             absoluteEncoder = Mocks.createMock(SparkAbsoluteEncoder.class, absoluteEncoderImpl, new REVLibErrorAnswer());
         }
         return absoluteEncoder;
@@ -240,7 +247,7 @@ public class MockSparkBase extends MockedMotorBase {
      */
     public synchronized SparkAnalogSensor getAnalog(SparkAnalogSensor.Mode mode) {
         if(analogSensor == null) {
-            MockedEncoder analogSensorImpl = new MockedEncoder(SimDevice.create("CANAIn:%s[%d]".formatted(name, port)), 0, true, true);
+            MockedEncoder analogSensorImpl = new MockedEncoder(SimDevice.create("CANAIn:" + name, port), 0, true, true);
             analogSensor = Mocks.createMock(SparkAnalogSensor.class, analogSensorImpl, new REVLibErrorAnswer());
         }
         return analogSensor;

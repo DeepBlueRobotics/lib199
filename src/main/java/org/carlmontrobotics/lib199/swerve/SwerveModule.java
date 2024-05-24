@@ -465,8 +465,8 @@ public class SwerveModule implements Sendable {
      */
     public SwerveModuleSim createSim(Measure<Mass> massOnWheel, double turnGearing, double turnMoiKgM2) {
         double driveMoiKgM2 =  massOnWheel.in(Kilogram) * Math.pow(config.wheelDiameterMeters/2, 2);
-        return new SwerveModuleSim(drive.getDeviceId(), config.driveGearing, drive.getInverted(), driveMoiKgM2, 
-            turn.getDeviceId(), turnEncoder.getDeviceID(), turnGearing, turn.getInverted(), turnMoiKgM2);
+        return new SwerveModuleSim(drive.getDeviceId(), config.driveGearing, driveMoiKgM2, 
+            turn.getDeviceId(), turnEncoder.getDeviceID(), turnGearing, turnMoiKgM2);
     }
 
     /**

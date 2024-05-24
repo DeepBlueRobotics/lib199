@@ -156,22 +156,22 @@ public class MockedPlayingWithFusionTimeOfFlightTest {
         return MockedPlayingWithFusionTimeOfFlight.createMock(deviceId);
     }
 
-    private void withDevices(EncoderTest func) {
+    private void withDevices(DistanceSensorTest func) {
         withDevice(0, func);
         withDevice(1, func);
         withDevice(2, func);
     }
 
-    private void withDevice(int id, EncoderTest func) {
+    private void withDevice(int id, DistanceSensorTest func) {
         try(TimeOfFlight dev = createDevice(id)) {
             SimDeviceSim rangeDeviceSim = new SimDeviceSim(String.format("CANAIn:PlayingWithFusionTimeOfFlight[%d]-rangeVoltsIsMM", id));
             SimDeviceSim ambientLightLevelDeviceSim = new SimDeviceSim(String.format("CANAIn:PlayingWithFusionTimeOfFlight[%d]-ambientLightLevelVoltsIsMcps", id));
-            func.test((TimeOfFlight)dev, rangeDeviceSim, ambientLightLevelDeviceSim);
+            func.test(dev, rangeDeviceSim, ambientLightLevelDeviceSim);
         }
     }
 
-    private interface EncoderTest {
-        public void test(TimeOfFlight encoder, SimDeviceSim rangeDeviceSim, SimDeviceSim ambientLightLevelDeviceSim);
+    private interface DistanceSensorTest {
+        public void test(TimeOfFlight distanceSensor, SimDeviceSim rangeDeviceSim, SimDeviceSim ambientLightLevelDeviceSim);
     }
 
 }

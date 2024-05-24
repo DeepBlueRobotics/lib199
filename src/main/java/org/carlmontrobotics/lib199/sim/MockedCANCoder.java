@@ -21,15 +21,12 @@ public class MockedCANCoder {
     private SimDevice device;
     private SimDeviceSim deviceSim;
     private SimDouble position; // Rotations - Continuous
-    private SimDouble gearing;
-    private SimBoolean init;
     private CANcoderSimState sim;
 
     public MockedCANCoder(CANcoder canCoder) {
         port = canCoder.getDeviceID();
         device = SimDevice.create("CANDutyCycle:CANCoder", port);
         position = device.createDouble("position", Direction.kInput, 0);
-        gearing = device.createDouble("gearing", Direction.kOutput, 1);
         sim = canCoder.getSimState();
         deviceSim = new SimDeviceSim("CANDutyCycle:CANCoder", port);
         deviceSim.registerValueChangedCallback(position, new SimValueCallback() {
@@ -39,15 +36,6 @@ public class MockedCANCoder {
             }
         }, true);
         sims.put(port, this);
-        init = device.createBoolean("init", Direction.kOutput, true);
-    }
-
-    public void setGearing(double gearing) {
-        this.gearing.set(gearing);
-    }
-
-    public static void setGearing(int port, double gearing) {
-        if(sims.containsKey(port)) sims.get(port).setGearing(gearing);
     }
 
 }
