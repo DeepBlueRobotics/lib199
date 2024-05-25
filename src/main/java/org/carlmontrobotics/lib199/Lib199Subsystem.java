@@ -11,32 +11,13 @@ public class Lib199Subsystem implements Subsystem {
     private static final Lib199Subsystem INSTANCE = new Lib199Subsystem();
     private static final CopyOnWriteArrayList<Runnable> periodicMethods = new CopyOnWriteArrayList<>();
     private static final CopyOnWriteArrayList<Runnable> periodicSimulationMethods = new CopyOnWriteArrayList<>();
-    private static final CopyOnWriteArrayList<Runnable> asyncPeriodicMethods = new CopyOnWriteArrayList<>();
-    private static final CopyOnWriteArrayList<Runnable> asyncPeriodicSimulationMethods = new CopyOnWriteArrayList<>();
     private static final Consumer<Runnable> RUN_RUNNABLE = Runnable::run;
 
-    private static final Thread asyncPeriodicThread;
-
+    @Deprecated
     public static final long asyncSleepTime = 20;
 
     static {
         ensureRegistered();
-
-        asyncPeriodicThread = new Thread(() -> {
-            while(true) {
-                try {
-                    INSTANCE.asyncPeriodic();
-                    try {
-                        Thread.sleep(asyncSleepTime);
-                    } catch(InterruptedException e) {}
-                } catch (Exception ex) {
-                    System.err.println("Lib199 error running ayncPeriodic() methods: " + ex);
-                    ex.printStackTrace(System.err);
-                }
-            }
-        });
-        asyncPeriodicThread.setDaemon(true);
-        asyncPeriodicThread.start();
     }
 
     private static boolean registered = false;
@@ -72,7 +53,7 @@ public class Lib199Subsystem implements Subsystem {
      * @param method
      */
     public static void registerAsyncPeriodic(Runnable method) {
-        asyncPeriodicMethods.add(method);
+        registerPeriodic(method);
     }
 
     @Deprecated
@@ -81,7 +62,7 @@ public class Lib199Subsystem implements Subsystem {
      * @param method
      */
     public static void registerAsyncSimulationPeriodic(Runnable method) {
-        if(RobotBase.isSimulation()) asyncPeriodicSimulationMethods.add(method);
+        registerSimulationPeriodic(method);
     }
 
     @Override
@@ -94,26 +75,11 @@ public class Lib199Subsystem implements Subsystem {
         periodicSimulationMethods.forEach(RUN_RUNNABLE);
     }
 
-    public synchronized void asyncPeriodic() {
-        asyncPeriodicMethods.forEach(RUN_RUNNABLE);
-        asyncPeriodicSimulationMethods.forEach(RUN_RUNNABLE);
-    }
-
     @Deprecated
     /**
-     * Unregisters all Runnables registered with registerAsyncPeriodic() and
-     * registerAsyncSimulationPeriodic(). Blocks until any currently registered
-     * Runnables have finished running. This is particularly useful for ensuring
-     * that Runnables registered in one test don't interfere with other tests.
-     *
-     * @deprecated because {@link #registerAsyncPeriodic(Runnable)} and
-     * {@link #registerAsyncSimulationPeriodic(Runnable)} are deprecated.
+     * No longer does anything.
      */
-    public static void unregisterAllAsync() {
-        synchronized (INSTANCE) {
-            asyncPeriodicMethods.clear();
-            asyncPeriodicSimulationMethods.clear();
-        }
+    public synchronized void asyncPeriodic() {
     }
 
     private Lib199Subsystem() {}
