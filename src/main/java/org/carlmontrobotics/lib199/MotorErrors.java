@@ -23,8 +23,8 @@ public final class MotorErrors {
     public static final int kOverheatTripCount = 5;
 
     static {
-        Lib199Subsystem.registerAsyncPeriodic(MotorErrors::doReportSparkTemp);
-        Lib199Subsystem.registerAsyncPeriodic(MotorErrors::printSparkErrorMessages);
+        Lib199Subsystem.registerPeriodic(MotorErrors::doReportSparkTemp);
+        Lib199Subsystem.registerPeriodic(MotorErrors::printSparkErrorMessages);
     }
 
     public static void reportError(ErrorCode error) {

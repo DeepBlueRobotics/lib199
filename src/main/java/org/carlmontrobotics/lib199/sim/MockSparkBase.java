@@ -40,7 +40,7 @@ public class MockSparkBase extends MockedMotorBase {
 
     /**
      * Initializes a new {@link SimDevice} with the given parameters and creates the necessary sim values, and
-     * registers this class's {@link #run()} method to be called asynchronously via {@link Lib199Subsystem#registerAsyncSimulationPeriodic(Runnable)}.
+     * registers this class's {@link #run()} method to be called via {@link Lib199Subsystem#registerSimulationPeriodic(Runnable)}.
      *
      * @param port the port to associate this {@code MockSparkMax} with. Will be used to create the {@link SimDevice} and facilitate motor following.
      * @param type the type of the simulated motor. If this is set to {@link MotorType#kBrushless}, the builtin encoder simulation will be configured
@@ -72,7 +72,7 @@ public class MockSparkBase extends MockedMotorBase {
 
         controllers.put(port, this);
 
-        Lib199Subsystem.registerAsyncSimulationPeriodic(this);
+        Lib199Subsystem.registerSimulationPeriodic(this);
     }
 
     @Override

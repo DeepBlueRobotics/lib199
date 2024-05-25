@@ -66,10 +66,20 @@ public class Lib199Subsystem implements Subsystem {
         periodicSimulationMethods.add(method);
     }
 
+    @Deprecated
+    /**
+     * @deprecated Use registerPeriodic
+     * @param method
+     */
     public static void registerAsyncPeriodic(Runnable method) {
         asyncPeriodicMethods.add(method);
     }
 
+    @Deprecated
+    /**
+     * @deprecated Use registerSimulationPeriodic
+     * @param method
+     */
     public static void registerAsyncSimulationPeriodic(Runnable method) {
         if(RobotBase.isSimulation()) asyncPeriodicSimulationMethods.add(method);
     }
@@ -89,11 +99,15 @@ public class Lib199Subsystem implements Subsystem {
         asyncPeriodicSimulationMethods.forEach(RUN_RUNNABLE);
     }
 
+    @Deprecated
     /**
      * Unregisters all Runnables registered with registerAsyncPeriodic() and
      * registerAsyncSimulationPeriodic(). Blocks until any currently registered
      * Runnables have finished running. This is particularly useful for ensuring
      * that Runnables registered in one test don't interfere with other tests.
+     *
+     * @deprecated because {@link #registerAsyncPeriodic(Runnable)} and
+     * {@link #registerAsyncSimulationPeriodic(Runnable)} are deprecated.
      */
     public static void unregisterAllAsync() {
         synchronized (INSTANCE) {
