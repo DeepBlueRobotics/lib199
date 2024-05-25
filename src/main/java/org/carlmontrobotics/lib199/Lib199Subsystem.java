@@ -84,9 +84,22 @@ public class Lib199Subsystem implements Subsystem {
         periodicSimulationMethods.forEach(RUN_RUNNABLE);
     }
 
-    public void asyncPeriodic() {
+    public synchronized void asyncPeriodic() {
         asyncPeriodicMethods.forEach(RUN_RUNNABLE);
         asyncPeriodicSimulationMethods.forEach(RUN_RUNNABLE);
+    }
+
+    /**
+     * Unregisters all Runnables registered with registerAsyncPeriodic() and
+     * registerAsyncSimulationPeriodic(). Blocks until any currently registered
+     * Runnables have finished running. This is particularly useful for ensuring
+     * that Runnables registered in one test don't interfere with other tests.
+     */
+    public static void unregisterAllAsync() {
+        synchronized (INSTANCE) {
+            asyncPeriodicMethods.clear();
+            asyncPeriodicSimulationMethods.clear();
+        }
     }
 
     private Lib199Subsystem() {}

@@ -40,21 +40,21 @@ public class MockedPlayingWithFusionTimeOfFlightTest {
     }
 
     private void assertTestDeviceCreation(int id) {
-        String deviceName = String.format("PlayingWithFusionTimeOfFlight[%d]", id);
+        String deviceName = String.format("CANAIn:PlayingWithFusionTimeOfFlight[%d]-rangeVoltsIsMM", id);
         assertFalse(simDeviceExists(deviceName));
         try(TimeOfFlight dev = createDevice(id)) {
             assertTrue(simDeviceExists(deviceName));
-            SimDeviceSim sim = new SimDeviceSim("PlayingWithFusionTimeOfFlight", id);
+            SimDeviceSim sim = new SimDeviceSim(deviceName);
             var valueNames = Stream.of(sim.enumerateValues()).map(info -> info.name).toList();
-            assertThat(valueNames, hasItems("range", "rangeSigma", "sampleTime", "ambientLightLevel", "status", "rangingMode", "roiLeft", "roiTop", "roiRight", "roiBottom"));
+            assertThat(valueNames, hasItems("voltage", "rangeSigma", "sampleTime", "status", "rangingMode", "roiLeft", "roiTop", "roiRight", "roiBottom"));
         }
         assertFalse(simDeviceExists(deviceName));
     }
 
     @Test
     public void testRange() {
-        withDevices((dev, sim) -> {
-            SimDouble range = sim.getDouble("range");
+        withDevices((dev, rangeDeviceSim, ambientLightLevelDeviceSim) -> {
+            SimDouble range = rangeDeviceSim.getDouble("voltage");
             assertNotNull(range);
             dev.getRange(); // Default is not specified but must not throw.
 
@@ -68,8 +68,8 @@ public class MockedPlayingWithFusionTimeOfFlightTest {
 
     @Test
     public void testRangeSigma() {
-        withDevices((dev, sim) -> {
-            SimDouble rangeSigma = sim.getDouble("rangeSigma");
+        withDevices((dev, rangeDeviceSim, ambientLightLevelDeviceSim) -> {
+            SimDouble rangeSigma = rangeDeviceSim.getDouble("rangeSigma");
             assertNotNull(rangeSigma);
             dev.getRangeSigma(); // Default is not specified but must not throw.
 
@@ -82,8 +82,8 @@ public class MockedPlayingWithFusionTimeOfFlightTest {
 
     @Test
     public void testStatus() {
-        withDevices((dev, sim) -> {
-            SimEnum status = sim.getEnum("status");
+        withDevices((dev, rangeDeviceSim, ambientLightLevelDeviceSim) -> {
+            SimEnum status = rangeDeviceSim.getEnum("status");
             assertNotNull(status);
             dev.getStatus(); // Default is not specified but must not throw.
 
@@ -97,8 +97,8 @@ public class MockedPlayingWithFusionTimeOfFlightTest {
 
     @Test
     public void testAmbientLightLevel() {
-        withDevices((dev, sim) -> {
-            SimDouble ambientLightLevel = sim.getDouble("ambientLightLevel");
+        withDevices((dev, rangeDeviceSim, ambientLightLevelDeviceSim) -> {
+            SimDouble ambientLightLevel = ambientLightLevelDeviceSim.getDouble("voltage");
             assertNotNull(ambientLightLevel);
             dev.getAmbientLightLevel(); // Default is not specified but must not throw.
 
@@ -111,12 +111,12 @@ public class MockedPlayingWithFusionTimeOfFlightTest {
 
     @Test
     public void testRangingMode() {
-        withDevices((dev, sim) -> {
-            SimDouble sampleTime = sim.getDouble("sampleTime");
+        withDevices((dev, rangeDeviceSim, ambientLightLevelDeviceSim) -> {
+            SimDouble sampleTime = rangeDeviceSim.getDouble("sampleTime");
             assertNotNull(sampleTime);
             assertThat(dev.getSampleTime(), is(24.0));
 
-            SimEnum rangingMode = sim.getEnum("rangingMode");
+            SimEnum rangingMode = rangeDeviceSim.getEnum("rangingMode");
             assertNotNull(rangingMode);
             assertThat(dev.getRangingMode(), is(RangingMode.Short));
 
@@ -128,8 +128,8 @@ public class MockedPlayingWithFusionTimeOfFlightTest {
 
     @Test
     public void testRangeOfInterest() {
-        withDevices((dev, sim) -> {
-            List<SimInt> roiList = Arrays.stream(new String[] {"Left", "Top", "Right", "Bottom"}).map(side -> sim.getInt("roi"+side)).toList();
+        withDevices((dev, rangeDeviceSim, ambientLightLevelDeviceSim) -> {
+            List<SimInt> roiList = Arrays.stream(new String[] {"Left", "Top", "Right", "Bottom"}).map(side -> rangeDeviceSim.getInt("roi"+side)).toList();
             assertThat(roiList, everyItem(notNullValue(SimInt.class)));
             assertEquals(0, roiList.get(0).get());
             assertEquals(0, roiList.get(1).get());
@@ -156,21 +156,22 @@ public class MockedPlayingWithFusionTimeOfFlightTest {
         return MockedPlayingWithFusionTimeOfFlight.createMock(deviceId);
     }
 
-    private void withDevices(EncoderTest func) {
+    private void withDevices(DistanceSensorTest func) {
         withDevice(0, func);
         withDevice(1, func);
         withDevice(2, func);
     }
 
-    private void withDevice(int id, EncoderTest func) {
+    private void withDevice(int id, DistanceSensorTest func) {
         try(TimeOfFlight dev = createDevice(id)) {
-            SimDeviceSim sim = new SimDeviceSim("PlayingWithFusionTimeOfFlight", id);
-            func.test((TimeOfFlight)dev, sim);
+            SimDeviceSim rangeDeviceSim = new SimDeviceSim(String.format("CANAIn:PlayingWithFusionTimeOfFlight[%d]-rangeVoltsIsMM", id));
+            SimDeviceSim ambientLightLevelDeviceSim = new SimDeviceSim(String.format("CANAIn:PlayingWithFusionTimeOfFlight[%d]-ambientLightLevelVoltsIsMcps", id));
+            func.test(dev, rangeDeviceSim, ambientLightLevelDeviceSim);
         }
     }
 
-    private interface EncoderTest {
-        public void test(TimeOfFlight encoder, SimDeviceSim sim);
+    private interface DistanceSensorTest {
+        public void test(TimeOfFlight distanceSensor, SimDeviceSim rangeDeviceSim, SimDeviceSim ambientLightLevelDeviceSim);
     }
 
 }

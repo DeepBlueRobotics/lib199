@@ -45,8 +45,8 @@ public class MockedCANCoderTest {
             assertPositionEqualsWithinTime(canCoder, 0.0, timeoutSec, delta);
 
             // Set the position to 0.42 rotations via the SimDevice interface
-            SimDeviceSim canCoderSim = new SimDeviceSim("CANCoder", 0);
-            canCoderSim.getDouble("count").set(0.42 * MockedCANCoder.kCANCoderCPR);
+            SimDeviceSim canCoderSim = new SimDeviceSim("CANDutyCycle:CANCoder", 0);
+            canCoderSim.getDouble("position").set(0.42);
 
             assertPositionEqualsWithinTime(canCoder, 0.42, timeoutSec, delta);
         }

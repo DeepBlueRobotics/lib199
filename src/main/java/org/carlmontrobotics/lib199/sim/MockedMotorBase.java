@@ -26,6 +26,7 @@ public abstract class MockedMotorBase implements AutoCloseable, MotorController,
     public final SimDouble neutralDeadband;
     public final SimBoolean brakeModeEnabled;
     public final SimDouble currentDraw;
+    public final SimDouble busVoltage;
     protected SlewRateLimiter rampRateLimiter = null;
     protected boolean isInverted = false;
     protected boolean disabled = false;
@@ -42,12 +43,13 @@ public abstract class MockedMotorBase implements AutoCloseable, MotorController,
      * @param port the device port to pass to {@link SimDevice#create}
      */
     public MockedMotorBase(String type, int port) {
-        device = SimDevice.create(type, port);
+        device = SimDevice.create("CANMotor:" + type, port);
         this.port = port;
-        speed = device.createDouble("Speed", Direction.kOutput, 0.0);
-        neutralDeadband = device.createDouble("Neutral Deadband", Direction.kOutput, 0.04);
-        brakeModeEnabled = device.createBoolean("Brake Mode", Direction.kOutput, true);
-        currentDraw = device.createDouble("Current Draw", Direction.kInput, 0.0);
+        speed = device.createDouble("percentOutput", Direction.kOutput, 0.0);
+        neutralDeadband = device.createDouble("neutralDeadband", Direction.kOutput, 0.04);
+        brakeModeEnabled = device.createBoolean("brakeMode", Direction.kOutput, true);
+        currentDraw = device.createDouble("motorCurrent", Direction.kInput, 0.0);
+        busVoltage = device.createDouble("busVoltage", Direction.kInput, defaultNominalVoltage);
     }
 
     /**
@@ -137,7 +139,7 @@ public abstract class MockedMotorBase implements AutoCloseable, MotorController,
 	}
 
 	public void doDisableVoltageCompensation() {
-        voltageCompensationNominalVoltage = defaultNominalVoltage;
+        voltageCompensationNominalVoltage = busVoltage.get();
         setRampRate(getRampRate()); // Update the ramp rate to account for the new nominal voltage
     }
 
@@ -151,7 +153,7 @@ public abstract class MockedMotorBase implements AutoCloseable, MotorController,
 
     public void updateRequestedSpeed() {
         double percent = getRequestedSpeed();
-        percent *= voltageCompensationNominalVoltage / defaultNominalVoltage;
+        percent *= voltageCompensationNominalVoltage / busVoltage.get();
         percent *= isInverted ? -1.0 : 1.0;
         requestedSpeedPercent = percent;
     }

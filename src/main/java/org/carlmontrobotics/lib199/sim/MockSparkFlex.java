@@ -9,7 +9,7 @@ import com.revrobotics.CANSparkFlex;
 public class MockSparkFlex extends MockSparkBase {
 
     public MockSparkFlex(int port, MotorType type) {
-        super(port, type, "SparkFlex");
+        super(port, type, "CANSparkFlex", 7168);
     }
 
     public static CANSparkFlex createMockSparkFlex(int portPWM, MotorType type) {
