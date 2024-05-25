@@ -1,16 +1,11 @@
 package org.carlmontrobotics.lib199;
 
-import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
-import java.util.function.Consumer;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.mockito.MockSettings;
@@ -20,25 +15,6 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 public final class Mocks {
-
-    private static final List<WeakReference<Object>> MOCKS = Collections.synchronizedList(new ArrayList<>());
-    private static final Predicate<WeakReference<?>> IS_REFERENCE_CLEARED = reference -> reference.get() == null;
-    private static final Consumer<WeakReference<Object>> CLEAR_INVOCATIONS_ON_REFERENCED_MOCK = reference -> Mockito.clearInvocations(reference.get());
-    private static final Predicate<WeakReference<Object>> CLEAR_INVOCATIONS_ON_REFERENCED_MOCK_IF_REFERENCE_NOT_CLEARED = reference -> {
-        if(IS_REFERENCE_CLEARED.test(reference)) return true;
-        CLEAR_INVOCATIONS_ON_REFERENCED_MOCK.accept(reference);
-        return false;
-    };
-
-    static {
-        // Use a single predicate so that clearing references and invocations is an atomic operation
-        // Otherwise, we could (rarely) run into:
-        // 1) Mock is added
-        // 2) Garbage collected references are removed
-        // 3) Mock is garbage collected
-        // 4) Mock invocations are cleared -> throws NullPointerException
-        Lib199Subsystem.registerPeriodic(() -> MOCKS.removeIf(CLEAR_INVOCATIONS_ON_REFERENCED_MOCK_IF_REFERENCE_NOT_CLEARED));
-    }
 
     /**
      * Attempts to create an instance of a class in which some or all of the classes methods are replaced with a mocked implementation
@@ -86,7 +62,7 @@ public final class Mocks {
     public static <T, U> T createMock(Class<T> classToMock, U implClass, Answer<Object> defaultAnswer, Class<?>... interfaces) {
         HashMap<Method, InvokableMethod> methods = new HashMap<>();
         for(Method m: listMethods(classToMock, interfaces)) {
-            if(Modifier.isStatic(m.getModifiers()) || Modifier.isFinal(m.getModifiers())) {
+            if(Modifier.isStatic(m.getModifiers())) {
                 continue;
             }
             try {
@@ -104,6 +80,7 @@ public final class Mocks {
             settings = Mockito.withSettings().extraInterfaces(interfaces);
         }
         settings = settings.defaultAnswer(new MockAnswer<>(methods, implClass, defaultAnswer));
+        settings = settings.stubOnly(); // Because recording invocations would cause memory usage to grow without bound
         T mock = mock(classToMock, settings);
         return mock;
     }
@@ -158,15 +135,14 @@ public final class Mocks {
     }
 
     /**
-     * Registers a Mockito mock and periodically calls {@link Mockito#clearInvocations(Object...)} on it to prevent memory leaks
+     * No longer does anything.
      * 
      * @param <T> The type of the mock
      * @param t The mock
      * @return The mock
      */
+    @Deprecated
     public static <T> T reportMock(T t) {
-        // Wrap in a WeakReference to prevent memory leaks on objects with no more references
-        if(Mockito.mockingDetails(t).isMock()) MOCKS.add(new WeakReference<Object>(t));
         return t;
     }
 

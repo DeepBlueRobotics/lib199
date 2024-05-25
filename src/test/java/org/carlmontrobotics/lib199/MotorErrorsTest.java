@@ -2,17 +2,21 @@ package org.carlmontrobotics.lib199;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeNoException;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.ctre.phoenix.ErrorCode;
 import com.revrobotics.REVLibError;
 import com.revrobotics.CANSparkMax;
-import com.revrobotics.CANSparkMax.FaultID;
+import com.revrobotics.CANSparkBase.FaultID;
 
 import org.carlmontrobotics.lib199.testUtils.ErrStreamTest;
 import org.junit.Test;
 
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
 public class MotorErrorsTest extends ErrStreamTest {
 
@@ -45,7 +49,7 @@ public class MotorErrorsTest extends ErrStreamTest {
 
         public static class Instance {
 
-            private int smartCurrentLimit = 50;
+            private int smartCurrentLimit = MotorConfig.NEO.currentLimitAmps;
             private double temperature = 30;
             private final int id;
 
@@ -69,7 +73,7 @@ public class MotorErrorsTest extends ErrStreamTest {
                 smartCurrentLimit = limit;
     		    return REVLibError.kOk;
             }
-            
+
             public int getDeviceId() {
                 return id;
             }
@@ -89,7 +93,7 @@ public class MotorErrorsTest extends ErrStreamTest {
         assertEquals(0, errStream.toByteArray().length);
         MotorErrors.reportErrors((REVLibError)null, null);
         assertEquals(0, errStream.toByteArray().length);
-        
+
         // Ok Status
         MotorErrors.reportError(ErrorCode.OK);
         assertEquals(0, errStream.toByteArray().length);
@@ -155,6 +159,8 @@ public class MotorErrorsTest extends ErrStreamTest {
 
     @Test
     public void testReportSparkMaxTemp() {
+        assertTrue(MotorErrors.kOverheatTripCount > 0);
+
         doTestReportSparkMaxTemp(0);
         doTestReportSparkMaxTemp(1);
         doTestReportSparkMaxTemp(2);
@@ -162,33 +168,97 @@ public class MotorErrorsTest extends ErrStreamTest {
 
     private void doTestReportSparkMaxTemp(int id) {
         TemperatureSparkMax spark = (TemperatureSparkMax)Mocks.createMock(CANSparkMax.class, new TemperatureSparkMax.Instance(id), TemperatureSparkMax.class);
-        MotorErrors.reportSparkMaxTemp((CANSparkMax)spark, 40);
-        spark.setSmartCurrentLimit(50);
-        spark.setTemperature(20);
-        CommandScheduler.getInstance().run();
         String smartDashboardKey = "Port " + id + " Spark Max Temp";
-        assertEquals(20, SmartDashboard.getNumber(smartDashboardKey, 0), 0.01);
-        assertEquals(50, spark.getSmartCurrentLimit());
-        spark.setTemperature(20);
-        CommandScheduler.getInstance().run();
-        assertEquals(20, SmartDashboard.getNumber(smartDashboardKey, 0), 0.01);
-        assertEquals(50, spark.getSmartCurrentLimit());
-        assertEquals(0, errStream.size());
-        spark.setTemperature(40);
-        CommandScheduler.getInstance().run();
-        assertEquals(40, SmartDashboard.getNumber(smartDashboardKey, 0), 0.01);
-        assertEquals(1, spark.getSmartCurrentLimit());
-        assertNotEquals(0, errStream.size());
-        errStream.reset();
-        spark.setTemperature(50);
-        CommandScheduler.getInstance().run();
-        assertEquals(50, SmartDashboard.getNumber(smartDashboardKey, 0), 0.01);
-        assertEquals(1, spark.getSmartCurrentLimit());
-        spark.setTemperature(20);
-        CommandScheduler.getInstance().run();
-        assertEquals(20, SmartDashboard.getNumber(smartDashboardKey, 0), 0.01);
-        assertEquals(1, spark.getSmartCurrentLimit());
-        assertEquals(0, errStream.size());
+        MotorErrors.reportSparkMaxTemp((CANSparkMax)spark, 40);
+
+        try(AutoCloseable asyncBlock = blockAsyncPeriodic()) {
+            spark.setTemperature(20);
+            spark.setSmartCurrentLimit(50);
+            MotorErrors.doReportSparkMaxTemp();
+            assertEquals(20, SmartDashboard.getNumber(smartDashboardKey, 0), 0.01);
+            assertEquals(50, spark.getSmartCurrentLimit());
+
+            spark.setTemperature(20);
+            spark.setSmartCurrentLimit(50);
+            MotorErrors.doReportSparkMaxTemp();
+            assertEquals(20, SmartDashboard.getNumber(smartDashboardKey, 0), 0.01);
+            assertEquals(50, spark.getSmartCurrentLimit());
+
+            if(MotorErrors.kOverheatTripCount > 1) {
+                spark.setTemperature(51);
+                spark.setSmartCurrentLimit(50);
+                MotorErrors.doReportSparkMaxTemp();
+                assertEquals(51, SmartDashboard.getNumber(smartDashboardKey, 0), 0.01);
+                assertEquals(50, spark.getSmartCurrentLimit());
+
+                spark.setTemperature(20);
+                spark.setSmartCurrentLimit(50);
+                MotorErrors.doReportSparkMaxTemp();
+                assertEquals(20, SmartDashboard.getNumber(smartDashboardKey, 0), 0.01);
+                assertEquals(50, spark.getSmartCurrentLimit());
+            }
+
+            assertEquals(0, errStream.size());
+
+            for(int i = 0; i < MotorErrors.kOverheatTripCount; i++) {
+                assertEquals(50, spark.getSmartCurrentLimit());
+                assertEquals(0, errStream.size());
+
+                spark.setTemperature(51);
+                spark.setSmartCurrentLimit(50);
+                MotorErrors.doReportSparkMaxTemp();
+                assertEquals(51, SmartDashboard.getNumber(smartDashboardKey, 0), 0.01);
+            }
+
+            assertNotEquals(0, errStream.size());
+            errStream.reset();
+
+            spark.setTemperature(51);
+            spark.setSmartCurrentLimit(50);
+            MotorErrors.doReportSparkMaxTemp();
+            assertEquals(51, SmartDashboard.getNumber(smartDashboardKey, 0), 0.01);
+            assertEquals(1, spark.getSmartCurrentLimit());
+
+            spark.setTemperature(20);
+            spark.setSmartCurrentLimit(50);
+            MotorErrors.doReportSparkMaxTemp();
+            assertEquals(20, SmartDashboard.getNumber(smartDashboardKey, 0), 0.01);
+            assertEquals(1, spark.getSmartCurrentLimit());
+
+            assertEquals(0, errStream.size());
+        } catch(Exception e) {
+            assumeNoException(e);
+        }
+    }
+
+    // Blocks the Lib199Subsystem's async thread until closed
+    private AutoCloseable blockAsyncPeriodic() {
+        AtomicBoolean block = new AtomicBoolean(true);
+        Object lock = new Object();
+        CountDownLatch latch = new CountDownLatch(1);
+        Lib199Subsystem.registerAsyncPeriodic(() -> {
+            synchronized(lock) {
+                latch.countDown(); // Signal that we've started blocking
+                while(block.get()) { // Block until released
+                    try {
+                        lock.wait(); // Wait for the block to be released
+                    } catch(InterruptedException e) {
+                        assumeNoException(e);
+                    }
+                }
+            }
+        });
+        try {
+            latch.await(); // Wait for the async thread to start blocking
+        } catch(InterruptedException e) {
+            assumeNoException(e);
+        }
+        return () -> {
+            block.set(false); // Release the block
+            synchronized(lock) {
+                lock.notifyAll(); // Notify the async thread that the block has been released
+            }
+        };
     }
 
 }

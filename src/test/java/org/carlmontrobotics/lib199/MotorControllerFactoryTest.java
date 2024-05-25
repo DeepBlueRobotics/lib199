@@ -2,9 +2,8 @@ package org.carlmontrobotics.lib199;
 
 import static org.junit.Assert.assertEquals;
 
-import org.carlmontrobotics.MotorConfig;
 import org.carlmontrobotics.lib199.testUtils.ErrStreamTest;
-import org.carlmontrobotics.lib199.testUtils.SimDeviceTestRule;
+import org.carlmontrobotics.lib199.testUtils.TestRules;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -12,9 +11,9 @@ import org.junit.Test;
 public class MotorControllerFactoryTest extends ErrStreamTest {
 
     @ClassRule
-    public static SimDeviceTestRule.Class simClassRule = new SimDeviceTestRule.Class();
+    public static TestRules.InitializeHAL simClassRule = new TestRules.InitializeHAL();
     @Rule
-    public SimDeviceTestRule.Test simTestRule = new SimDeviceTestRule.Test();
+    public TestRules.ResetSimDeviceSimData simTestRule = new TestRules.ResetSimDeviceSimData();
 
     @Test
     // AutoClosable.close() throws Exception

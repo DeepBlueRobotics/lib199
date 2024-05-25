@@ -22,7 +22,7 @@ public class MocksTest {
         assertFalse(mock instanceof TestInterface);
         assertEquals(1, mock.test1());
         assertEquals(3, mock.test2());
-        assertEquals(3, mock.test3());
+        assertEquals(4, mock.test3());
     }
 
     @Test
@@ -37,7 +37,7 @@ public class MocksTest {
         TestBase mock = Mocks.createMock(TestBase.class, new TestImpl(), false);
         assertEquals(0, mock.test1());
         assertEquals(3, mock.test2());
-        assertEquals(3, mock.test3());
+        assertEquals(4, mock.test3());
     }
 
     @Test
@@ -45,7 +45,7 @@ public class MocksTest {
         TestBase mock = Mocks.createMock(TestBase.class, new TestImpl(), invocation -> 5);
         assertEquals(5, mock.test1());
         assertEquals(3, mock.test2());
-        assertEquals(3, mock.test3());
+        assertEquals(4, mock.test3());
     }
     
     public class TestBase {

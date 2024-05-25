@@ -10,14 +10,16 @@ package org.carlmontrobotics.lib199;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
-import com.ctre.phoenix.sensors.CANCoder;
+import com.ctre.phoenix6.hardware.CANcoder;
 import com.revrobotics.CANSparkMax;
-import com.revrobotics.CANSparkMax.ExternalFollower;
-import com.revrobotics.CANSparkMax.IdleMode;
-import com.revrobotics.CANSparkMaxLowLevel;
-import com.revrobotics.SparkMaxPIDController;
+import com.revrobotics.CANSparkBase.ExternalFollower;
+import com.revrobotics.CANSparkBase.IdleMode;
+import com.revrobotics.CANSparkBase;
+import com.revrobotics.CANSparkFlex;
+import com.revrobotics.CANSparkLowLevel;
+import com.revrobotics.SparkPIDController;
 
-import org.carlmontrobotics.MotorConfig;
+import org.carlmontrobotics.lib199.sim.MockSparkFlex;
 import org.carlmontrobotics.lib199.sim.MockSparkMax;
 import org.carlmontrobotics.lib199.sim.MockTalonSRX;
 import org.carlmontrobotics.lib199.sim.MockVictorSPX;
@@ -87,15 +89,11 @@ public class MotorControllerFactory {
   public static CANSparkMax createSparkMax(int id, int temperatureLimit) {
     CANSparkMax spark;
     if (RobotBase.isReal()) {
-      spark = new CachedSparkMax(id, CANSparkMaxLowLevel.MotorType.kBrushless);
-      if (spark.getFirmwareVersion() == 0) {
-        spark.close();
-        System.err.println("SparkMax on port: " + id + " is not connected!");
-        return MotorErrors.createDummySparkMax();
-      }
+      spark = new CANSparkMax(id, CANSparkLowLevel.MotorType.kBrushless);
     } else {
-        spark = MockSparkMax.createMockSparkMax(id, CANSparkMaxLowLevel.MotorType.kBrushless);
+        spark = MockSparkMax.createMockSparkMax(id, CANSparkLowLevel.MotorType.kBrushless);
     }
+    spark.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus0, 1);
 
     MotorErrors.reportSparkMaxTemp(spark, temperatureLimit);
 
@@ -107,7 +105,7 @@ public class MotorControllerFactory {
 
     MotorErrors.checkSparkMaxErrors(spark);
 
-    SparkMaxPIDController controller = spark.getPIDController();
+    SparkPIDController controller = spark.getPIDController();
     MotorErrors.reportError(controller.setOutputRange(-1, 1));
     MotorErrors.reportError(controller.setP(0));
     MotorErrors.reportError(controller.setI(0));
@@ -120,38 +118,54 @@ public class MotorControllerFactory {
   public static CANSparkMax createSparkMax(int id, MotorConfig config) {
     CANSparkMax spark;
     if (RobotBase.isReal()) {
-      spark = new CachedSparkMax(id, CANSparkMaxLowLevel.MotorType.kBrushless);
-      if (spark.getFirmwareVersion() == 0) {
-        spark.close();
-        System.err.println("SparkMax on port: " + id + " is not connected!");
-        return MotorErrors.createDummySparkMax();
-      }
+      spark = new CANSparkMax(id, CANSparkLowLevel.MotorType.kBrushless);
     } else {
-        spark = MockSparkMax.createMockSparkMax(id, CANSparkMaxLowLevel.MotorType.kBrushless);
+      spark = MockSparkMax.createMockSparkMax(id, CANSparkLowLevel.MotorType.kBrushless);
     }
 
-    MotorErrors.reportSparkMaxTemp(spark, config.temperatureLimit);
+    configureSpark(spark, config);
+
+    return spark;
+  }
+
+  public static CANSparkFlex createSparkFlex(int id, MotorConfig config) {
+    CANSparkFlex spark;
+    if (RobotBase.isReal()) {
+      spark = new CANSparkFlex(id, CANSparkLowLevel.MotorType.kBrushless);
+    } else {
+      spark = MockSparkFlex.createMockSparkFlex(id, CANSparkLowLevel.MotorType.kBrushless);
+    }
+
+    configureSpark(spark, config);
+
+    return spark;
+  }
+
+  private static void configureSpark(CANSparkBase spark, MotorConfig config) {
+    MotorErrors.reportSparkTemp(spark, config.temperatureLimitCelsius);
 
     MotorErrors.reportError(spark.restoreFactoryDefaults());
-    MotorErrors.reportError(spark.follow(ExternalFollower.kFollowerDisabled, 0));
+    //MotorErrors.reportError(spark.follow(ExternalFollower.kFollowerDisabled, 0));
     MotorErrors.reportError(spark.setIdleMode(IdleMode.kBrake));
     MotorErrors.reportError(spark.enableVoltageCompensation(12));
-    MotorErrors.reportError(spark.setSmartCurrentLimit(config.currentLimit));
+    MotorErrors.reportError(spark.setSmartCurrentLimit(config.currentLimitAmps));
 
-    MotorErrors.checkSparkMaxErrors(spark);
+    MotorErrors.checkSparkErrors(spark);
 
-    SparkMaxPIDController controller = spark.getPIDController();
+    SparkPIDController controller = spark.getPIDController();
     MotorErrors.reportError(controller.setOutputRange(-1, 1));
     MotorErrors.reportError(controller.setP(0));
     MotorErrors.reportError(controller.setI(0));
     MotorErrors.reportError(controller.setD(0));
     MotorErrors.reportError(controller.setFF(0));
-
-    return spark;
   }
 
-  public static CANCoder createCANCoder(int port) {
-    CANCoder canCoder = new CANCoder(port);
+  /**
+   * @deprecated Use {@link SensorFactory#createCANCoder(int)} instead.
+   */
+  @Deprecated
+  public static CANcoder createCANCoder(int port) {
+    CANcoder canCoder = new CANcoder(port);
     if(RobotBase.isSimulation()) new MockedCANCoder(canCoder);
     return canCoder;
   }
@@ -162,7 +176,10 @@ public class MotorControllerFactory {
    * This MUST be called AFTER AHRS initialization or the code will be unable to connect to the gyro.
    *
    * @return The configured camera
+   *
+   * @deprecated Use {@link SensorFactory#configureCamera()} instead.
    */
+  @Deprecated
   public static UsbCamera configureCamera() {
     UsbCamera camera = CameraServer.startAutomaticCapture();
     camera.setConnectionStrategy(ConnectionStrategy.kKeepOpen);
@@ -177,7 +194,10 @@ public class MotorControllerFactory {
    *
    * @param numCameras The number of cameras to configure
    * @return The configured cameras.
+   *
+   * @deprecated Use {@link SensorFactory#configureCameras(int)} instead.
    */
+  @Deprecated
   public static UsbCamera[] configureCameras(int numCameras) {
     UsbCamera[] cameras = new UsbCamera[numCameras];
     for(int i = 0; i < numCameras; i++) cameras[i] = configureCamera();
