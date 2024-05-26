@@ -31,13 +31,8 @@ public class TestRules {
             return new Statement(){
                 @Override
                 public void evaluate() throws Throwable {
-                    // Ensure there are no async periodic things running before
-                    // we reset the SimDeviceData so that they don't try to
-                    // touch devices/data after they have been removed.
-                    Lib199Subsystem.unregisterAllAsync();
                     SimDeviceSim.resetData();
                     base.evaluate();
-                    Lib199Subsystem.unregisterAllAsync();
                     SimDeviceSim.resetData();
                 }
             };
