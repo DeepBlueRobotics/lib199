@@ -29,5 +29,7 @@
     },
   ],
   "java.test.defaultConfig": "WPIlibUnitTests",
-  "java.gradle.buildServer.enabled": "on"
+  "java.gradle.buildServer.enabled": "on",
+  "java.format.settings.url": "https://raw.githubusercontent.com/wpilibsuite/styleguide/main/ide/eclipse-java-google-style.xml",
+  "editor.formatOnSaveMode": "modificationsIfAvailable"
 }
