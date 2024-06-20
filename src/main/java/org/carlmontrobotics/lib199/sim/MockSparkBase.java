@@ -196,13 +196,16 @@ public class MockSparkBase extends MockedMotorBase {
      */
     public synchronized SparkAbsoluteEncoder getAbsoluteEncoder(SparkAbsoluteEncoder.Type encoderType) {
         if(absoluteEncoder == null) {
-            MockedEncoder absoluteEncoderImpl = new MockedEncoder(SimDevice.create("CANDutyCycle:" + name, port), 0, false, true) {
-                @Override
-                public double getVelocity() {
-                    // A SparkAbsoluteEncoder returns a velocity in rps, not rpm.
-                    return super.getVelocity() / 60.0;
-                }            
-            };
+            MockedEncoder absoluteEncoderImpl = new MockedEncoder(
+                    SimDevice.create("CANDutyCycle:" + name, port), 0, false,
+                    true);
+            // {
+            // @Override
+            // public double getVelocity() {
+            // // A SparkAbsoluteEncoder returns a velocity in rps, not rpm.
+            // return super.getVelocity() / 60.0;
+            // }
+            // };
             absoluteEncoder = Mocks.createMock(SparkAbsoluteEncoder.class, absoluteEncoderImpl, new REVLibErrorAnswer());
         }
         return absoluteEncoder;
