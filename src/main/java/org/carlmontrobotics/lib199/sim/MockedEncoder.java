@@ -32,6 +32,7 @@ public class MockedEncoder implements AbsoluteEncoder, AnalogInput, AutoCloseabl
     protected final SimBoolean init;
     protected final int countsPerRev;
     protected final boolean absolute;
+    protected final boolean useRps;
     protected double positionConversionFactor = 1.0;
     protected double velocityConversionFactor = 1.0;
     protected double positionOffset = 0.0;
@@ -41,11 +42,26 @@ public class MockedEncoder implements AbsoluteEncoder, AnalogInput, AutoCloseabl
      * @param device The device to retrieve position and velocity data from
      * @param countsPerRev The value that this.getCountsPerRevolution() should return
      * @param analog Whether the encoder is an analog sensor
-     * @param absolute Whether the encoder is an absolute encoder.
-     * This flag caps the position to one rotation via. {@link MathUtil#inputModulus(double, double, double)},
-     * disables {@link #setPosition(double)}, and enables {@link #setZeroOffset(double)}.
+     * @param absolute Whether the encoder is an absolute encoder. This flag caps the position to
+     *        one rotation via. {@link MathUtil#inputModulus(double, double, double)}, disables
+     *        {@link #setPosition(double)}, and enables {@link #setZeroOffset(double)}.
      */
-    public MockedEncoder(SimDevice device, int countsPerRev, boolean analog, boolean absolute) {
+    public MockedEncoder(SimDevice device, int countsPerRev, boolean analog,
+            boolean absolute) {
+        this(device, countsPerRev, analog, absolute, false);
+    }
+
+    /**
+     * @param device The device to retrieve position and velocity data from
+     * @param countsPerRev The value that this.getCountsPerRevolution() should return
+     * @param analog Whether the encoder is an analog sensor
+     * @param absolute Whether the encoder is an absolute encoder. This flag caps the position to
+     *        one rotation via. {@link MathUtil#inputModulus(double, double, double)}, disables
+     *        {@link #setPosition(double)}, and enables {@link #setZeroOffset(double)}.
+     * @param useRps Whether getVelocity() should return rps instead of rpm.
+     */
+    public MockedEncoder(SimDevice device, int countsPerRev, boolean analog,
+            boolean absolute, boolean useRps) {
         this.device = device;
         position = device.createDouble("position", Direction.kInput, 0); // Rotations
         velocity = device.createDouble("velocity", Direction.kInput, 0); // Rotations per *second*
@@ -56,6 +72,7 @@ public class MockedEncoder implements AbsoluteEncoder, AnalogInput, AutoCloseabl
         }
         this.countsPerRev = countsPerRev;
         this.absolute = absolute;
+        this.useRps = useRps;
         init = device.createBoolean("init", Direction.kOutput, true);
     }
 
@@ -105,7 +122,8 @@ public class MockedEncoder implements AbsoluteEncoder, AnalogInput, AutoCloseabl
 
     @Override
     public double getVelocity() {
-        return velocity.get() * 60 * (inverted ? -1 : 1) * velocityConversionFactor;
+        return velocity.get() * (useRps ? 1 : 60) * (inverted ? -1 : 1)
+                * velocityConversionFactor;
     }
 
     @Override
