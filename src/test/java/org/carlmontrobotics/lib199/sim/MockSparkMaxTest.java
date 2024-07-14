@@ -31,6 +31,22 @@ public class MockSparkMaxTest {
     }
 
     @Test
+    public void testCanRecreateIfClosed() {
+        for (int i = 0; i < 2; i++) {
+            try (var mockSpark = new MockSparkMax(0, MotorType.kBrushless)) {
+                SimDeviceSim simSpark =
+                        new SimDeviceSim("CANMotor:CANSparkMax", 0);
+                assertNotNull(simSpark);
+                SimDeviceSim simEncoder =
+                        new SimDeviceSim("CANEncoder:CANSparkMax", 0);
+                assertNotNull(simEncoder);
+                SimDouble simPosition = simEncoder.getDouble("position");
+                assertNotNull(simPosition);
+            }
+        }
+    }
+
+    @Test
     public void testGetOutputCurrent() {
         var mockSpark = new MockSparkMax(0, MotorType.kBrushless);
         SimDeviceSim simSpark = new SimDeviceSim("CANMotor:CANSparkMax", 0);

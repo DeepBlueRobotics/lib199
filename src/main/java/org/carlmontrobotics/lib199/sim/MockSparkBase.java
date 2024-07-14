@@ -34,8 +34,10 @@ public class MockSparkBase extends MockedMotorBase {
     private final SparkPIDController pidController;
     private final MockedSparkMaxPIDController pidControllerImpl;
     private SparkAbsoluteEncoder absoluteEncoder = null;
+    private MockedEncoder absoluteEncoderImpl = null;
     private MockedEncoder alternateEncoder = null;
     private SparkAnalogSensor analogSensor = null;
+    private MockedEncoder analogSensorImpl = null;
     private final String name;
 
     /**
@@ -183,6 +185,18 @@ public class MockSparkBase extends MockedMotorBase {
     @Override
     public void close() {
         controllers.remove(port);
+        if (encoder != null) {
+            encoder.close();
+        }
+        if (absoluteEncoderImpl != null) {
+            absoluteEncoderImpl.close();
+        }
+        if (analogSensorImpl != null) {
+            analogSensorImpl.close();
+        }
+        if (alternateEncoder != null) {
+            alternateEncoder.close();
+        }
         super.close();
     }
 
@@ -196,7 +210,7 @@ public class MockSparkBase extends MockedMotorBase {
      */
     public synchronized SparkAbsoluteEncoder getAbsoluteEncoder(SparkAbsoluteEncoder.Type encoderType) {
         if(absoluteEncoder == null) {
-            MockedEncoder absoluteEncoderImpl = new MockedEncoder(
+            absoluteEncoderImpl = new MockedEncoder(
                     SimDevice.create("CANDutyCycle:" + name, port), 0, false,
                     true, true);
             absoluteEncoder = Mocks.createMock(SparkAbsoluteEncoder.class, absoluteEncoderImpl, new REVLibErrorAnswer());
@@ -243,7 +257,8 @@ public class MockSparkBase extends MockedMotorBase {
      */
     public synchronized SparkAnalogSensor getAnalog(SparkAnalogSensor.Mode mode) {
         if(analogSensor == null) {
-            MockedEncoder analogSensorImpl = new MockedEncoder(SimDevice.create("CANAIn:" + name, port), 0, true, true);
+            analogSensorImpl = new MockedEncoder(
+                    SimDevice.create("CANAIn:" + name, port), 0, true, true);
             analogSensor = Mocks.createMock(SparkAnalogSensor.class, analogSensorImpl, new REVLibErrorAnswer());
         }
         return analogSensor;
