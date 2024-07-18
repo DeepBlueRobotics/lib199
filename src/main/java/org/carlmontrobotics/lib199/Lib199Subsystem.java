@@ -31,6 +31,10 @@ public class Lib199Subsystem implements Subsystem {
         }
         registered = true;
         registerSimulationPeriodic(() -> {
+            // To workaround https://github.com/wpilibsuite/allwpilib/issues/6842, we need to
+            // explicitly request that the DeepBlueSim controller connect to the robot code *after*
+            // any SimDevices have been created (like those used to support simulation of many of
+            // the devices in lib199), so we do it once during the robot's first time step.
             if (!connectHALSimWSRequestSent) {
                 NetworkTableInstance.getDefault()
                         .getStringTopic("/DeepBlueSim/Coordinator/request")
