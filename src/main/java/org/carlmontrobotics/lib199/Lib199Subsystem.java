@@ -4,8 +4,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
 import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.StringPublisher;
-import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 
 public class Lib199Subsystem implements Subsystem {
@@ -23,25 +21,21 @@ public class Lib199Subsystem implements Subsystem {
     }
 
     private static boolean registered = false;
-    private static boolean connectHALSimWSRequestSent = false;
 
     private static void ensureRegistered() {
         if(registered) {
             return;
         }
         registered = true;
-        registerSimulationPeriodic(() -> {
-            // To workaround https://github.com/wpilibsuite/allwpilib/issues/6842, we need to
-            // explicitly request that the DeepBlueSim controller connect to the robot code *after*
-            // any SimDevices have been created (like those used to support simulation of many of
-            // the devices in lib199), so we do it once during the robot's first time step.
-            if (!connectHALSimWSRequestSent) {
-                NetworkTableInstance.getDefault()
-                        .getStringTopic("/DeepBlueSim/Coordinator/request")
-                        .publish().set("connectHALSimWS");
-                connectHALSimWSRequestSent = true;
-            }
-        });
+
+        // Regularly request a HALSimWS connection from the DeepBlueSim controller (if/when it is
+        // listening). To workaround https://github.com/wpilibsuite/allwpilib/issues/6842, this must
+        // be done *after* any SimDevices have been created (like those used to support simulation
+        // of many of the devices in lib199).
+        var reqPublisher = NetworkTableInstance.getDefault()
+                .getStringTopic("/DeepBlueSim/Coordinator/request").publish();
+        registerSimulationPeriodic(() -> reqPublisher.set("connectHALSimWS"));
+
         INSTANCE.register();
     }
 
