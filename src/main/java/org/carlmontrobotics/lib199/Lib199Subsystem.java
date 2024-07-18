@@ -3,6 +3,8 @@ package org.carlmontrobotics.lib199;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StringPublisher;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 
@@ -21,12 +23,21 @@ public class Lib199Subsystem implements Subsystem {
     }
 
     private static boolean registered = false;
+    private static boolean connectHALSimWSRequestSent = false;
 
     private static void ensureRegistered() {
         if(registered) {
             return;
         }
         registered = true;
+        registerSimulationPeriodic(() -> {
+            if (!connectHALSimWSRequestSent) {
+                NetworkTableInstance.getDefault()
+                        .getStringTopic("/DeepBlueSim/Coordinator/request")
+                        .publish().set("connectHALSimWS");
+                connectHALSimWSRequestSent = true;
+            }
+        });
         INSTANCE.register();
     }
 
