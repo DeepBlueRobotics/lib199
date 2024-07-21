@@ -38,6 +38,12 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
  * such as moving, getting encoder values, or configuring PID.
  */
 public class SwerveModule implements Sendable {
+
+    /**
+     * If a CANCoder has not sent a packet in this amount of time, it is considered disconnected.
+     */
+    public static final double CANCODER_TIMEOUT_MS = 200;
+
     public enum ModuleType {FL, FR, BL, BR};
 
     private SwerveConfig config;
@@ -53,7 +59,7 @@ public class SwerveModule implements Sendable {
     private Timer timer;
     private SimpleMotorFeedforward forwardSimpleMotorFF, backwardSimpleMotorFF, turnSimpleMotorFeedforward;
     private double maxControllableAccerlationRps2;
-    private double desiredSpeed, lastAngle, maxAchievableTurnVelocityRps, maxAchievableTurnAccelerationRps2, drivetoleranceMPerS, turnToleranceRot, angleDiffRot;
+    private double desiredSpeed, lastAngle, maxAchievableTurnVelocityRps, maxAchievableTurnAccelerationRps2, drivetoleranceMPerS, turnToleranceRot, angleDiffRot, relativePositionCorrection;
 
     private double turnSpeedCorrectionVolts, turnFFVolts, turnVolts;
     private double maxTurnVelocityWithoutTippingRps;
@@ -73,7 +79,12 @@ public class SwerveModule implements Sendable {
         drive.setInverted(config.driveInversion[arrIndex]);
         drive.getEncoder().setPositionConversionFactor(positionConstant);
         drive.getEncoder().setVelocityConversionFactor(positionConstant / 60);
+
+        positionConstant = 360 / config.turnGearing; // Convert rotations to degrees
         turn.setInverted(config.turnInversion[arrIndex]);
+        turn.getEncoder().setPositionConversionFactor(positionConstant);
+        turn.getEncoder().setVelocityConversionFactor(positionConstant / 60);
+
         maxControllableAccerlationRps2 = 0;
         final double normalForceNewtons = 83.2 /* lbf */ * 4.4482 /* N/lbf */ / 4 /* numModules */;
         double wheelTorqueLimitNewtonMeters = normalForceNewtons * config.mu * config.wheelDiameterMeters / 2;
@@ -95,7 +106,6 @@ public class SwerveModule implements Sendable {
         drivePIDController = new PIDController(config.drivekP[arrIndex],
                                                config.drivekI[arrIndex],
                                                config.drivekD[arrIndex]);
-        
         /* offset for 1 CANcoder count */
         drivetoleranceMPerS = (1.0 / (double)(drive.getEncoder().getCountsPerRevolution()) * positionConstant) / Units.millisecondsToSeconds(drive.getEncoder().getMeasurementPeriod() * drive.getEncoder().getAverageDepth());
         drivePIDController.setTolerance(drivetoleranceMPerS);
@@ -196,6 +206,15 @@ public class SwerveModule implements Sendable {
     }
 
     public void turnPeriodic() {
+        // Use a member variable instead of setPosition to reduce CAN bus traffic
+        // If we call the CANCoder value c, the SparkMax value s, and the correction x,
+        // When we're using the CANCoder, we want the correction to work out so s - x = c
+        // The formula here gives x = s - c => s - x = s - (s - c) = c + s - s = c as desired
+        // When we're using the SparkMax, we want the correction to work out so there is no chage
+        // The formula here gives x = s - (s - x) = x + s - s = x as desired
+        double newRelativePositionCorrection = turn.getEncoder().getPosition() - getRawEncoderOrFallbackAngle();
+        if(!Double.isNaN(newRelativePositionCorrection)) relativePositionCorrection = newRelativePositionCorrection;
+
         String moduleString = type.toString();
         // Turn Control
         {
@@ -303,7 +322,14 @@ public class SwerveModule implements Sendable {
      * @return module angle in degrees
      */
     public double getModuleAngle() {
-        return MathUtil.inputModulus(Units.rotationsToDegrees(turnEncoder.getAbsolutePosition().getValue()) - turnZeroDeg, -180, 180);
+        return MathUtil.inputModulus(getRawEncoderOrFallbackAngle()-turnZeroDeg, -180, 180);
+    }
+
+    /**
+     * @return The current angle measured by the CANCoder (not zeroed) or, if the CANCoder is disconnected, an approximated angle from the turn motor encoder.
+     */
+    public double getRawEncoderOrFallbackAngle() {
+        return cancoderConnected() ? Units.rotationsToDegrees(turnEncoder.getAbsolutePosition().getValue()) : turn.getEncoder().getPosition() - relativePositionCorrection;
     }
 
     /**
@@ -354,8 +380,12 @@ public class SwerveModule implements Sendable {
         SmartDashboard.putNumber(moduleString + " Turn Goal Vel (dps)", turnPIDController.getGoal().velocity);
         //SmartDashboard.putNumber("Gyro Pitch", pitchDegSupplier.get());
         //SmartDashboard.putNumber("Gyro Roll", rollDegSupplier.get());
-        SmartDashboard.putNumber(moduleString + "Antigravitational Acceleration", calculateAntiGravitationalA(pitchDegSupplier.get(), rollDegSupplier.get()));
+        SmartDashboard.putNumber(moduleString + " Antigravitational Acceleration", calculateAntiGravitationalA(pitchDegSupplier.get(), rollDegSupplier.get()));
         SmartDashboard.putBoolean(moduleString + " Turn is at Goal", turnPIDController.atGoal());
+        SmartDashboard.putBoolean(moduleString + " CANCoder Connected", cancoderConnected());
+        SmartDashboard.putNumber(moduleString + " Raw Encoder or Fallback Angle", getRawEncoderOrFallbackAngle());
+        SmartDashboard.putNumber(moduleString + " CANCoder Last Packet", (System.nanoTime() / 1e6d) - (turnEncoder.getLastTimestamp() * 1000));
+        SmartDashboard.putNumber(moduleString + " CANCoder Last Timestamp", turnEncoder.getLastTimestamp());
         
         SmartDashboard.putNumber(moduleString + "Turn PID Output (Volts)", turnSpeedCorrectionVolts);
         SmartDashboard.putNumber(moduleString + "Turn FF Output (Volts)", turnFFVolts);
@@ -429,6 +459,17 @@ public class SwerveModule implements Sendable {
         turnPIDController.setConstraints(turnConstraints);
     }
 
+    public boolean cancoderConnected() {
+        // The right thing to do here would be to have WPILib tell us this time, but that functionality
+        // is not exposed in the 2023 API.
+        // From what I can tell, WPILib bases CAN packet timestamps off of the system's monotonic clock
+        // On linux (and maybe other OSs), this is exposed through System.nanoTime()
+        // In WPILib 2024, this should be replaced with CAN.getCANPacketBaseTime() (see wpilibsuite/allwpilib#5357)
+        // That function should also return millis rather than nanos, eliminating the need
+        // for the below conversion.
+        return (System.nanoTime() / 1e6d) - (turnEncoder.getLastTimestamp() * 1000) < CANCODER_TIMEOUT_MS;
+    }
+
     @Override
     public void initSendable(SendableBuilder builder) {
         builder.setActuator(true);
@@ -449,6 +490,7 @@ public class SwerveModule implements Sendable {
         builder.addDoubleProperty("Error (deg)", turnPIDController::getPositionError, null);
         builder.addDoubleProperty("Desired Speed (mps)", drivePIDController::getSetpoint, null);
         builder.addDoubleProperty("Angle Diff (deg)", () -> angleDiffRot, null);
+        builder.addBooleanProperty("CANCoder Connected", this::cancoderConnected, null);
 
         builder.addDoubleProperty("Turn PID Output", () -> turnSpeedCorrectionVolts, null);
         builder.addDoubleProperty("Turn FF Output", () -> turnFFVolts, null);

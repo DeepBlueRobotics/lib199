@@ -2,19 +2,20 @@ package org.carlmontrobotics.lib199.swerve;
 
 public final class SwerveConfig {
 
-    public double wheelDiameterMeters, driveGearing, mu, autoCentripetalAccel, driveModifier;
+    public double wheelDiameterMeters, driveGearing, turnGearing, mu, autoCentripetalAccel, driveModifier;
     public double[] kForwardVolts, kForwardVels, kForwardAccels, kBackwardVolts, kBackwardVels, kBackwardAccels,
             drivekP, drivekI, drivekD, turnkP, turnkI, turnkD, turnkS, turnkV, turnkA, turnZeroDeg;
     public boolean[] driveInversion, turnInversion, reversed;
 
-    public SwerveConfig(double wheelDiameterMeters, double driveGearing, double mu,
+    public SwerveConfig(double wheelDiameterMeters, double driveGearing, double turnGearing, double mu,
             double autoCentripetalAccel, double[] kForwardVolts, double[] kForwardVels, double[] kForwardAccels,
             double[] kBackwardVolts, double[] kBackwardVels, double[] kBackwardAccels, double[] drivekP,
             double[] drivekI, double[] drivekD, double[] turnkP, double[] turnkI, double[] turnkD, double[] turnkS,
             double[] turnkV, double[] turnkA, double[] turnZeroDeg, boolean[] driveInversion, boolean[] reversed, double driveModifier, boolean[] turnInversion) {
         this.wheelDiameterMeters = wheelDiameterMeters;
         this.driveGearing = driveGearing;
-        this.mu = mu;//coefficient of friction between the wheel and the surface
+        this.turnGearing = turnGearing;
+        this.mu = mu; //coefficient of friction between the wheel and the surface
         this.autoCentripetalAccel = autoCentripetalAccel;
         this.kForwardVolts = kForwardVolts;
         this.kForwardVels = kForwardVels;
