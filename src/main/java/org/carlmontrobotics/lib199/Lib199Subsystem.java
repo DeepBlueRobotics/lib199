@@ -3,7 +3,7 @@ package org.carlmontrobotics.lib199;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
-import edu.wpi.first.wpilibj.RobotBase;
+import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 
 public class Lib199Subsystem implements Subsystem {
@@ -27,6 +27,15 @@ public class Lib199Subsystem implements Subsystem {
             return;
         }
         registered = true;
+
+        // Regularly request a HALSimWS connection from the DeepBlueSim controller (if/when it is
+        // listening). To workaround https://github.com/wpilibsuite/allwpilib/issues/6842, this must
+        // be done *after* any SimDevices have been created (like those used to support simulation
+        // of many of the devices in lib199).
+        var reqPublisher = NetworkTableInstance.getDefault()
+                .getStringTopic("/DeepBlueSim/Coordinator/request").publish();
+        registerSimulationPeriodic(() -> reqPublisher.set("connectHALSimWS"));
+
         INSTANCE.register();
     }
 
