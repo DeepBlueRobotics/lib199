@@ -3,8 +3,8 @@ package org.carlmontrobotics.lib199.sim;
 import org.carlmontrobotics.lib199.DummySparkMaxAnswer;
 import org.carlmontrobotics.lib199.Mocks;
 
-import com.revrobotics.CANSparkLowLevel.MotorType;
-import com.revrobotics.CANSparkMax;
+import com.revrobotics.spark.SparkLowLevel.MotorType;
+import com.revrobotics.spark.SparkMax;
 
 public class MockSparkMax extends MockSparkBase {
 
@@ -12,7 +12,7 @@ public class MockSparkMax extends MockSparkBase {
         super(port, type, "CANSparkMax", 42);
     }
 
-    public static CANSparkMax createMockSparkMax(int portPWM, MotorType type) {
-        return Mocks.createMock(CANSparkMax.class, new MockSparkMax(portPWM, type), new DummySparkMaxAnswer());
+    public static SparkMax createMockSparkMax(int portPWM, MotorType type) {
+        return Mocks.createMock(SparkMax.class, new MockSparkMax(portPWM, type), new DummySparkMaxAnswer());
     }
 }

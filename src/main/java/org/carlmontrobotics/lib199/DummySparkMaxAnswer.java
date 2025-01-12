@@ -1,14 +1,15 @@
 package org.carlmontrobotics.lib199;
 
-import com.revrobotics.CANSparkMax;
 import com.revrobotics.RelativeEncoder;
-import com.revrobotics.SparkAbsoluteEncoder;
-import com.revrobotics.SparkAnalogSensor;
-import com.revrobotics.SparkLimitSwitch;
-import com.revrobotics.SparkPIDController;
-import com.revrobotics.CANSparkBase.IdleMode;
-import com.revrobotics.CANSparkLowLevel.MotorType;
-import com.revrobotics.SparkPIDController.AccelStrategy;
+import com.revrobotics.spark.SparkAbsoluteEncoder;
+import com.revrobotics.spark.SparkAnalogSensor;
+import com.revrobotics.spark.SparkClosedLoopController;
+import com.revrobotics.spark.SparkLimitSwitch;
+import com.revrobotics.spark.SparkLowLevel;
+import com.revrobotics.spark.SparkLowLevel.MotorType;
+import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
+import com.revrobotics.spark.config.MAXMotionConfig;
+import com.revrobotics.spark.SparkMax;
 
 import org.mockito.invocation.InvocationOnMock;
 
@@ -18,12 +19,12 @@ public class DummySparkMaxAnswer extends REVLibErrorAnswer {
 
     public static final DummySparkMaxAnswer ANSWER = new DummySparkMaxAnswer();
 
-    public static final CANSparkMax DUMMY_SPARK_MAX = Mocks.mock(CANSparkMax.class, ANSWER);
+    public static final SparkMax DUMMY_SPARK_MAX = Mocks.mock(SparkMax.class, ANSWER);
 
     public static final RelativeEncoder DUMMY_ENCODER = Mocks.mock(RelativeEncoder.class, REVLibErrorAnswer.ANSWER);
     public static final SparkAnalogSensor DUMMY_ANALOG_SENSOR = Mocks.mock(SparkAnalogSensor.class, REVLibErrorAnswer.ANSWER);
     public static final SparkLimitSwitch DUMMY_LIMIT_SWITCH = Mocks.mock(SparkLimitSwitch.class, REVLibErrorAnswer.ANSWER);
-    public static final SparkPIDController DUMMY_PID_CONTROLLER = Mocks.mock(SparkPIDController.class, ANSWER);
+    public static final SparkClosedLoopController DUMMY_PID_CONTROLLER = Mocks.mock(SparkClosedLoopController.class, ANSWER);
     public static final SparkAbsoluteEncoder DUMMY_ABSOLUTE_ENCODER = Mocks.mock(SparkAbsoluteEncoder.class, ANSWER);
 
 
@@ -36,14 +37,14 @@ public class DummySparkMaxAnswer extends REVLibErrorAnswer {
             return DUMMY_ANALOG_SENSOR;
         } else if(returnType == SparkLimitSwitch.class) {
             return DUMMY_LIMIT_SWITCH;
-        } else if(returnType == SparkPIDController.class) {
+        } else if(returnType == SparkClosedLoopController.class) {
             return DUMMY_PID_CONTROLLER;
         } else if(returnType == MotorType.class) {
             return MotorType.kBrushless;
         } else if(returnType == IdleMode.class) {
             return IdleMode.kBrake;
-        } else if(returnType == AccelStrategy.class) {
-            return AccelStrategy.kTrapezoidal;
+        } else if(returnType == MAXMotionConfig.MAXMotionPositionMode.class) {
+            return MAXMotionConfig.MAXMotionPositionMode.kMAXMotionTrapezoidal;
         } else if(returnType == SparkAbsoluteEncoder.class) {
             return DUMMY_ABSOLUTE_ENCODER;
         }

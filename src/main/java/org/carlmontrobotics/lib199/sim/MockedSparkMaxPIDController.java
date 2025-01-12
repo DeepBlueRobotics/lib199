@@ -3,14 +3,15 @@ package org.carlmontrobotics.lib199.sim;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.revrobotics.CANSparkMax;
-import com.revrobotics.MotorFeedbackSensor;
 import com.revrobotics.REVLibError;
-import com.revrobotics.SparkAbsoluteEncoder;
-import com.revrobotics.SparkMaxAlternateEncoder;
-import com.revrobotics.SparkAnalogSensor;
-import com.revrobotics.SparkPIDController;
-import com.revrobotics.SparkRelativeEncoder;
+import com.revrobotics.spark.SparkAbsoluteEncoder;
+import com.revrobotics.spark.SparkAnalogSensor;
+import com.revrobotics.spark.SparkClosedLoopController;
+import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.SparkMaxAlternateEncoder;
+import com.revrobotics.spark.SparkRelativeEncoder;
+import com.revrobotics.spark.config.ClosedLoopConfig;
+import com.revrobotics.spark.config.MAXMotionConfig;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
@@ -24,7 +25,7 @@ public class MockedSparkMaxPIDController {
     public final Map<Integer, Slot> slots = new ConcurrentHashMap<>();
     public final MockedMotorBase motor;
     public Slot activeSlot;
-    public CANSparkMax.ControlType controlType = CANSparkMax.ControlType.kDutyCycle;
+    public SparkMax.ControlType controlType = SparkMax.ControlType.kDutyCycle;
     public MotorController leader = null;
     public boolean invertLeader = false;
     public double setpoint = 0.0;
@@ -74,7 +75,7 @@ public class MockedSparkMaxPIDController {
 
     public void setDutyCycle(double speed) {
         setpoint = speed;
-        controlType = CANSparkMax.ControlType.kDutyCycle;
+        controlType = SparkMax.ControlType.kDutyCycle;
         stopFollowing();
         motor.setClosedLoopControl(false);
     }
@@ -214,8 +215,8 @@ public class MockedSparkMaxPIDController {
         return slot.pidController.getP();
     }
 
-    public SparkPIDController.AccelStrategy getSmartMotionAccelStrategy(int slotID) {
-        return SparkPIDController.AccelStrategy.kTrapezoidal;
+    public  MAXMotionConfig.MAXMotionPositionMode getSmartMotionAccelStrategy(int slotID) {
+        return MAXMotionConfig.MAXMotionPositionMode.kMAXMotionTrapezoidal;
     }
 
     public double getSmartMotionAllowedClosedLoopError(int slotID) {
@@ -245,8 +246,8 @@ public class MockedSparkMaxPIDController {
         return REVLibError.kOk;
     }
 
-    public REVLibError setFeedbackDevice(MotorFeedbackSensor sensor) {
-        if (sensor instanceof SparkRelativeEncoder
+    public REVLibError setFeedbackDevice(Object sensor) {
+        if (   sensor instanceof SparkRelativeEncoder
             || sensor instanceof SparkMaxAlternateEncoder
             || sensor instanceof SparkAnalogSensor
             || sensor instanceof SparkAbsoluteEncoder
@@ -386,20 +387,20 @@ public class MockedSparkMaxPIDController {
         return REVLibError.kOk;
     }
 
-    public REVLibError setReference(double value, CANSparkMax.ControlType ctrl) {
+    public REVLibError setReference(double value, SparkMax.ControlType ctrl) {
         return setReference(value, ctrl, 0);
     }
 
-    public REVLibError setReference(double value, CANSparkMax.ControlType ctrl, int pidSlot) {
+    public REVLibError setReference(double value, SparkMax.ControlType ctrl, int pidSlot) {
         return setReference(value, ctrl, pidSlot, 0);
     }
 
-    public REVLibError setReference(double value, CANSparkMax.ControlType ctrl, int pidSlot, double arbFeedforward) {
-        return setReference(value, ctrl, pidSlot, arbFeedforward, SparkPIDController.ArbFFUnits.kVoltage);
+    public REVLibError setReference(double value, SparkMax.ControlType ctrl, int pidSlot, double arbFeedforward) {
+        return setReference(value, ctrl, pidSlot, arbFeedforward, SparkClosedLoopController.ArbFFUnits.kVoltage);
     }
 
-    public REVLibError setReference(double value, CANSparkMax.ControlType ctrl, int pidSlot, double arbFeedforward, SparkPIDController.ArbFFUnits arbFFUnits) {
-        if(ctrl == CANSparkMax.ControlType.kSmartVelocity) {
+    public REVLibError setReference(double value, SparkMax.ControlType ctrl, int pidSlot, double arbFeedforward, SparkClosedLoopController.ArbFFUnits arbFFUnits) {
+        if(ctrl == SparkMax.ControlType.kSmartVelocity) {
             System.err.println("(MockedSparkMaxPIDController): setReference() with ControlType.kSmartVelocity is not currently implemented");
             return REVLibError.kNotImplemented;
         }
@@ -440,8 +441,8 @@ public class MockedSparkMaxPIDController {
         return REVLibError.kOk;
     }
 
-    public REVLibError setSmartMotionAccelStrategy(SparkPIDController.AccelStrategy accelStrategy, int slotID) {
-        if(accelStrategy != SparkPIDController.AccelStrategy.kTrapezoidal) {
+    public REVLibError setSmartMotionAccelStrategy(MAXMotionConfig.MAXMotionPositionMode accelStrategy, int slotID) {
+        if(accelStrategy != MAXMotionConfig.MAXMotionPositionMode.kMAXMotionTrapezoidal) {
             System.err.println("(MockedSparkMaxPIDController) Ignoring command to set accel strategy on slot " + slotID + " to " + accelStrategy + ". Only AccelStrategy.kTrapezoidal is supported.");
             return REVLibError.kParamNotImplementedDeprecated;
         }

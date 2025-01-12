@@ -11,13 +11,17 @@ import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
 import com.ctre.phoenix6.hardware.CANcoder;
-import com.revrobotics.CANSparkMax;
-import com.revrobotics.CANSparkBase.ExternalFollower;
-import com.revrobotics.CANSparkBase.IdleMode;
-import com.revrobotics.CANSparkBase;
-import com.revrobotics.CANSparkFlex;
-import com.revrobotics.CANSparkLowLevel;
-import com.revrobotics.SparkPIDController;
+import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.SparkBase.PersistMode;
+import com.revrobotics.spark.config.SparkBaseConfig;
+import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
+import com.revrobotics.spark.config.SparkMaxConfig;
+import com.revrobotics.servohub.ServoHub.ResetMode;
+import com.revrobotics.spark.ClosedLoopSlot;
+import com.revrobotics.spark.SparkBase;
+import com.revrobotics.spark.SparkFlex;
+import com.revrobotics.spark.SparkLowLevel;
+import com.revrobotics.spark.SparkClosedLoopController;
 
 import org.carlmontrobotics.lib199.sim.MockSparkFlex;
 import org.carlmontrobotics.lib199.sim.MockSparkMax;
@@ -81,83 +85,107 @@ public class MotorControllerFactory {
   //checks for spark max errors
 
   @Deprecated
-  public static CANSparkMax createSparkMax(int id, MotorErrors.TemperatureLimit temperatureLimit) {
+  public static SparkMax createSparkMax(int id, MotorErrors.TemperatureLimit temperatureLimit) {
     return createSparkMax(id, temperatureLimit.limit);
   }
 
   @Deprecated
-  public static CANSparkMax createSparkMax(int id, int temperatureLimit) {
-    CANSparkMax spark;
+  public static SparkMax createSparkMax(int id, int temperatureLimit) {
+    SparkMax spark;
     if (RobotBase.isReal()) {
-      spark = new CANSparkMax(id, CANSparkLowLevel.MotorType.kBrushless);
+      spark = new SparkMax(id, SparkLowLevel.MotorType.kBrushless);
     } else {
-        spark = MockSparkMax.createMockSparkMax(id, CANSparkLowLevel.MotorType.kBrushless);
+        spark = MockSparkMax.createMockSparkMax(id, SparkLowLevel.MotorType.kBrushless);
     }
-    spark.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus0, 1);
+    SparkMaxConfig config = new SparkMaxConfig();
+    // config.setPeriodicFramePeriod(SparkLowLevel.PeriodicFrame.kStatus0, 1);
+    //FIXME: What is kStatus0
+    // config.signals.
 
     MotorErrors.reportSparkMaxTemp(spark, temperatureLimit);
 
-    MotorErrors.reportError(spark.restoreFactoryDefaults());
-    MotorErrors.reportError(spark.follow(ExternalFollower.kFollowerDisabled, 0));
-    MotorErrors.reportError(spark.setIdleMode(IdleMode.kBrake));
-    MotorErrors.reportError(spark.enableVoltageCompensation(12));
-    MotorErrors.reportError(spark.setSmartCurrentLimit(50));
-
+    // MotorErrors.reportError(config.follow(ExternalFollower.kFollowerDisabled, 0));
+    // config.follow(null, false); dont follow nothing because thats the norm
+    // MotorErrors.reportError(config.setIdleMode(IdleMode.kBrake));
+    config.idleMode(IdleMode.kBrake);
+    // MotorErrors.reportError(config.enableVoltageCompensation(12));
+    config.voltageCompensation(12);
+    // MotorErrors.reportError(config.smartCurrentLimit(50));
+    config.smartCurrentLimit(50);
+    
     MotorErrors.checkSparkMaxErrors(spark);
-
-    SparkPIDController controller = spark.getPIDController();
-    MotorErrors.reportError(controller.setOutputRange(-1, 1));
-    MotorErrors.reportError(controller.setP(0));
-    MotorErrors.reportError(controller.setI(0));
-    MotorErrors.reportError(controller.setD(0));
-    MotorErrors.reportError(controller.setFF(0));
+    SparkClosedLoopController controller = spark.getClosedLoopController();
+    // MotorErrors.reportError(controller.setOutputRange(-1, 1));
+    config.closedLoop.minOutput(-1);
+    config.closedLoop.maxOutput(1);
+    // MotorErrors.reportError(controller.setP(0));
+    // MotorErrors.reportError(controller.setI(0));
+    // MotorErrors.reportError(controller.setD(0));
+    config.closedLoop.p(0, ClosedLoopSlot.kSlot0);
+    config.closedLoop.i(0, ClosedLoopSlot.kSlot0);
+    config.closedLoop.d(0, ClosedLoopSlot.kSlot0);
+    // MotorErrors.reportError(controller.setFF(0));
+    config.closedLoop.velocityFF(0);
 
     return spark;
   }
 
-  public static CANSparkMax createSparkMax(int id, MotorConfig config) {
-    CANSparkMax spark;
+  public static SparkMax createSparkMax(int id, SparkBaseConfig config) {
+    SparkMax spark;
     if (RobotBase.isReal()) {
-      spark = new CANSparkMax(id, CANSparkLowLevel.MotorType.kBrushless);
+      spark = new SparkMax(id, SparkLowLevel.MotorType.kBrushless);
     } else {
-      spark = MockSparkMax.createMockSparkMax(id, CANSparkLowLevel.MotorType.kBrushless);
+      spark = MockSparkMax.createMockSparkMax(id, SparkLowLevel.MotorType.kBrushless);
+    }
+    
+    spark.configure(
+      config, 
+      SparkBase.ResetMode.kResetSafeParameters,
+      SparkBase.PersistMode.kNoPersistParameters
+    );
+
+    return spark;
+  }
+
+  public static SparkFlex createSparkFlex(int id, SparkBaseConfig config) {
+    SparkFlex spark;
+    if (RobotBase.isReal()) {
+      spark = new SparkFlex(id, SparkLowLevel.MotorType.kBrushless);
+    } else {
+      spark = MockSparkFlex.createMockSparkFlex(id, SparkLowLevel.MotorType.kBrushless);
     }
 
-    configureSpark(spark, config);
+    spark.configure(
+      config, 
+      SparkBase.ResetMode.kResetSafeParameters,
+      SparkBase.PersistMode.kNoPersistParameters
+    );
 
     return spark;
   }
 
-  public static CANSparkFlex createSparkFlex(int id, MotorConfig config) {
-    CANSparkFlex spark;
-    if (RobotBase.isReal()) {
-      spark = new CANSparkFlex(id, CANSparkLowLevel.MotorType.kBrushless);
-    } else {
-      spark = MockSparkFlex.createMockSparkFlex(id, CANSparkLowLevel.MotorType.kBrushless);
-    }
+  private static void configureSpark(SparkBase spark, SparkMaxConfig config) {
+    MotorErrors.reportSparkTemp(spark, (int) spark.getMotorTemperature());
+  
+    SparkMaxConfig newConfig = new SparkMaxConfig();
 
-    configureSpark(spark, config);
+    config.idleMode(IdleMode.kBrake);
+    
+    config.voltageCompensation(12);
+    config.smartCurrentLimit(50);
+    
+    config.closedLoop.minOutput(-1);
+    config.closedLoop.maxOutput(1);
+    config.closedLoop.p(0, ClosedLoopSlot.kSlot0);
+    config.closedLoop.i(0, ClosedLoopSlot.kSlot0);
+    config.closedLoop.d(0, ClosedLoopSlot.kSlot0);
+    config.closedLoop.velocityFF(0);
 
-    return spark;
-  }
-
-  private static void configureSpark(CANSparkBase spark, MotorConfig config) {
-    MotorErrors.reportSparkTemp(spark, config.temperatureLimitCelsius);
-
-    MotorErrors.reportError(spark.restoreFactoryDefaults());
-    //MotorErrors.reportError(spark.follow(ExternalFollower.kFollowerDisabled, 0));
-    MotorErrors.reportError(spark.setIdleMode(IdleMode.kBrake));
-    MotorErrors.reportError(spark.enableVoltageCompensation(12));
-    MotorErrors.reportError(spark.setSmartCurrentLimit(config.currentLimitAmps));
-
-    MotorErrors.checkSparkErrors(spark);
-
-    SparkPIDController controller = spark.getPIDController();
-    MotorErrors.reportError(controller.setOutputRange(-1, 1));
-    MotorErrors.reportError(controller.setP(0));
-    MotorErrors.reportError(controller.setI(0));
-    MotorErrors.reportError(controller.setD(0));
-    MotorErrors.reportError(controller.setFF(0));
+    spark.configure(
+      config, 
+      SparkBase.ResetMode.kResetSafeParameters,
+      SparkBase.PersistMode.kNoPersistParameters
+    );
   }
 
   /**

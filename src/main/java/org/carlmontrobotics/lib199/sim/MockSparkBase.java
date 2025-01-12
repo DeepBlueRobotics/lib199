@@ -6,18 +6,17 @@ import org.carlmontrobotics.lib199.Lib199Subsystem;
 import org.carlmontrobotics.lib199.Mocks;
 import org.carlmontrobotics.lib199.REVLibErrorAnswer;
 
-import com.revrobotics.CANSparkBase;
-import com.revrobotics.CANSparkBase.ExternalFollower;
-import com.revrobotics.CANSparkBase.IdleMode;
-import com.revrobotics.CANSparkLowLevel.MotorType;
+import com.revrobotics.spark.config.ClosedLoopConfig;
+import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
+import com.revrobotics.spark.SparkClosedLoopController;
+import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.REVLibError;
 import com.revrobotics.RelativeEncoder;
-import com.revrobotics.SparkAbsoluteEncoder;
-import com.revrobotics.SparkMaxAlternateEncoder;
-import com.revrobotics.SparkAnalogSensor;
-import com.revrobotics.SparkPIDController;
-import com.revrobotics.SparkRelativeEncoder;
-import com.revrobotics.SparkRelativeEncoder.Type;
+import com.revrobotics.spark.SparkAbsoluteEncoder;
+import com.revrobotics.spark.SparkMaxAlternateEncoder;
+import com.revrobotics.spark.SparkAnalogSensor;
+import com.revrobotics.spark.SparkBase;
+import com.revrobotics.spark.SparkRelativeEncoder;
 
 import edu.wpi.first.hal.SimDevice;
 import edu.wpi.first.wpilibj.motorcontrol.MotorController;
@@ -31,7 +30,7 @@ public class MockSparkBase extends MockedMotorBase {
 
     public final MotorType type;
     private final MockedEncoder encoder;
-    private final SparkPIDController pidController;
+    private final SparkClosedLoopController pidController;
     private final MockedSparkMaxPIDController pidControllerImpl;
     private SparkAbsoluteEncoder absoluteEncoder = null;
     private MockedEncoder absoluteEncoderImpl = null;
@@ -47,7 +46,7 @@ public class MockSparkBase extends MockedMotorBase {
      * @param port the port to associate this {@code MockSparkMax} with. Will be used to create the {@link SimDevice} and facilitate motor following.
      * @param type the type of the simulated motor. If this is set to {@link MotorType#kBrushless}, the builtin encoder simulation will be configured
      * to follow the inversion state of the motor and its {@code setInverted} method will be disabled.
-     * @param name the name of the type of controller ("CANSparkMax" or "CANSparkFlex")
+     * @param name the name of the type of controller ("SparkMax" or "SparkFlex")
      * @param countsPerRev the number of counts per revolution of this controller's built-in encoder.
      */
     public MockSparkBase(int port, MotorType type, String name, int countsPerRev) {
@@ -69,8 +68,8 @@ public class MockSparkBase extends MockedMotorBase {
         }
 
         pidControllerImpl = new MockedSparkMaxPIDController(this);
-        pidController = Mocks.createMock(SparkPIDController.class, pidControllerImpl, new REVLibErrorAnswer());
-        pidController.setFeedbackDevice(encoder);
+        pidController = Mocks.createMock(SparkClosedLoopController.class, pidControllerImpl, new REVLibErrorAnswer());
+        pidController.feedbackSensor(encoder);
 
         controllers.put(port, this);
 
@@ -96,11 +95,11 @@ public class MockSparkBase extends MockedMotorBase {
         pidControllerImpl.setDutyCycle(speed);
     }
 
-    public REVLibError follow(CANSparkBase leader) {
+    public REVLibError follow(SparkBase leader) {
         return follow(leader, false);
     }
 
-    public REVLibError follow(CANSparkBase leader, boolean invert) {
+    public REVLibError follow(SparkBase leader, boolean invert) {
 		pidControllerImpl.follow(leader, invert); // No need to lookup the spark max if we already have it
         return REVLibError.kOk;
 	}
@@ -168,7 +167,7 @@ public class MockSparkBase extends MockedMotorBase {
 		return REVLibError.kOk;
     }
 
-    public SparkPIDController getPIDController() {
+    public SparkClosedLoopController getPIDController() {
         return pidController;
     }
 
@@ -293,7 +292,7 @@ public class MockSparkBase extends MockedMotorBase {
 
     @Override
     public void disable() {
-        // CANSparkBase sets the motor speed to zero rather than actually disabling the motor
+        // SparkBase sets the motor speed to zero rather than actually disabling the motor
         set(0);
     }
 

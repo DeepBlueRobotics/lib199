@@ -6,22 +6,24 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 
 import com.ctre.phoenix.ErrorCode;
-import com.revrobotics.CANSparkBase;
-import com.revrobotics.CANSparkFlex;
-import com.revrobotics.CANSparkMax;
-import com.revrobotics.CANSparkBase.FaultID;
+import com.revrobotics.spark.SparkBase;
+import com.revrobotics.spark.SparkFlex;
+import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.SparkBase.Faults;
+import com.revrobotics.spark.config.SparkBaseConfig;
+import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.REVLibError;
 
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public final class MotorErrors {
 
-    private static final Map<Integer, CANSparkBase> temperatureSparks = new ConcurrentSkipListMap<>();
+    private static final Map<Integer, SparkBase> temperatureSparks = new ConcurrentSkipListMap<>();
     private static final Map<Integer, Integer> sparkTemperatureLimits = new ConcurrentHashMap<>();
     private static final Map<Integer, Integer> overheatedSparks = new ConcurrentHashMap<>();
-    private static final Map<CANSparkBase, Short> flags = new ConcurrentSkipListMap<>(
+    private static final Map<SparkBase, Short> flags = new ConcurrentSkipListMap<>(
             (spark1, spark2) -> (spark1.getDeviceId() - spark2.getDeviceId()));
-    private static final Map<CANSparkBase, Short> stickyFlags = new ConcurrentSkipListMap<>(
+    private static final Map<SparkBase, Short> stickyFlags = new ConcurrentSkipListMap<>(
             (spark1, spark2) -> (spark1.getDeviceId() - spark2.getDeviceId()));
 
     public static final int kOverheatTripCount = 5;
@@ -65,7 +67,7 @@ public final class MotorErrors {
         System.err.println(Arrays.toString(stack));
     }
 
-    public static void checkSparkErrors(CANSparkBase spark) {
+    public static void checkSparkErrors(SparkBase spark) {
         //Purposely obviously impersonal to differentiate from actual computer generated errors
         short faults = spark.getFaults();
         short stickyFaults = spark.getStickyFaults();
@@ -84,11 +86,11 @@ public final class MotorErrors {
     }
 
     @Deprecated
-    public static void checkSparkMaxErrors(CANSparkMax spark) {
-        checkSparkErrors((CANSparkBase)spark);
+    public static void checkSparkMaxErrors(SparkMax spark) {
+        checkSparkErrors((SparkBase)spark);
     }
 
-    private static String formatFaults(CANSparkBase spark) {
+    private static String formatFaults(SparkBase spark) {
         String out = "";
         for(FaultID fault: FaultID.values()) {
             if(spark.getFault(fault)) {
@@ -98,7 +100,7 @@ public final class MotorErrors {
         return out;
     }
 
-    private static String formatStickyFaults(CANSparkBase spark) {
+    private static String formatStickyFaults(SparkBase spark) {
         String out = "";
         for(FaultID fault: FaultID.values()) {
             if(spark.getStickyFault(fault)) {
@@ -125,27 +127,27 @@ public final class MotorErrors {
         lastSparkErrorIndexReported = (lastSparkErrorIndexReported + n) % flags.size();
     }
 
-    public static CANSparkMax createDummySparkMax() {
+    public static SparkMax createDummySparkMax() {
         return DummySparkMaxAnswer.DUMMY_SPARK_MAX;
     }
 
     @Deprecated
-    public static void reportSparkMaxTemp(CANSparkMax spark, TemperatureLimit temperatureLimit) {
+    public static void reportSparkMaxTemp(SparkMax spark, TemperatureLimit temperatureLimit) {
         reportSparkMaxTemp(spark, temperatureLimit.limit);
     }
 
-    public static boolean isSparkMaxOverheated(CANSparkMax spark){
+    public static boolean isSparkMaxOverheated(SparkMax spark){
       int id = spark.getDeviceId();
       int motorMaxTemp = sparkTemperatureLimits.get(id);
       return ( spark.getMotorTemperature() >= motorMaxTemp );
     }
 
     @Deprecated
-    public static void reportSparkMaxTemp(CANSparkMax spark, int temperatureLimit) {
-        reportSparkTemp((CANSparkBase) spark, temperatureLimit);
+    public static void reportSparkMaxTemp(SparkMax spark, int temperatureLimit) {
+        reportSparkTemp((SparkBase) spark, temperatureLimit);
     }
 
-    public static void reportSparkTemp(CANSparkBase spark, int temperatureLimit) {
+    public static void reportSparkTemp(SparkBase spark, int temperatureLimit) {
         int id = spark.getDeviceId();
         temperatureSparks.put(id, spark);
         sparkTemperatureLimits.put(id, temperatureLimit);
@@ -169,14 +171,14 @@ public final class MotorErrors {
         lastSparkTempIndexReported = (lastSparkTempIndexReported + n) % temperatureSparks.size();
     }
 
-    private static void reportSparkTemp(int port, CANSparkBase spark) {
+    private static void reportSparkTemp(int port, SparkBase spark) {
         double temp = spark.getMotorTemperature();
         double limit = sparkTemperatureLimits.get(port);
         int numTrips = overheatedSparks.get(port);
         String sparkType = "of unknown type";
-        if (spark instanceof CANSparkMax) {
+        if (spark instanceof SparkMax) {
             sparkType = "Max";
-        } else if (spark instanceof CANSparkFlex) {
+        } else if (spark instanceof SparkFlex) {
             sparkType = "Flex";
         }
         SmartDashboard.putNumber(String.format("Port %d Spark %s Temp", port, sparkType), temp);
@@ -202,7 +204,10 @@ public final class MotorErrors {
                 System.err.println("Port " + port + " spark is operating at " + temp
                         + " degrees Celsius! It will be disabled until the robot code is restarted.");
             }
-            spark.setSmartCurrentLimit(1);
+        spark.configure(
+            new SparkMaxConfig().smartCurrentLimit(1), 
+            SparkBase.ResetMode.kResetSafeParameters,
+            SparkBase.PersistMode.kNoPersistParameters);
         }
     }
 
