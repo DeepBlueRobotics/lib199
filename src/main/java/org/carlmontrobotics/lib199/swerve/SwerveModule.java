@@ -8,12 +8,15 @@ import java.util.function.Supplier;
 
 import org.mockito.internal.reporting.SmartPrinter;
 
-import com.ctre.phoenix6.signals.AbsoluteSensorRangeValue;
+// import com.ctre.phoenix6.signals.AbsoluteSensorRangeValue;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.SparkBase.PersistMode;
+import com.revrobotics.spark.SparkBase.ResetMode;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
-
+import com.revrobotics.spark.config.SparkBaseConfig;
+import com.revrobotics.spark.config.SparkMaxConfig;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
@@ -86,7 +89,8 @@ public class SwerveModule implements Sendable {
         final double neoStallCurrentAmps = 166;
         double currentLimitAmps = neoFreeCurrentAmps + 2*motorTorqueLimitNewtonMeters / neoStallTorqueNewtonMeters * (neoStallCurrentAmps-neoFreeCurrentAmps);
         // SmartDashboard.putNumber(type.toString() + " current limit (amps)", currentLimitAmps);
-        drive.setSmartCurrentLimit((int)Math.min(50, currentLimitAmps));
+        drive.configure(new SparkMaxConfig().smartCurrentLimit(Math.min(50,(int)currentLimitAmps)),
+            ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
         
         this.forwardSimpleMotorFF = new SimpleMotorFeedforward(config.kForwardVolts[arrIndex],
                                                                 config.kForwardVels[arrIndex],
@@ -100,7 +104,9 @@ public class SwerveModule implements Sendable {
                                                config.drivekD[arrIndex]);
         
         /* offset for 1 CANcoder count */
-        drivetoleranceMPerS = (1.0 / (double)(drive.getEncoder().getCountsPerRevolution()) * positionConstant) / Units.millisecondsToSeconds(drive.getEncoder().getMeasurementPeriod() * drive.getEncoder().getAverageDepth());
+        drivetoleranceMPerS = (1.0 
+            / (double)(drive.configAccessor.encoder.getCountsPerRevolution()) * positionConstant) 
+            / Units.millisecondsToSeconds(drive.configAccessor.signals.getPrimaryEncoderPositionPeriodMs() * drive.configAccessor.absoluteEncoder.getAverageDepth());
         drivePIDController.setTolerance(drivetoleranceMPerS);
 
         //System.out.println("Velocity Constant: " + (positionConstant / 60));
@@ -342,9 +348,9 @@ public class SwerveModule implements Sendable {
     public void updateSmartDashboard() {
         String moduleString = type.toString();
         // Display the position of the quadrature encoder.
-        SmartDashboard.putNumber(moduleString + " Incremental Position", turnEncoder.getPosition().getValue());
+        SmartDashboard.putNumber(moduleString + " Incremental Position", turnEncoder.getPosition().getValueAsDouble());
         // Display the position of the analog encoder.
-        SmartDashboard.putNumber(moduleString + " Absolute Angle (deg)", Units.rotationsToDegrees(turnEncoder.getAbsolutePosition().getValue()));
+        SmartDashboard.putNumber(moduleString + " Absolute Angle (deg)", Units.rotationsToDegrees(turnEncoder.getAbsolutePosition().getValueAsDouble()));
         // Display the module angle as calculated using the absolute encoder.
         SmartDashboard.putNumber(moduleString + " Turn Measured Pos (deg)", getModuleAngle());
         SmartDashboard.putNumber(moduleString + " Encoder Position", drive.getEncoder().getPosition());
@@ -396,10 +402,10 @@ public class SwerveModule implements Sendable {
         if (turnPIDController.getPositionTolerance() != turnTolerance) {
             turnPIDController.setTolerance(turnTolerance);
         }
-        double kS = SmartDashboard.getNumber(moduleString + " Swerve kS", turnSimpleMotorFeedforward.ks);
-        double kV = SmartDashboard.getNumber(moduleString + " Swerve kV", turnSimpleMotorFeedforward.kv);
-        double kA = SmartDashboard.getNumber(moduleString + " Swerve kA", turnSimpleMotorFeedforward.ka);
-        if (turnSimpleMotorFeedforward.ks != kS || turnSimpleMotorFeedforward.kv != kV || turnSimpleMotorFeedforward.ka != kA) {
+        double kS = SmartDashboard.getNumber(moduleString + " Swerve kS", turnSimpleMotorFeedforward.getKs());
+        double kV = SmartDashboard.getNumber(moduleString + " Swerve kV", turnSimpleMotorFeedforward.getKv());
+        double kA = SmartDashboard.getNumber(moduleString + " Swerve kA", turnSimpleMotorFeedforward.getKa());
+        if (turnSimpleMotorFeedforward.getKs() != kS || turnSimpleMotorFeedforward.getKv() != kV || turnSimpleMotorFeedforward.getKa() != kA) {
             turnSimpleMotorFeedforward = new SimpleMotorFeedforward(kS, kV, kA);
             maxAchievableTurnVelocityRps = 0.5 * turnSimpleMotorFeedforward.maxAchievableVelocity(12.0, 0);
             maxAchievableTurnAccelerationRps2 = 0.5 * turnSimpleMotorFeedforward.maxAchievableAcceleration(12.0, maxAchievableTurnVelocityRps);
@@ -407,18 +413,20 @@ public class SwerveModule implements Sendable {
     }
 
     public void toggleMode() {
-        if (drive.getIdleMode() == IdleMode.kBrake && turn.getIdleMode() == IdleMode.kCoast) coast();
+        if (drive.configAccessor.getIdleMode() == IdleMode.kBrake && turn.configAccessor.getIdleMode() == IdleMode.kCoast) coast();
         else brake();
     }
 
     public void brake() {
-        drive.setIdleMode(IdleMode.kBrake);
-        turn.setIdleMode(IdleMode.kBrake);
+        SparkBaseConfig config = new SparkMaxConfig().idleMode(IdleMode.kBrake);
+        drive.configure(config, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
+        turn .configure(config, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
     }
 
     public void coast() {
-        drive.setIdleMode(IdleMode.kCoast);
-        turn.setIdleMode(IdleMode.kCoast);
+        SparkBaseConfig config = new SparkMaxConfig().idleMode(IdleMode.kCoast);
+        drive.configure(config, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
+        turn .configure(config, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
     }
 
     /**

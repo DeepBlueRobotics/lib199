@@ -8,6 +8,7 @@ import java.util.concurrent.ConcurrentSkipListMap;
 import com.ctre.phoenix.ErrorCode;
 import com.revrobotics.spark.SparkBase;
 import com.revrobotics.spark.SparkFlex;
+import com.revrobotics.spark.SparkLowLevel;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.SparkBase.Faults;
 import com.revrobotics.spark.config.SparkBaseConfig;
@@ -21,9 +22,9 @@ public final class MotorErrors {
     private static final Map<Integer, SparkBase> temperatureSparks = new ConcurrentSkipListMap<>();
     private static final Map<Integer, Integer> sparkTemperatureLimits = new ConcurrentHashMap<>();
     private static final Map<Integer, Integer> overheatedSparks = new ConcurrentHashMap<>();
-    private static final Map<SparkBase, Short> flags = new ConcurrentSkipListMap<>(
+    private static final Map<SparkBase, Faults> flags = new ConcurrentSkipListMap<>(
             (spark1, spark2) -> (spark1.getDeviceId() - spark2.getDeviceId()));
-    private static final Map<SparkBase, Short> stickyFlags = new ConcurrentSkipListMap<>(
+    private static final Map<SparkBase, Faults> stickyFlags = new ConcurrentSkipListMap<>(
             (spark1, spark2) -> (spark1.getDeviceId() - spark2.getDeviceId()));
 
     public static final int kOverheatTripCount = 5;
@@ -69,15 +70,16 @@ public final class MotorErrors {
 
     public static void checkSparkErrors(SparkBase spark) {
         //Purposely obviously impersonal to differentiate from actual computer generated errors
-        short faults = spark.getFaults();
-        short stickyFaults = spark.getStickyFaults();
-        short prevFaults = flags.containsKey(spark) ? flags.get(spark) : 0;
-        short prevStickyFaults = stickyFlags.containsKey(spark) ? stickyFlags.get(spark) : 0;
+        // short faults = spark.getFaults();
+        Faults faults = spark.getFaults();
+        Faults stickyFaults = spark.getStickyFaults();
+        Faults prevFaults = flags.containsKey(spark) ? flags.get(spark) : null;
+        Faults prevStickyFaults = stickyFlags.containsKey(spark) ? stickyFlags.get(spark) : null;
 
-        if (spark.getFaults() != 0 && prevFaults != faults) {
+        if (spark.hasActiveFault() && prevFaults != faults) {
         System.err.println("Whoops, big oopsie : fault error(s) with spark id : " + spark.getDeviceId() + ": [ " + formatFaults(spark) + "], ooF!");
         }
-        if (spark.getStickyFaults() != 0 && prevStickyFaults != stickyFaults) {
+        if (spark.hasActiveFault() && prevStickyFaults != stickyFaults) {
         System.err.println("Bruh, you did an Error : sticky fault(s) error with spark id : " + spark.getDeviceId() + ": " + formatStickyFaults(spark) + ", Ouch!");
         }
         spark.clearFaults();
@@ -91,23 +93,31 @@ public final class MotorErrors {
     }
 
     private static String formatFaults(SparkBase spark) {
-        String out = "";
-        for(FaultID fault: FaultID.values()) {
-            if(spark.getFault(fault)) {
-                out += (fault.name() + " ");
-            }
-        }
-        return out;
+        Faults f = spark.getFaults();
+        return "" //i hope this makes you proud of yourself, REVLib
+            + (f.can            ? "CAN " : "")
+            + (f.escEeprom      ? "Flash ROM " : "")
+            + (f.firmware       ? "Firmware " : "")
+            + (f.gateDriver     ? "Gate Driver " : "")
+            + (f.motorType      ? "Motor Type " : "")
+            + (f.other          ? "Other " : "")
+            + (f.sensor         ? "Sensor " : "")
+            + (f.temperature    ? "Temperature " : "")
+        ;
     }
 
     private static String formatStickyFaults(SparkBase spark) {
-        String out = "";
-        for(FaultID fault: FaultID.values()) {
-            if(spark.getStickyFault(fault)) {
-                out += (fault.name() + " ");
-            }
-        }
-        return out;
+        Faults f = spark.getStickyFaults();
+        return ""
+            + (f.can            ? "CAN " : "")
+            + (f.escEeprom      ? "Flash ROM " : "")
+            + (f.firmware       ? "Firmware " : "")
+            + (f.gateDriver     ? "Gate Driver " : "")
+            + (f.motorType      ? "Motor Type " : "")
+            + (f.other          ? "Other " : "")
+            + (f.sensor         ? "Sensor " : "")
+            + (f.temperature    ? "Temperature " : "")
+        ;
     }
 
     @Deprecated

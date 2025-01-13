@@ -4,7 +4,9 @@ import org.carlmontrobotics.lib199.sim.MockedCANCoder;
 import org.carlmontrobotics.lib199.sim.MockedEncoder;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.system.LinearSystem;
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Mass;
 import edu.wpi.first.units.Measure;
@@ -35,12 +37,21 @@ public class SwerveModuleSim {
                             int turnMotorPortNum, int turnEncoderPortNum, double turnGearing, double turnMoiKgM2) {
         driveMotorSim = new SimDeviceSim("CANMotor:CANSparkMax", drivePortNum);
         driveEncoderSim = new SimDeviceSim("CANEncoder:CANSparkMax", drivePortNum);
-        drivePhysicsSim = new DCMotorSim(DCMotor.getNEO(1), driveGearing, driveMoiKgM2);
+        DCMotor dcmotor = DCMotor.getNEO(1);
+        drivePhysicsSim = new DCMotorSim(
+            LinearSystemId.createDCMotorSystem(dcmotor, driveMoiKgM2, driveGearing), 
+            dcmotor,
+             0.0);//FIXME WHAT DO WE WANT THE MEASUREMENT STDDEVS TO BE? (LAST ARG)
+
+        // drivePhysicsSim = new DCMotorSim(DCMotor.getNEO(1), driveGearing, driveMoiKgM2);
         this.driveGearing = driveGearing;
 
         turnMotorSim = new SimDeviceSim("CANMotor:CANSparkMax", turnMotorPortNum);
         turnEncoderSim = new SimDeviceSim("CANDutyCycle:CANCoder", turnEncoderPortNum);
-        turnPhysicsSim = new DCMotorSim(DCMotor.getNEO(1), turnGearing, turnMoiKgM2);
+        turnPhysicsSim = new DCMotorSim(
+            LinearSystemId.createDCMotorSystem(dcmotor, turnMoiKgM2, turnGearing), 
+            dcmotor,
+             0.0);
     }
 
     /**

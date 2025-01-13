@@ -56,12 +56,12 @@ public class MockSparkBase extends MockedMotorBase {
 
         if(type == MotorType.kBrushless) {
             encoder = new MockedEncoder(SimDevice.create("CANEncoder:" + name, port), countsPerRev, false, false) {
-                @Override
-                public REVLibError setInverted(boolean inverted) {
-                    System.err.println(
-                            "(MockedEncoder) SparkRelativeEncoder cannot be inverted separately from the motor in brushless mode!");
-                    return REVLibError.kParamInvalid;
-                }
+                // @Override
+                // public REVLibError setInverted(boolean inverted) {
+                //     System.err.println(
+                //             "(MockedEncoder) SparkRelativeEncoder cannot be inverted separately from the motor in brushless mode!");
+                //     return REVLibError.kParamInvalid;
+                // }
             };
         } else {
             encoder = new MockedEncoder(SimDevice.create("CANEncoder:" + name, port), countsPerRev, false, false);
