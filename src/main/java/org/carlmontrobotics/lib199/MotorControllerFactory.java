@@ -23,8 +23,9 @@ import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkLowLevel;
 import com.revrobotics.spark.SparkClosedLoopController;
 
-import org.carlmontrobotics.lib199.sim.MockSparkFlex;
-import org.carlmontrobotics.lib199.sim.MockSparkMax;
+// import org.carlmontrobotics.lib199.sim.MockSparkFlex;
+// import org.carlmontrobotics.lib199.sim.MockSparkMax;
+// FIXME: sorry but we don't need these right now
 import org.carlmontrobotics.lib199.sim.MockTalonSRX;
 import org.carlmontrobotics.lib199.sim.MockVictorSPX;
 import org.carlmontrobotics.lib199.sim.MockedCANCoder;
@@ -91,18 +92,19 @@ public class MotorControllerFactory {
 
   @Deprecated
   public static SparkMax createSparkMax(int id, int temperatureLimit) {
-    SparkMax spark;
+    SparkMax spark=null;
     if (RobotBase.isReal()) {
       spark = new SparkMax(id, SparkLowLevel.MotorType.kBrushless);
     } else {
-        spark = MockSparkMax.createMockSparkMax(id, SparkLowLevel.MotorType.kBrushless);
+      System.err.println("heyy... lib199 doesn't have sim support sorri");
+      // spark = MockSparkMax.createMockSparkMax(id, SparkLowLevel.MotorType.kBrushless);
     }
     SparkMaxConfig config = new SparkMaxConfig();
     // config.setPeriodicFramePeriod(SparkLowLevel.PeriodicFrame.kStatus0, 1);
     //FIXME: What is kStatus0
     // config.signals.
-
-    MotorErrors.reportSparkMaxTemp(spark, temperatureLimit);
+    if (spark!=null)
+      MotorErrors.reportSparkMaxTemp(spark, temperatureLimit);
 
     // MotorErrors.reportError(config.follow(ExternalFollower.kFollowerDisabled, 0));
     // config.follow(null, false); dont follow nothing because thats the norm
@@ -131,35 +133,37 @@ public class MotorControllerFactory {
   }
 
   public static SparkMax createSparkMax(int id, SparkBaseConfig config) {
-    SparkMax spark;
+    SparkMax spark = null;
     if (RobotBase.isReal()) {
       spark = new SparkMax(id, SparkLowLevel.MotorType.kBrushless);
     } else {
-      spark = MockSparkMax.createMockSparkMax(id, SparkLowLevel.MotorType.kBrushless);
+      System.err.println("heyy... lib199 doesn't have sim support sorri");
+      // spark = MockSparkMax.createMockSparkMax(id, SparkLowLevel.MotorType.kBrushless);
     }
-    
-    spark.configure(
-      config, 
-      SparkBase.ResetMode.kResetSafeParameters,
-      SparkBase.PersistMode.kNoPersistParameters
-    );
+    if (spark!=null)
+      spark.configure(
+        config, 
+        SparkBase.ResetMode.kResetSafeParameters,
+        SparkBase.PersistMode.kNoPersistParameters
+      );
 
     return spark;
   }
 
   public static SparkFlex createSparkFlex(int id, SparkBaseConfig config) {
-    SparkFlex spark;
+    SparkFlex spark = null;
     if (RobotBase.isReal()) {
       spark = new SparkFlex(id, SparkLowLevel.MotorType.kBrushless);
     } else {
-      spark = MockSparkFlex.createMockSparkFlex(id, SparkLowLevel.MotorType.kBrushless);
+      System.err.println("heyy... lib199 doesn't have sim support sorri");
+      // spark = MockSparkFlex.createMockSparkFlex(id, SparkLowLevel.MotorType.kBrushless);
     }
-
-    spark.configure(
-      config, 
-      SparkBase.ResetMode.kResetSafeParameters,
-      SparkBase.PersistMode.kNoPersistParameters
-    );
+    if (spark!=null)
+      spark.configure(
+        config, 
+        SparkBase.ResetMode.kResetSafeParameters,
+        SparkBase.PersistMode.kNoPersistParameters
+      );
 
     return spark;
   }
