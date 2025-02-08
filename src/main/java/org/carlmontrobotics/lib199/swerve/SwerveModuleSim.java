@@ -39,8 +39,6 @@ public class SwerveModuleSim {
         driveEncoderSim = new SimDeviceSim("CANEncoder:CANSparkMax", drivePortNum);
         DCMotor dcmotor = DCMotor.getNEO(1);
         drivePhysicsSim = new DCMotorSim(LinearSystemId.createDCMotorSystem(dcmotor, driveMoiKgM2, driveGearing),  dcmotor);//FIXME WHAT DO WE WANT THE MEASUREMENT STDDEVS TO BE? (LAST ARG)
-
-        // drivePhysicsSim = new DCMotorSim(DCMotor.getNEO(1), driveGearing, driveMoiKgM2);
         this.driveGearing = driveGearing;
 
         turnMotorSim = new SimDeviceSim("CANMotor:CANSparkMax", turnMotorPortNum);
