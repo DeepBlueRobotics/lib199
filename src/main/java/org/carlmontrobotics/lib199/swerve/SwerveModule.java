@@ -45,6 +45,9 @@ public class SwerveModule implements Sendable {
     public enum ModuleType {FL, FR, BL, BR};
 
     private SwerveConfig config;
+    private SparkMaxConfig turnConfig = new SparkMaxConfig();
+    private SparkMaxConfig driveConfig = new SparkMaxConfig();
+
     private ModuleType type;
     private SparkMax drive, turn;
     private CANcoder turnEncoder;
@@ -74,12 +77,14 @@ public class SwerveModule implements Sendable {
         this.drive = drive;
 
         double positionConstant = config.wheelDiameterMeters * Math.PI / config.driveGearing;
-        drive.setInverted(config.driveInversion[arrIndex]);
+        driveConfig.inverted(config.driveInversion[arrIndex]);
+        turnConfig.inverted(config.turnInversion[arrIndex]);
+
         // drive.getEncoder().setPositionConversionFactor(positionConstant); //no such thing
         // drive.getEncoder().setVelocityConversionFactor(positionConstant / 60); //no such thing
         final double drivePositionFactor = positionConstant;
         final double turnPositionFactor = positionConstant / 60;
-        turn.setInverted(config.turnInversion[arrIndex]);
+
         maxControllableAccerlationRps2 = 0;
         final double normalForceNewtons = 83.2 /* lbf */ * 4.4482 /* N/lbf */ / 4 /* numModules */;
         double wheelTorqueLimitNewtonMeters = normalForceNewtons * config.mu * config.wheelDiameterMeters / 2;
@@ -167,6 +172,10 @@ public class SwerveModule implements Sendable {
         // SmartDashboard.putData(this);
 
         SendableRegistry.addLW(this, "SwerveModule", type.toString());
+
+        //do stuff here
+        drive.configure(driveConfig, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
+        turn.configure(turnConfig, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
 
     }
 
