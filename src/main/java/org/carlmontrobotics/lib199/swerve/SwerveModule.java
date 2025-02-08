@@ -142,7 +142,7 @@ public class SwerveModule implements Sendable {
         turnPIDController.setTolerance(turnToleranceRot);
         
         CANcoderConfiguration configs = new CANcoderConfiguration();
-         configs.MagnetSensor.AbsoluteSensorDiscontinuityPoint = .5;
+        configs.MagnetSensor.AbsoluteSensorDiscontinuityPoint = .5;
         this.turnEncoder = turnEncoder;
         this.turnEncoder.getConfigurator().apply(configs);
 
