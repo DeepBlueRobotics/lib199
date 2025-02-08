@@ -48,7 +48,7 @@ public class SwerveModuleSim {
         turnPhysicsSim = new DCMotorSim(
             LinearSystemId.createDCMotorSystem(dcmotor, turnMoiKgM2, turnGearing), 
             dcmotor,
-             0.0);
+             0.0,2.2);
     }
 
     /**
