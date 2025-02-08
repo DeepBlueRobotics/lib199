@@ -55,16 +55,16 @@ public class MockedSparkMaxPIDController {
             case kVelocity:
                 output = activeSlot.pidController.calculate(feedbackDevice.getVelocity(), setpoint);
                 break;
-            case kSmartMotion:
+            case kMAXMotionPositionControl:
                 output = activeSlot.profiledPIDController.calculate(feedbackDevice.getPosition(), setpoint);
                 if(Math.abs(activeSlot.profiledPIDController.getGoal().velocity) < activeSlot.smartMotionMinVelocity) {
-                    output = 0;
+                    output = 0;//FIXME max motion doesn't have min velocity!!!
                 }
                 break;
             case kCurrent:
                 output = activeSlot.pidController.calculate(currentDraw, setpoint);
                 break;
-            case kSmartVelocity:
+            case kMAXMotionVelocityControl:
             default:
                 throw new IllegalArgumentException("Unsupported ControlType: " + controlType);
         }

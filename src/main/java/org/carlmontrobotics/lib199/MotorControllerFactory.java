@@ -25,7 +25,6 @@ import com.revrobotics.spark.SparkClosedLoopController;
 
 // import org.carlmontrobotics.lib199.sim.MockSparkFlex;
 // import org.carlmontrobotics.lib199.sim.MockSparkMax;
-// FIXME: sorry but we don't need these right now
 import org.carlmontrobotics.lib199.sim.MockTalonSRX;
 import org.carlmontrobotics.lib199.sim.MockVictorSPX;
 import org.carlmontrobotics.lib199.sim.MockedCANCoder;
@@ -129,6 +128,8 @@ public class MotorControllerFactory {
     // MotorErrors.reportError(controller.setFF(0));
     config.closedLoop.velocityFF(0);
 
+    spark.configure(config, SparkBase.ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
+
     return spark;
   }
 
@@ -168,29 +169,7 @@ public class MotorControllerFactory {
     return spark;
   }
 
-  private static void configureSpark(SparkBase spark, SparkMaxConfig config) {
-    MotorErrors.reportSparkTemp(spark, (int) spark.getMotorTemperature());
-  
-    SparkMaxConfig newConfig = new SparkMaxConfig();
-
-    config.idleMode(IdleMode.kBrake);
-    
-    config.voltageCompensation(12);
-    config.smartCurrentLimit(50);
-    
-    config.closedLoop.minOutput(-1);
-    config.closedLoop.maxOutput(1);
-    config.closedLoop.p(0, ClosedLoopSlot.kSlot0);
-    config.closedLoop.i(0, ClosedLoopSlot.kSlot0);
-    config.closedLoop.d(0, ClosedLoopSlot.kSlot0);
-    config.closedLoop.velocityFF(0);
-
-    spark.configure(
-      config, 
-      SparkBase.ResetMode.kResetSafeParameters,
-      SparkBase.PersistMode.kNoPersistParameters
-    );
-  }
+  //delete configureSpark(SparkBase, Config) because SparkBase.configure() already does that.
 
   /**
    * @deprecated Use {@link SensorFactory#createCANCoder(int)} instead.

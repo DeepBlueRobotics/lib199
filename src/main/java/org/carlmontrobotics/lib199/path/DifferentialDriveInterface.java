@@ -92,6 +92,7 @@ public interface DifferentialDriveInterface extends DrivetrainInterface {
      */
     @Override
     public default Command createAutoCommand(Trajectory trajectory, Supplier<Rotation2d> desiredHeading) {
+        //Ramsetecommand is deprecated but there's no equivalent...
         return new RamseteCommand(trajectory, this::getPose, createRamsete(), getKinematics(), this::drive, this);
     }
 

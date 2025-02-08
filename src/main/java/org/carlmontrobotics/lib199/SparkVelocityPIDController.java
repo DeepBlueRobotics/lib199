@@ -2,6 +2,7 @@ package org.carlmontrobotics.lib199;
 
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.ClosedLoopConfig;
+import com.revrobotics.spark.config.SparkBaseConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
 // import com.revrobotics.SparkBase.ControlType;
 import com.revrobotics.RelativeEncoder;
@@ -84,22 +85,22 @@ public class SparkVelocityPIDController implements Sendable {
         return kS * Math.signum(velocity) + kV * velocity;
     }
 
+    private void instantClosedLoopConfig(ClosedLoopConfig clConfig) {
+        spark.configure(new SparkMaxConfig().apply(clConfig), ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
+    }
+
     @Override
     public void initSendable(SendableBuilder builder) {
         builder.setActuator(true);
         builder.setSmartDashboardType("SparkVelocityPIDController");
         builder.addDoubleProperty("P", () -> currentP, p -> {
-            spark.configure(new SparkMaxConfig().apply(new ClosedLoopConfig().p(p)), ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
-            // pidController.setP(p);
-            currentP = p;
+            instantClosedLoopConfig(new ClosedLoopConfig().p(currentP = p));
         });
         builder.addDoubleProperty("I", () -> currentI, i -> {
-            spark.configure(new SparkMaxConfig().apply(new ClosedLoopConfig().i(i)), ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
-            currentI = i;
+            instantClosedLoopConfig(new ClosedLoopConfig().i(currentI = i));
         });
         builder.addDoubleProperty("D", () -> currentD, d -> {
-            spark.configure(new SparkMaxConfig().apply(new ClosedLoopConfig().d(d)), ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
-            currentD = d;
+            instantClosedLoopConfig(new ClosedLoopConfig().d(currentD = d));
         });
         builder.addDoubleProperty("Target Speed", () -> targetSpeed, newSpeed -> {
             if(newSpeed == targetSpeed) return;

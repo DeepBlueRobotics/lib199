@@ -193,8 +193,11 @@ public class SwerveModule implements Sendable {
     public void drivePeriodic() {
         String moduleString = type.toString();
         double actualSpeed = getCurrentSpeed();
-        double targetVoltage = (actualSpeed >= 0 ? forwardSimpleMotorFF :
-                                backwardSimpleMotorFF).calculate(desiredSpeed, calculateAntiGravitationalA(pitchDegSupplier.get(), rollDegSupplier.get()));//clippedAcceleration);
+        double targetVoltage = (actualSpeed >= 0 ? forwardSimpleMotorFF : backwardSimpleMotorFF)
+            .calculateWithVelocities(
+                desiredSpeed, 
+                desiredSpeed+calculateAntiGravitationalA(pitchDegSupplier.get(), rollDegSupplier.get())
+            );//clippedAcceleration);
         
         // Use robot characterization as a simple physical model to account for internal resistance, frcition, etc.
         // Add a PID adjustment for error correction (also "drives" the actual speed to the desired speed)
@@ -241,7 +244,7 @@ public class SwerveModule implements Sendable {
 
             // SmartDashboard.putNumber("previous turn Velocity", prevTurnVelocity);
             // SmartDashboard.putNumber("state velocity",state.velocity);
-            turnFFVolts = turnSimpleMotorFeedforward.calculate(state.velocity, 0);//(state.velocity-prevTurnVelocity) / period);
+            turnFFVolts = turnSimpleMotorFeedforward.calculate(state.velocity);//(state.velocity-prevTurnVelocity) / period);
             turnVolts = turnFFVolts + turnSpeedCorrectionVolts;
             if (!turnPIDController.atGoal()) {
                 turn.setVoltage(MathUtil.clamp(turnVolts, -12.0, 12.0));
@@ -388,8 +391,8 @@ public class SwerveModule implements Sendable {
         if (drivePIDController.getD() != drivekD) {
             drivePIDController.setD(drivekD);
         }
-        double driveTolerance = SmartDashboard.getNumber(moduleString + " Drive Tolerance", drivePIDController.getPositionTolerance());
-        if (drivePIDController.getPositionTolerance() != driveTolerance) {
+        double driveTolerance = SmartDashboard.getNumber(moduleString + " Drive Tolerance", drivePIDController.getErrorTolerance());
+        if (drivePIDController.getErrorTolerance() != driveTolerance) {
             drivePIDController.setTolerance(driveTolerance);
         }
         double drivekS = SmartDashboard.getNumber(moduleString + " Drive kS", forwardSimpleMotorFF.getKs());
@@ -428,14 +431,14 @@ public class SwerveModule implements Sendable {
 
     public void brake() {
         SparkBaseConfig config = new SparkMaxConfig().idleMode(IdleMode.kBrake);
-        drive.configure(config, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
-        turn .configure(config, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
+        drive.configure(config, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
+        turn .configure(config, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
     }
 
     public void coast() {
         SparkBaseConfig config = new SparkMaxConfig().idleMode(IdleMode.kCoast);
-        drive.configure(config, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
-        turn .configure(config, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
+        drive.configure(config, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
+        turn .configure(config, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
     }
 
     /**

@@ -76,11 +76,11 @@ public final class MotorErrors {
         Faults prevFaults = flags.containsKey(spark) ? flags.get(spark) : null;
         Faults prevStickyFaults = stickyFlags.containsKey(spark) ? stickyFlags.get(spark) : null;
 
-        if (spark.hasActiveFault() && prevFaults != faults) {
-        System.err.println("Whoops, big oopsie : fault error(s) with spark id : " + spark.getDeviceId() + ": [ " + formatFaults(spark) + "], ooF!");
+        if (spark.hasActiveFault() && prevFaults!=null && prevFaults != faults) {
+        System.err.println("Fault Errors! (spark id " + spark.getDeviceId() + "): [" + formatFaults(spark) + "], ooF!");
         }
-        if (spark.hasActiveFault() && prevStickyFaults != stickyFaults) {
-        System.err.println("Bruh, you did an Error : sticky fault(s) error with spark id : " + spark.getDeviceId() + ": " + formatStickyFaults(spark) + ", Ouch!");
+        if (prevStickyFaults!=null && prevStickyFaults != stickyFaults) {
+        System.err.println("Sticky Faults! (spark id " + spark.getDeviceId() + "): [" + formatStickyFaults(spark) + "], Ouch!");
         }
         spark.clearFaults();
         flags.put(spark, faults);
