@@ -195,9 +195,10 @@ public class SwerveModule implements Sendable {
         double actualSpeed = getCurrentSpeed();
         double targetVoltage = (actualSpeed >= 0 ? forwardSimpleMotorFF : backwardSimpleMotorFF)
             .calculateWithVelocities(
-                desiredSpeed, 
-                desiredSpeed+calculateAntiGravitationalA(pitchDegSupplier.get(), rollDegSupplier.get())
+                actualSpeed, 
+                desiredSpeed
             );//clippedAcceleration);
+        //calculateAntiGravitationalA(pitchDegSupplier.get(), rollDegSupplier.get())
         
         // Use robot characterization as a simple physical model to account for internal resistance, frcition, etc.
         // Add a PID adjustment for error correction (also "drives" the actual speed to the desired speed)
