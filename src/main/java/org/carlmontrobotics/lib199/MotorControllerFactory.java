@@ -14,6 +14,7 @@ import com.ctre.phoenix6.hardware.CANcoder;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.config.SparkBaseConfig;
+import com.revrobotics.spark.config.SparkFlexConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.servohub.ServoHub.ResetMode;
@@ -128,7 +129,7 @@ public class MotorControllerFactory {
     // MotorErrors.reportError(controller.setFF(0));
     config.closedLoop.velocityFF(0);
 
-    spark.configure(config, SparkBase.ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
+    spark.configure(config, SparkBase.ResetMode.kResetSafeParameters, SparkBase.PersistMode.kPersistParameters);
 
     return spark;
   }
@@ -169,7 +170,28 @@ public class MotorControllerFactory {
     return spark;
   }
 
-  //delete configureSpark(SparkBase, Config) because SparkBase.configure() already does that.
+  private static SparkBaseConfig baseSparkConfig(MotorConfig motorConfig) {
+    SparkMaxConfig config = new SparkMaxConfig();
+
+    config.idleMode(IdleMode.kBrake);
+    
+    config.voltageCompensation(12);//FIXME does this need to be different for different motors?
+    config.smartCurrentLimit(motorConfig.currentLimitAmps);
+    
+    config.closedLoop
+      .minOutput(-1)
+      .maxOutput(1)
+      .pid(0,0,0)
+      .velocityFF(0);
+
+    return config;
+  }
+  private static SparkMaxConfig baseSparkMaxConfig(MotorConfig motorConfig){
+    return (SparkMaxConfig) baseSparkConfig(motorConfig);//FIXME apply needed config changes for each controller
+  }
+  private static SparkFlexConfig baseSparkFlexConfig(MotorConfig motorConfig){
+    return (SparkFlexConfig) baseSparkConfig(motorConfig);//criminal casting usage
+  }
 
   /**
    * @deprecated Use {@link SensorFactory#createCANCoder(int)} instead.
