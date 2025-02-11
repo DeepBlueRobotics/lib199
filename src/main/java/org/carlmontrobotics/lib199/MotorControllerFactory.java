@@ -187,9 +187,11 @@ public class MotorControllerFactory {
     return config;
   }
   private static SparkMaxConfig baseSparkMaxConfig(MotorConfig motorConfig){
+    //typical operating voltage: 12V.
     return (SparkMaxConfig) baseSparkConfig(motorConfig);//FIXME apply needed config changes for each controller
   }
   private static SparkFlexConfig baseSparkFlexConfig(MotorConfig motorConfig){
+    //typical operating voltage: 12V. ( same as sparkMax )
     return (SparkFlexConfig) baseSparkConfig(motorConfig);//criminal casting usage
   }
 
