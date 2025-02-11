@@ -32,6 +32,7 @@ import edu.wpi.first.units.Measure;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.util.sendable.SendableRegistry;
+import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
@@ -94,8 +95,7 @@ public class SwerveModule implements Sendable {
         final double neoStallCurrentAmps = 166;
         double currentLimitAmps = neoFreeCurrentAmps + 2*motorTorqueLimitNewtonMeters / neoStallTorqueNewtonMeters * (neoStallCurrentAmps-neoFreeCurrentAmps);
         // SmartDashboard.putNumber(type.toString() + " current limit (amps)", currentLimitAmps);
-        drive.configure(new SparkMaxConfig().smartCurrentLimit(Math.min(50,(int)currentLimitAmps)),
-            ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
+        driveConfig.smartCurrentLimit(Math.min(50, (int)currentLimitAmps));
         
         this.forwardSimpleMotorFF = new SimpleMotorFeedforward(config.kForwardVolts[arrIndex],
                                                                 config.kForwardVels[arrIndex],
@@ -193,10 +193,11 @@ public class SwerveModule implements Sendable {
     public void drivePeriodic() {
         String moduleString = type.toString();
         double actualSpeed = getCurrentSpeed();
+        double extraAccel = calculateAntiGravitationalA(pitchDegSupplier.get(), rollDegSupplier.get());
         double targetVoltage = (actualSpeed >= 0 ? forwardSimpleMotorFF : backwardSimpleMotorFF)
             .calculateWithVelocities(
                 actualSpeed, 
-                desiredSpeed
+                desiredSpeed + extraAccel * TimedRobot.kDefaultPeriod//m/s + ( m/s^2 * s )
             );//clippedAcceleration);
         //calculateAntiGravitationalA(pitchDegSupplier.get(), rollDegSupplier.get())
         
