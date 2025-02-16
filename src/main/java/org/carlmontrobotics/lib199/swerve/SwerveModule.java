@@ -77,14 +77,14 @@ public class SwerveModule implements Sendable {
         this.type = type;
         this.drive = drive;
 
-        double positionConstant = config.wheelDiameterMeters * Math.PI / config.driveGearing;
         driveConfig.inverted(config.driveInversion[arrIndex]);
         turnConfig.inverted(config.turnInversion[arrIndex]);
 
-        // drive.getEncoder().setPositionConversionFactor(positionConstant); //no such thing
-        // drive.getEncoder().setVelocityConversionFactor(positionConstant / 60); //no such thing
-        final double drivePositionFactor = positionConstant;
-        final double turnPositionFactor = positionConstant / 60;
+        double drivePositionFactor = config.wheelDiameterMeters * Math.PI / config.driveGearing;
+        final double driveVelocityFactor = drivePositionFactor / 60;//why by 60?
+        driveConfig.encoder
+            .positionConversionFactor(drivePositionFactor)
+            .velocityConversionFactor(driveVelocityFactor);
 
         maxControllableAccerlationRps2 = 0;
         final double normalForceNewtons = 83.2 /* lbf */ * 4.4482 /* N/lbf */ / 4 /* numModules */;
@@ -108,10 +108,10 @@ public class SwerveModule implements Sendable {
                                                config.drivekI[arrIndex],
                                                config.drivekD[arrIndex]);
         
-        /* offset for 1 CANcoder count */
+        /* offset for 1 relative encoder count */
         drivetoleranceMPerS = (1.0 
-            / (double)(drive.configAccessor.encoder.getCountsPerRevolution()) * positionConstant) 
-            / Units.millisecondsToSeconds(drive.configAccessor.signals.getPrimaryEncoderPositionPeriodMs() * drive.configAccessor.absoluteEncoder.getAverageDepth());
+            / (double)(drive.configAccessor.encoder.getCountsPerRevolution()) * drivePositionFactor) 
+            / Units.millisecondsToSeconds(drive.configAccessor.signals.getPrimaryEncoderPositionPeriodMs() * drive.configAccessor.encoder.getAverageDepth());
         drivePIDController.setTolerance(drivetoleranceMPerS);
 
         //System.out.println("Velocity Constant: " + (positionConstant / 60));
@@ -134,21 +134,22 @@ public class SwerveModule implements Sendable {
 
         turnConstraints = new TrapezoidProfile.Constraints(maxAchievableTurnVelocityRps, maxAchievableTurnAccelerationRps2);
         lastAngle = 0.0;
-        turnPIDController = new ProfiledPIDController(config.turnkP[arrIndex], 
-                                              config.turnkI[arrIndex],
-                                              config.turnkD[arrIndex],
-                                              turnConstraints);
+        turnPIDController = new ProfiledPIDController(
+            config.turnkP[arrIndex], 
+            config.turnkI[arrIndex],
+            config.turnkD[arrIndex],
+            turnConstraints);
         turnPIDController.enableContinuousInput(-.5, .5);
         turnPIDController.setTolerance(turnToleranceRot);
-        
-        CANcoderConfiguration configs = new CANcoderConfiguration();
-        configs.MagnetSensor.AbsoluteSensorDiscontinuityPoint = .5;
-        this.turnEncoder = turnEncoder;
-        this.turnEncoder.getConfigurator().apply(configs);
 
         this.driveModifier = config.driveModifier;
         this.reversed = config.reversed[arrIndex];
         this.turnZeroDeg = config.turnZeroDeg[arrIndex];
+        
+        CANcoderConfiguration CANconfig = new CANcoderConfiguration();
+        CANconfig.MagnetSensor.AbsoluteSensorDiscontinuityPoint = .5;
+        // CANconfig.MagnetSensor.MagnetOffset=-turnZeroDeg; //done in getModuleAngle.
+        this.turnEncoder.getConfigurator().apply(CANconfig);
 
         turnPIDController.reset(getModuleAngle());
 
@@ -186,7 +187,7 @@ public class SwerveModule implements Sendable {
     private double prevTurnVelocity = 0;
     public void periodic() {
         drivePeriodic();
-        //updateSmartDashboard();
+        updateSmartDashboard();
         turnPeriodic();
     }
 
