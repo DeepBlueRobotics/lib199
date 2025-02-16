@@ -111,7 +111,7 @@ public class SwerveModule implements Sendable {
         /* offset for 1 relative encoder count */
         drivetoleranceMPerS = (1.0 
             / (double)(drive.configAccessor.encoder.getCountsPerRevolution()) * drivePositionFactor) 
-            / Units.millisecondsToSeconds(drive.configAccessor.signals.getPrimaryEncoderPositionPeriodMs() * drive.configAccessor.encoder.getAverageDepth());
+            / Units.millisecondsToSeconds(drive.configAccessor.signals.getPrimaryEncoderPositionPeriodMs() * drive.configAccessor.encoder.getQuadratureAverageDepth());
         drivePIDController.setTolerance(drivetoleranceMPerS);
 
         //System.out.println("Velocity Constant: " + (positionConstant / 60));
