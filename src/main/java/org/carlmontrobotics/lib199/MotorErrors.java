@@ -137,8 +137,9 @@ public final class MotorErrors {
         lastSparkErrorIndexReported = (lastSparkErrorIndexReported + n) % flags.size();
     }
 
+    //what does this even supposed to do??
     public static SparkMax createDummySparkMax() {
-        return DummySparkMaxAnswer.DUMMY_SPARK_MAX;
+        return Mocks.mock(SparkMax.class, new REVLibErrorAnswer());
     }
 
     @Deprecated
