@@ -88,22 +88,22 @@ public class MockedEncoder implements AbsoluteEncoder, AnalogInput, AutoCloseabl
         return REVLibError.kOk;
     }
 
-    @Override
-    public REVLibError setMeasurementPeriod(int period_ms) {
-        System.err.println("(MockedEncoder) setMeasurementPeriod not implemented");
-        return REVLibError.kNotImplemented;
-    }
+    // @Override
+    // public REVLibError setMeasurementPeriod(int period_ms) {
+    //     System.err.println("(MockedEncoder) setMeasurementPeriod not implemented");
+    //     return REVLibError.kNotImplemented;
+    // }
 
-    @Override
-    public int getMeasurementPeriod() {
-        System.err.println("(MockedEncoder) getMeasurementPeriod not implemented");
-        return 0;
-    }
+    // @Override
+    // public int getMeasurementPeriod() {
+    //     System.err.println("(MockedEncoder) getMeasurementPeriod not implemented");
+    //     return 0;
+    // }
 
-    @Override
-    public int getCountsPerRevolution() {
-        return countsPerRev;
-    }
+    // @Override
+    // public int getCountsPerRevolution() {
+    //     return countsPerRev;
+    // }
 
     /**
      * @return The current position of the encoder, not accounting for the position offset ({@link #setPosition(double)} and {@link #setZeroOffset(double)})
@@ -128,65 +128,65 @@ public class MockedEncoder implements AbsoluteEncoder, AnalogInput, AutoCloseabl
                 * velocityConversionFactor;
     }
 
-    @Override
-    public REVLibError setPositionConversionFactor(double factor) {
-        positionConversionFactor = factor;
-        return REVLibError.kOk;
-    }
+    // @Override
+    // public REVLibError setPositionConversionFactor(double factor) {
+    //     positionConversionFactor = factor;
+    //     return REVLibError.kOk;
+    // }
 
-    @Override
-    public double getPositionConversionFactor() {
-        return positionConversionFactor;
-    }
+    // @Override
+    // public double getPositionConversionFactor() {
+    //     return positionConversionFactor;
+    // }
 
-    @Override
-    public REVLibError setVelocityConversionFactor(double factor) {
-        velocityConversionFactor = factor;
-        return REVLibError.kOk;
-    }
+    // @Override
+    // public REVLibError setVelocityConversionFactor(double factor) {
+    //     velocityConversionFactor = factor;
+    //     return REVLibError.kOk;
+    // }
 
-    @Override
-    public double getVelocityConversionFactor() {
-        return velocityConversionFactor;
-    }
+    // @Override
+    // public double getVelocityConversionFactor() {
+    //     return velocityConversionFactor;
+    // }
 
-    @Override
-    public REVLibError setInverted(boolean inverted) {
-        this.inverted = inverted;
-        return REVLibError.kOk;
-    }
+    // @Override
+    // public REVLibError setInverted(boolean inverted) {
+    //     this.inverted = inverted;
+    //     return REVLibError.kOk;
+    // }
 
-    @Override
-    public boolean getInverted() {
-        return inverted;
-    }
+    // @Override
+    // public boolean getInverted() {
+    //     return inverted;
+    // }
 
-    @Override
-    public REVLibError setAverageDepth(int depth) {
-        System.err.println("(MockedEncoder) setAverageDepth not implemented");
-        return REVLibError.kNotImplemented;
-    }
+    // @Override
+    // public REVLibError setAverageDepth(int depth) {
+    //     System.err.println("(MockedEncoder) setAverageDepth not implemented");
+    //     return REVLibError.kNotImplemented;
+    // }
 
-    @Override
-    public int getAverageDepth() {
-        System.err.println("(MockedEncoder) getAverageDepth not implemented");
-        return 0;
-    }
+    // @Override
+    // public int getAverageDepth() {
+    //     System.err.println("(MockedEncoder) getAverageDepth not implemented");
+    //     return 0;
+    // }
 
-    @Override
-    public REVLibError setZeroOffset(double offset) {
-        if (!absolute) {
-            System.err.println("(MockedEncoder) setZeroOffset cannot be called on a relative encoder");
-            return REVLibError.kParamAccessMode;
-        }
-        positionOffset = offset;
-        return REVLibError.kOk;
-    }
+    // @Override
+    // public REVLibError setZeroOffset(double offset) {
+    //     if (!absolute) {
+    //         System.err.println("(MockedEncoder) setZeroOffset cannot be called on a relative encoder");
+    //         return REVLibError.kParamAccessMode;
+    //     }
+    //     positionOffset = offset;
+    //     return REVLibError.kOk;
+    // }
 
-    @Override
-    public double getZeroOffset() {
-        return positionOffset;
-    }
+    // @Override
+    // public double getZeroOffset() {
+    //     return positionOffset;
+    // }
 
     @Override
     public void close() {
