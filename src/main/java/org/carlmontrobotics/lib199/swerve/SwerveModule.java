@@ -148,6 +148,7 @@ public class SwerveModule implements Sendable {
         
         CANcoderConfiguration CANconfig = new CANcoderConfiguration();
         CANconfig.MagnetSensor.AbsoluteSensorDiscontinuityPoint = .5;
+        this.turnEncoder = turnEncoder;
         // CANconfig.MagnetSensor.MagnetOffset=-turnZeroDeg; //done in getModuleAngle.
         this.turnEncoder.getConfigurator().apply(CANconfig);
 
