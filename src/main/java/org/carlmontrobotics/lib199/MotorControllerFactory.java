@@ -83,15 +83,13 @@ public class MotorControllerFactory {
     return talon;
   }
 
-  //checks for spark max errors
-
-  @Deprecated
-  public static SparkMax createSparkMax(int id, MotorErrors.TemperatureLimit temperatureLimit) {
-    return createSparkMax(id, temperatureLimit.limit);
-  }
-
-  @Deprecated
-  public static SparkMax createSparkMax(int id, int temperatureLimit) {
+    /**
+   * Create a sparkMax controller (NEO or 550) with defautl settings.
+   * 
+   * @param id the port of the motor controller
+   * @param motorConfig either MotorConfig.NEO or MotorConfig.NEO_550
+   */
+  public static SparkMax createSparkMax(int id, MotorConfig motorConfig) {
     SparkMax spark=null;
     if (RobotBase.isReal()) {
       spark = new SparkMax(id, SparkLowLevel.MotorType.kBrushless);
@@ -99,37 +97,20 @@ public class MotorControllerFactory {
       System.err.println("heyy... lib199 doesn't have sim support sorri");
       // spark = MockSparkMax.createMockSparkMax(id, SparkLowLevel.MotorType.kBrushless);
     }
-    SparkMaxConfig config = new SparkMaxConfig();
-    // config.setPeriodicFramePeriod(SparkLowLevel.PeriodicFrame.kStatus0, 1);
-    //FIXME: What is kStatus0
-    // config.signals.
-    if (spark!=null)
-      MotorErrors.reportSparkMaxTemp(spark, temperatureLimit);
 
-    // MotorErrors.reportError(config.follow(ExternalFollower.kFollowerDisabled, 0));
-    // config.follow(null, false); dont follow nothing because thats the norm
-    // MotorErrors.reportError(config.setIdleMode(IdleMode.kBrake));
-    config.idleMode(IdleMode.kBrake);
-    // MotorErrors.reportError(config.enableVoltageCompensation(12));
-    config.voltageCompensation(12);
-    // MotorErrors.reportError(config.smartCurrentLimit(50));
-    config.smartCurrentLimit(50);
+    // config.setPeriodicFramePeriod(SparkLowLevel.PeriodicFrame.kStatus0, 1);
+    if (spark!=null)
+      MotorErrors.reportSparkMaxTemp(spark, motorConfig.temperatureLimitCelsius);
     
     MotorErrors.checkSparkMaxErrors(spark);
-    SparkClosedLoopController controller = spark.getClosedLoopController();
-    // MotorErrors.reportError(controller.setOutputRange(-1, 1));
-    config.closedLoop.minOutput(-1);
-    config.closedLoop.maxOutput(1);
-    // MotorErrors.reportError(controller.setP(0));
-    // MotorErrors.reportError(controller.setI(0));
-    // MotorErrors.reportError(controller.setD(0));
-    config.closedLoop.p(0, ClosedLoopSlot.kSlot0);
-    config.closedLoop.i(0, ClosedLoopSlot.kSlot0);
-    config.closedLoop.d(0, ClosedLoopSlot.kSlot0);
-    // MotorErrors.reportError(controller.setFF(0));
-    config.closedLoop.velocityFF(0);
 
-    spark.configure(config, SparkBase.ResetMode.kResetSafeParameters, SparkBase.PersistMode.kPersistParameters);
+    if (motorConfig==MotorConfig.NEO || motorConfig==MotorConfig.NEO_550)
+      spark.configure(baseSparkMaxConfig(), SparkBase.ResetMode.kResetSafeParameters, SparkBase.PersistMode.kPersistParameters);
+    else if (motorConfig==MotorConfig.NEO_VORTEX)
+      spark.configure(baseSparkFlexConfig(), SparkBase.ResetMode.kResetSafeParameters, SparkBase.PersistMode.kPersistParameters);
+    else
+      spark.configure(baseSparkConfig(), SparkBase.ResetMode.kResetSafeParameters, SparkBase.PersistMode.kPersistParameters);
+
 
     return spark;
   }
@@ -170,13 +151,13 @@ public class MotorControllerFactory {
     return spark;
   }
 
-  private static SparkBaseConfig baseSparkConfig(MotorConfig motorConfig) {
+  private static SparkBaseConfig baseSparkConfig() {
     SparkMaxConfig config = new SparkMaxConfig();
 
     config.idleMode(IdleMode.kBrake);
     
     config.voltageCompensation(12);//FIXME does this need to be different for different motors?
-    config.smartCurrentLimit(motorConfig.currentLimitAmps);
+    config.smartCurrentLimit(50);
     
     config.closedLoop
       .minOutput(-1)
@@ -186,13 +167,42 @@ public class MotorControllerFactory {
 
     return config;
   }
-  private static SparkMaxConfig baseSparkMaxConfig(MotorConfig motorConfig){
-    //typical operating voltage: 12V.
-    return (SparkMaxConfig) baseSparkConfig(motorConfig);//FIXME apply needed config changes for each controller
+  /**
+   * Overrides an old config - but does not change other settings.
+   */
+  private static SparkBaseConfig baseSparkConfig(SparkMaxConfig config) {
+    config.idleMode(IdleMode.kBrake);
+    
+    config.voltageCompensation(12);//FIXME does this need to be different for different motors?
+    config.smartCurrentLimit(50);
+    
+    config.closedLoop
+      .minOutput(-1)
+      .maxOutput(1)
+      .pid(0,0,0)
+      .velocityFF(0);
+
+    return config;
   }
-  private static SparkFlexConfig baseSparkFlexConfig(MotorConfig motorConfig){
+  /**
+   * Overrides an old config - but does not change other settings.
+   */
+  private static SparkMaxConfig baseSparkMaxConfig(SparkMaxConfig config){
+    //typical operating voltage: 12V.
+    return (SparkMaxConfig) baseSparkConfig(config);//FIXME apply needed config changes for each controller
+  }
+  private static SparkMaxConfig baseSparkMaxConfig(){
+    return (SparkMaxConfig) baseSparkConfig();
+  }
+  /**
+   * Overrides an old config - but does not change other settings.
+   */
+  private static SparkFlexConfig baseSparkFlexConfig(SparkMaxConfig config){
     //typical operating voltage: 12V. ( same as sparkMax )
-    return (SparkFlexConfig) baseSparkConfig(motorConfig);//criminal casting usage
+    return (SparkFlexConfig) baseSparkConfig(config);//criminal casting usage
+  }
+  private static SparkFlexConfig baseSparkFlexConfig(){//why? no Se.
+    return (SparkFlexConfig) baseSparkConfig();
   }
 
   /**
