@@ -151,7 +151,7 @@ public class MotorControllerFactory {
     return spark;
   }
 
-  private static SparkBaseConfig baseSparkConfig() {
+  public static SparkBaseConfig baseSparkConfig() {
     SparkMaxConfig config = new SparkMaxConfig();
 
     config.idleMode(IdleMode.kBrake);
@@ -170,7 +170,7 @@ public class MotorControllerFactory {
   /**
    * Overrides an old config - but does not change other settings.
    */
-  private static SparkBaseConfig baseSparkConfig(SparkMaxConfig config) {
+  public static SparkBaseConfig baseSparkConfig(SparkMaxConfig config) {
     config.idleMode(IdleMode.kBrake);
     
     config.voltageCompensation(12);//FIXME does this need to be different for different motors?
@@ -187,21 +187,21 @@ public class MotorControllerFactory {
   /**
    * Overrides an old config - but does not change other settings.
    */
-  private static SparkMaxConfig baseSparkMaxConfig(SparkMaxConfig config){
+  public static SparkMaxConfig baseSparkMaxConfig(SparkMaxConfig config){
     //typical operating voltage: 12V.
     return (SparkMaxConfig) baseSparkConfig(config);//FIXME apply needed config changes for each controller
   }
-  private static SparkMaxConfig baseSparkMaxConfig(){
+  public static SparkMaxConfig baseSparkMaxConfig(){
     return (SparkMaxConfig) baseSparkConfig();
   }
   /**
    * Overrides an old config - but does not change other settings.
    */
-  private static SparkFlexConfig baseSparkFlexConfig(SparkMaxConfig config){
+  public static SparkFlexConfig baseSparkFlexConfig(SparkMaxConfig config){
     //typical operating voltage: 12V. ( same as sparkMax )
     return (SparkFlexConfig) baseSparkConfig(config);//criminal casting usage
   }
-  private static SparkFlexConfig baseSparkFlexConfig(){//why? no Se.
+  public static SparkFlexConfig baseSparkFlexConfig(){//why? no Se.
     return (SparkFlexConfig) baseSparkConfig();
   }
 
