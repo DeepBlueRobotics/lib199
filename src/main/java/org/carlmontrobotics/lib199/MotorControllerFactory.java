@@ -83,8 +83,8 @@ public class MotorControllerFactory {
     return talon;
   }
 
-    /**
-   * Create a sparkMax controller (NEO or 550) with defautl settings.
+  /**
+   * Create a default sparkMax controller (NEO or 550).
    * 
    * @param id the port of the motor controller
    * @param motorConfig either MotorConfig.NEO or MotorConfig.NEO_550
@@ -114,7 +114,12 @@ public class MotorControllerFactory {
 
     return spark;
   }
-
+  /**
+   * Create a sparkMax controller (NEO or 550) with custom settings.
+   * 
+   * @param id the port of the motor controller
+   * @param config the custom config to set
+   */
   public static SparkMax createSparkMax(int id, SparkBaseConfig config) {
     SparkMax spark = null;
     if (RobotBase.isReal()) {
@@ -132,7 +137,38 @@ public class MotorControllerFactory {
 
     return spark;
   }
+  /**
+   * Create a default sparkFlex-Vortex controller.
+   * 
+   * @param id the port of the motor controller
+   */
+  public static SparkFlex createSparkFlex(int id) {
+    MotorConfig motorConfig = MotorConfig.NEO_VORTEX;
 
+    SparkFlex spark=null;
+    if (RobotBase.isReal()) {
+      spark = new SparkFlex(id, SparkLowLevel.MotorType.kBrushless);
+    } else {
+      System.err.println("heyy... lib199 doesn't have sim support sorri");
+      // spark = MockSparkMax.createMockSparkMax(id, SparkLowLevel.MotorType.kBrushless);
+    }
+
+    // config.setPeriodicFramePeriod(SparkLowLevel.PeriodicFrame.kStatus0, 1);
+    if (spark!=null)
+      MotorErrors.reportSparkTemp(spark, motorConfig.temperatureLimitCelsius);
+    
+    MotorErrors.checkSparkErrors(spark);
+
+    spark.configure(baseSparkFlexConfig(), SparkBase.ResetMode.kResetSafeParameters, SparkBase.PersistMode.kPersistParameters);
+
+    return spark;
+  }
+  /**
+   * Create a sparkFlex controller (VORTEX) with custom settings.
+   * 
+   * @param id the port of the motor controller
+   * @param config the custom config to set
+   */
   public static SparkFlex createSparkFlex(int id, SparkBaseConfig config) {
     SparkFlex spark = null;
     if (RobotBase.isReal()) {
@@ -150,6 +186,7 @@ public class MotorControllerFactory {
 
     return spark;
   }
+
 
   public static SparkBaseConfig baseSparkConfig() {
     SparkMaxConfig config = new SparkMaxConfig();
