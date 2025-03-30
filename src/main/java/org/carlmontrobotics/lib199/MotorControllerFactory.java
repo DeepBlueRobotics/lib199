@@ -11,16 +11,21 @@ import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
 import com.ctre.phoenix6.hardware.CANcoder;
-import com.revrobotics.CANSparkMax;
-import com.revrobotics.CANSparkBase.ExternalFollower;
-import com.revrobotics.CANSparkBase.IdleMode;
-import com.revrobotics.CANSparkBase;
-import com.revrobotics.CANSparkFlex;
-import com.revrobotics.CANSparkLowLevel;
-import com.revrobotics.SparkPIDController;
+import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.SparkBase.PersistMode;
+import com.revrobotics.spark.config.SparkBaseConfig;
+import com.revrobotics.spark.config.SparkFlexConfig;
+import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
+import com.revrobotics.spark.config.SparkMaxConfig;
+import com.revrobotics.servohub.ServoHub.ResetMode;
+import com.revrobotics.spark.ClosedLoopSlot;
+import com.revrobotics.spark.SparkBase;
+import com.revrobotics.spark.SparkFlex;
+import com.revrobotics.spark.SparkLowLevel;
+import com.revrobotics.spark.SparkClosedLoopController;
 
-import org.carlmontrobotics.lib199.sim.MockSparkFlex;
-import org.carlmontrobotics.lib199.sim.MockSparkMax;
+// import org.carlmontrobotics.lib199.sim.MockSparkFlex;
+// import org.carlmontrobotics.lib199.sim.MockSparkMax;
 import org.carlmontrobotics.lib199.sim.MockTalonSRX;
 import org.carlmontrobotics.lib199.sim.MockVictorSPX;
 import org.carlmontrobotics.lib199.sim.MockedCANCoder;
@@ -78,86 +83,163 @@ public class MotorControllerFactory {
     return talon;
   }
 
-  //checks for spark max errors
-
-  @Deprecated
-  public static CANSparkMax createSparkMax(int id, MotorErrors.TemperatureLimit temperatureLimit) {
-    return createSparkMax(id, temperatureLimit.limit);
-  }
-
-  @Deprecated
-  public static CANSparkMax createSparkMax(int id, int temperatureLimit) {
-    CANSparkMax spark;
+  /**
+   * Create a default sparkMax controller (NEO or 550).
+   * 
+   * @param id the port of the motor controller
+   * @param motorConfig either MotorConfig.NEO or MotorConfig.NEO_550
+   */
+  public static SparkMax createSparkMax(int id, MotorConfig motorConfig) {
+    SparkMax spark=null;
     if (RobotBase.isReal()) {
-      spark = new CANSparkMax(id, CANSparkLowLevel.MotorType.kBrushless);
+      spark = new SparkMax(id, SparkLowLevel.MotorType.kBrushless);
     } else {
-        spark = MockSparkMax.createMockSparkMax(id, CANSparkLowLevel.MotorType.kBrushless);
+      System.err.println("heyy... lib199 doesn't have sim support sorri");
+      // spark = MockSparkMax.createMockSparkMax(id, SparkLowLevel.MotorType.kBrushless);
     }
-    spark.setPeriodicFramePeriod(CANSparkLowLevel.PeriodicFrame.kStatus0, 1);
 
-    MotorErrors.reportSparkMaxTemp(spark, temperatureLimit);
-
-    MotorErrors.reportError(spark.restoreFactoryDefaults());
-    MotorErrors.reportError(spark.follow(ExternalFollower.kFollowerDisabled, 0));
-    MotorErrors.reportError(spark.setIdleMode(IdleMode.kBrake));
-    MotorErrors.reportError(spark.enableVoltageCompensation(12));
-    MotorErrors.reportError(spark.setSmartCurrentLimit(50));
-
+    // config.setPeriodicFramePeriod(SparkLowLevel.PeriodicFrame.kStatus0, 1);
+    if (spark!=null)
+      MotorErrors.reportSparkMaxTemp(spark, motorConfig.temperatureLimitCelsius);
+    
     MotorErrors.checkSparkMaxErrors(spark);
 
-    SparkPIDController controller = spark.getPIDController();
-    MotorErrors.reportError(controller.setOutputRange(-1, 1));
-    MotorErrors.reportError(controller.setP(0));
-    MotorErrors.reportError(controller.setI(0));
-    MotorErrors.reportError(controller.setD(0));
-    MotorErrors.reportError(controller.setFF(0));
+    if (motorConfig==MotorConfig.NEO || motorConfig==MotorConfig.NEO_550)
+      spark.configure(baseSparkMaxConfig(), SparkBase.ResetMode.kResetSafeParameters, SparkBase.PersistMode.kPersistParameters);
+    else if (motorConfig==MotorConfig.NEO_VORTEX)
+      spark.configure(baseSparkFlexConfig(), SparkBase.ResetMode.kResetSafeParameters, SparkBase.PersistMode.kPersistParameters);
+    else
+      spark.configure(baseSparkConfig(), SparkBase.ResetMode.kResetSafeParameters, SparkBase.PersistMode.kPersistParameters);
+
 
     return spark;
   }
-
-  public static CANSparkMax createSparkMax(int id, MotorConfig config) {
-    CANSparkMax spark;
+  /**
+   * Create a sparkMax controller (NEO or 550) with custom settings.
+   * 
+   * @param id the port of the motor controller
+   * @param config the custom config to set
+   */
+  public static SparkMax createSparkMax(int id, SparkBaseConfig config) {
+    SparkMax spark = null;
     if (RobotBase.isReal()) {
-      spark = new CANSparkMax(id, CANSparkLowLevel.MotorType.kBrushless);
+      spark = new SparkMax(id, SparkLowLevel.MotorType.kBrushless);
     } else {
-      spark = MockSparkMax.createMockSparkMax(id, CANSparkLowLevel.MotorType.kBrushless);
+      System.err.println("heyy... lib199 doesn't have sim support sorri");
+      // spark = MockSparkMax.createMockSparkMax(id, SparkLowLevel.MotorType.kBrushless);
+    }
+    if (spark!=null)
+      spark.configure(
+        config, 
+        SparkBase.ResetMode.kResetSafeParameters,
+        SparkBase.PersistMode.kNoPersistParameters
+      );
+
+    return spark;
+  }
+  /**
+   * Create a default sparkFlex-Vortex controller.
+   * 
+   * @param id the port of the motor controller
+   */
+  public static SparkFlex createSparkFlex(int id) {
+    MotorConfig motorConfig = MotorConfig.NEO_VORTEX;
+
+    SparkFlex spark=null;
+    if (RobotBase.isReal()) {
+      spark = new SparkFlex(id, SparkLowLevel.MotorType.kBrushless);
+    } else {
+      System.err.println("heyy... lib199 doesn't have sim support sorri");
+      // spark = MockSparkMax.createMockSparkMax(id, SparkLowLevel.MotorType.kBrushless);
     }
 
-    configureSpark(spark, config);
-
-    return spark;
-  }
-
-  public static CANSparkFlex createSparkFlex(int id, MotorConfig config) {
-    CANSparkFlex spark;
-    if (RobotBase.isReal()) {
-      spark = new CANSparkFlex(id, CANSparkLowLevel.MotorType.kBrushless);
-    } else {
-      spark = MockSparkFlex.createMockSparkFlex(id, CANSparkLowLevel.MotorType.kBrushless);
-    }
-
-    configureSpark(spark, config);
-
-    return spark;
-  }
-
-  private static void configureSpark(CANSparkBase spark, MotorConfig config) {
-    MotorErrors.reportSparkTemp(spark, config.temperatureLimitCelsius);
-
-    MotorErrors.reportError(spark.restoreFactoryDefaults());
-    //MotorErrors.reportError(spark.follow(ExternalFollower.kFollowerDisabled, 0));
-    MotorErrors.reportError(spark.setIdleMode(IdleMode.kBrake));
-    MotorErrors.reportError(spark.enableVoltageCompensation(12));
-    MotorErrors.reportError(spark.setSmartCurrentLimit(config.currentLimitAmps));
-
+    // config.setPeriodicFramePeriod(SparkLowLevel.PeriodicFrame.kStatus0, 1);
+    if (spark!=null)
+      MotorErrors.reportSparkTemp(spark, motorConfig.temperatureLimitCelsius);
+    
     MotorErrors.checkSparkErrors(spark);
 
-    SparkPIDController controller = spark.getPIDController();
-    MotorErrors.reportError(controller.setOutputRange(-1, 1));
-    MotorErrors.reportError(controller.setP(0));
-    MotorErrors.reportError(controller.setI(0));
-    MotorErrors.reportError(controller.setD(0));
-    MotorErrors.reportError(controller.setFF(0));
+    spark.configure(baseSparkFlexConfig(), SparkBase.ResetMode.kResetSafeParameters, SparkBase.PersistMode.kPersistParameters);
+
+    return spark;
+  }
+  /**
+   * Create a sparkFlex controller (VORTEX) with custom settings.
+   * 
+   * @param id the port of the motor controller
+   * @param config the custom config to set
+   */
+  public static SparkFlex createSparkFlex(int id, SparkBaseConfig config) {
+    SparkFlex spark = null;
+    if (RobotBase.isReal()) {
+      spark = new SparkFlex(id, SparkLowLevel.MotorType.kBrushless);
+    } else {
+      System.err.println("heyy... lib199 doesn't have sim support sorri");
+      // spark = MockSparkFlex.createMockSparkFlex(id, SparkLowLevel.MotorType.kBrushless);
+    }
+    if (spark!=null)
+      spark.configure(
+        config, 
+        SparkBase.ResetMode.kResetSafeParameters,
+        SparkBase.PersistMode.kNoPersistParameters
+      );
+
+    return spark;
+  }
+
+
+  public static SparkBaseConfig baseSparkConfig() {
+    SparkMaxConfig config = new SparkMaxConfig();
+
+    config.idleMode(IdleMode.kBrake);
+    
+    config.voltageCompensation(12);//FIXME does this need to be different for different motors?
+    config.smartCurrentLimit(50);
+    
+    config.closedLoop
+      .minOutput(-1)
+      .maxOutput(1)
+      .pid(0,0,0)
+      .velocityFF(0);
+
+    return config;
+  }
+  /**
+   * Overrides an old config - but does not change other settings.
+   */
+  public static SparkBaseConfig baseSparkConfig(SparkMaxConfig config) {
+    config.idleMode(IdleMode.kBrake);
+    
+    config.voltageCompensation(12);//FIXME does this need to be different for different motors?
+    config.smartCurrentLimit(50);
+    
+    config.closedLoop
+      .minOutput(-1)
+      .maxOutput(1)
+      .pid(0,0,0)
+      .velocityFF(0);
+
+    return config;
+  }
+  /**
+   * Overrides an old config - but does not change other settings.
+   */
+  public static SparkMaxConfig baseSparkMaxConfig(SparkMaxConfig config){
+    //typical operating voltage: 12V.
+    return (SparkMaxConfig) baseSparkConfig(config);//FIXME apply needed config changes for each controller
+  }
+  public static SparkMaxConfig baseSparkMaxConfig(){
+    return (SparkMaxConfig) baseSparkConfig();
+  }
+  /**
+   * Overrides an old config - but does not change other settings.
+   */
+  public static SparkFlexConfig baseSparkFlexConfig(SparkMaxConfig config){
+    //typical operating voltage: 12V. ( same as sparkMax )
+    return (SparkFlexConfig) baseSparkConfig(config);//criminal casting usage
+  }
+  public static SparkFlexConfig baseSparkFlexConfig(){//why? no Se.
+    return (SparkFlexConfig) baseSparkConfig();
   }
 
   /**
