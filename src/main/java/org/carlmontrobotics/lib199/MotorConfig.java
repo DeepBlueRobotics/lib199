@@ -11,7 +11,6 @@ public class MotorConfig {
     // See: https://www.chiefdelphi.com/t/rev-robotics-spark-flex-and-neo-vortex/442595/349?u=brettle
     // As a result I think 100C should be safe. I wouldn't increase it past 120. --Dean
     public static final MotorConfig NEO_VORTEX = new MotorConfig(100, 60);
-
     public final int temperatureLimitCelsius, currentLimitAmps;
 
     public MotorConfig(int temperatureLimitCelsius, int currentLimitAmps) {
