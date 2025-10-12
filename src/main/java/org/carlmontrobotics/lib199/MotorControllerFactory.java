@@ -169,7 +169,7 @@ public class MotorControllerFactory {
    * @param id the port of the motor controller
    * @param config the custom config to set
    */
-  public static SparkFlex createSparkFlex(int id, SparkBaseConfig config) {
+  public static SparkFlex createSparkFlex(int id, SparkFlexConfig config) {
     SparkFlex spark = null;
     if (RobotBase.isReal()) {
       spark = new SparkFlex(id, SparkLowLevel.MotorType.kBrushless);
@@ -187,7 +187,7 @@ public class MotorControllerFactory {
     return spark;
   }
 
-
+  //does this not do the same as baseSparkMaxConfig, as it also creates a Spark MaxConfig?
   public static SparkBaseConfig baseSparkConfig() {
     SparkMaxConfig config = new SparkMaxConfig();
 
@@ -207,6 +207,7 @@ public class MotorControllerFactory {
   /**
    * Overrides an old config - but does not change other settings.
    */
+  //does this not do the same as baseSparkMaxConfig, as it also creates a Spark MaxConfig?
   public static SparkBaseConfig baseSparkConfig(SparkMaxConfig config) {
     config.idleMode(IdleMode.kBrake);
     
@@ -234,12 +235,36 @@ public class MotorControllerFactory {
   /**
    * Overrides an old config - but does not change other settings.
    */
-  public static SparkFlexConfig baseSparkFlexConfig(SparkMaxConfig config){
+  public static SparkFlexConfig baseSparkFlexConfig(SparkFlexConfig config){
     //typical operating voltage: 12V. ( same as sparkMax )
-    return (SparkFlexConfig) baseSparkConfig(config);//criminal casting usage
+    config.idleMode(IdleMode.kBrake);
+    
+    config.voltageCompensation(12);//FIXME does this need to be different for different motors?
+    config.smartCurrentLimit(50);
+    
+    config.closedLoop
+      .minOutput(-1)
+      .maxOutput(1)
+      .pid(0,0,0)
+      .velocityFF(0);
+
+    return config;
   }
   public static SparkFlexConfig baseSparkFlexConfig(){//why? no Se.
-    return (SparkFlexConfig) baseSparkConfig();
+    SparkFlexConfig config = new SparkFlexConfig();
+
+    config.idleMode(IdleMode.kBrake);
+    
+    config.voltageCompensation(12);//FIXME does this need to be different for different motors?
+    config.smartCurrentLimit(50);
+    
+    config.closedLoop
+      .minOutput(-1)
+      .maxOutput(1)
+      .pid(0,0,0)
+      .velocityFF(0);
+
+    return config;
   }
 
   /**
