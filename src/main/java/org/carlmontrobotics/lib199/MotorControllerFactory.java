@@ -13,6 +13,7 @@ import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.SparkBase.PersistMode;
+import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.config.SparkBaseConfig;
 import com.revrobotics.spark.config.SparkFlexConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
@@ -24,11 +25,14 @@ import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkLowLevel;
 import com.revrobotics.spark.SparkClosedLoopController;
 
+import org.carlmontrobotics.lib199.sim.MockSparkFlex;
+import org.carlmontrobotics.lib199.sim.MockSparkMax;
 // import org.carlmontrobotics.lib199.sim.MockSparkFlex;
 // import org.carlmontrobotics.lib199.sim.MockSparkMax;
 import org.carlmontrobotics.lib199.sim.MockTalonSRX;
 import org.carlmontrobotics.lib199.sim.MockVictorSPX;
 import org.carlmontrobotics.lib199.sim.MockedCANCoder;
+import org.mockito.Mock;
 
 import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.cscore.UsbCamera;
@@ -125,8 +129,7 @@ public class MotorControllerFactory {
     if (RobotBase.isReal()) {
       spark = new SparkMax(id, SparkLowLevel.MotorType.kBrushless);
     } else {
-      System.err.println("heyy... lib199 doesn't have sim support sorri");
-      // spark = MockSparkMax.createMockSparkMax(id, SparkLowLevel.MotorType.kBrushless);
+      spark = MockSparkMax.createMockSparkMax(id, SparkLowLevel.MotorType.kBrushless, MockSparkMax.NEOType.NEO);
     }
     if (spark!=null)
       spark.configure(
@@ -150,7 +153,7 @@ public class MotorControllerFactory {
       spark = new SparkFlex(id, SparkLowLevel.MotorType.kBrushless);
     } else {
       System.err.println("heyy... lib199 doesn't have sim support sorri");
-      // spark = MockSparkMax.createMockSparkMax(id, SparkLowLevel.MotorType.kBrushless);
+      spark = MockSparkFlex.createMockSparkFlex(id, MotorType.kBrushless);
     }
 
     // config.setPeriodicFramePeriod(SparkLowLevel.PeriodicFrame.kStatus0, 1);
@@ -193,7 +196,7 @@ public class MotorControllerFactory {
 
     config.idleMode(IdleMode.kBrake);
     
-    config.voltageCompensation(12);//FIXME does this need to be different for different motors?
+    config.voltageCompensation(12);
     config.smartCurrentLimit(50);
     
     config.closedLoop

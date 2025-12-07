@@ -8,7 +8,6 @@ import java.util.function.Supplier;
 
 import org.mockito.internal.reporting.SmartPrinter;
 
-// import com.ctre.phoenix6.signals.AbsoluteSensorRangeValue;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.revrobotics.spark.SparkMax;
@@ -81,7 +80,7 @@ public class SwerveModule implements Sendable {
         turnConfig.inverted(config.turnInversion[arrIndex]);
 
         double drivePositionFactor = config.wheelDiameterMeters * Math.PI / config.driveGearing;
-        final double driveVelocityFactor = drivePositionFactor / 60;//why by 60?
+        final double driveVelocityFactor = drivePositionFactor / 60;
         driveConfig.encoder
             .positionConversionFactor(drivePositionFactor)
             .velocityConversionFactor(driveVelocityFactor);
@@ -200,9 +199,7 @@ public class SwerveModule implements Sendable {
             .calculateWithVelocities(
                 actualSpeed, 
                 desiredSpeed + extraAccel * TimedRobot.kDefaultPeriod//m/s + ( m/s^2 * s )
-            );//clippedAcceleration);
-        //calculateAntiGravitationalA(pitchDegSupplier.get(), rollDegSupplier.get())
-        
+            );//clippedAcceleration);        
         // Use robot characterization as a simple physical model to account for internal resistance, frcition, etc.
         // Add a PID adjustment for error correction (also "drives" the actual speed to the desired speed)
         double pidVolts = drivePIDController.calculate(actualSpeed, desiredSpeed);

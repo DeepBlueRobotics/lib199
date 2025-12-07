@@ -27,6 +27,8 @@ public final class MotorErrors {
     private static final Map<SparkBase, Faults> stickyFlags = new ConcurrentSkipListMap<>(
             (spark1, spark2) -> (spark1.getDeviceId() - spark2.getDeviceId()));
 
+    private static final SparkBaseConfig OVERHEAT_CONFIG = new SparkMaxConfig().smartCurrentLimit(1);
+
     public static final int kOverheatTripCount = 5;
 
     static {
@@ -137,17 +139,12 @@ public final class MotorErrors {
         lastSparkErrorIndexReported = (lastSparkErrorIndexReported + n) % flags.size();
     }
 
-    //what does this even supposed to do??
-    public static SparkMax createDummySparkMax() {
-        return Mocks.mock(SparkMax.class, new REVLibErrorAnswer());
-    }
-
     @Deprecated
     public static void reportSparkMaxTemp(SparkMax spark, TemperatureLimit temperatureLimit) {
         reportSparkMaxTemp(spark, temperatureLimit.limit);
     }
 
-    public static boolean isSparkMaxOverheated(SparkMax spark){
+    public static boolean isSparkOverheated(SparkBase spark){  
       int id = spark.getDeviceId();
       int motorMaxTemp = sparkTemperatureLimits.get(id);
       return ( spark.getMotorTemperature() >= motorMaxTemp );
@@ -216,8 +213,8 @@ public final class MotorErrors {
                         + " degrees Celsius! It will be disabled until the robot code is restarted.");
             }
         spark.configure(
-            new SparkMaxConfig().smartCurrentLimit(1), 
-            SparkBase.ResetMode.kResetSafeParameters,
+            OVERHEAT_CONFIG,
+            SparkBase.ResetMode.kNoResetSafeParameters,
             SparkBase.PersistMode.kNoPersistParameters);
         }
     }
