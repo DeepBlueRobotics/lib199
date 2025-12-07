@@ -60,7 +60,7 @@ public class MockedEncoderTest {
     }
 
     private void testFunctionalityWithPositionConversionFactor(double factor, RelativeEncoder enc, SimDouble positionSim) {
-        assertEquals(REVLibError.kOk, enc.setPositionConversionFactor(factor));
+        assertEquals(REVLibError.kOk, enc.setPositionConversionFactor(factor)); //FIXME: make this in a config with positionConversionFactor
         assertEquals(factor, enc.getPositionConversionFactor(), 0.01);
         testPosition(10, enc, factor, positionSim);
         testPosition(0, enc, factor, positionSim);

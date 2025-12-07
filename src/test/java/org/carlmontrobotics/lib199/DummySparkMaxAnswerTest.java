@@ -4,22 +4,29 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import com.revrobotics.REVLibError;
-import com.revrobotics.CANSparkMax;
-import com.revrobotics.CANSparkBase.IdleMode;
-import com.revrobotics.CANSparkLowLevel.MotorType;
+// import com.revrobotics.CANSparkMax;
+// import com.revrobotics.CANSparkBase.IdleMode;
+// import com.revrobotics.CANSparkLowLevel.MotorType;
 import com.revrobotics.SparkAnalogSensor.Mode;
 import com.revrobotics.SparkLimitSwitch.Type;
-import com.revrobotics.SparkPIDController.AccelStrategy;
+// import com.revrobotics.SparkPIDController.AccelStrategy;
+
+import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
+import com.revrobotics.spark.SparkLowLevel.MotorType;
+
+import com.revrobotics.spark.SparkLimitSwitch;//
+import com.revrobotics.spark.SparkClosedLoopController;
 
 import org.junit.Test;
 
 public class DummySparkMaxAnswerTest {
     
-    public CANSparkMax createMockedSparkMax() {
-        return Mocks.mock(CANSparkMax.class, new DummySparkMaxAnswer());
+    public SparkMax createMockedSparkMax() {
+        return Mocks.mock(SparkMax.class, new DummySparkMaxAnswer());
     }
 
-    public static void assertTestResponses(CANSparkMax spark) {
+    public static void assertTestResponses(SparkMax spark) {
         // Check device id
         assertEquals(0, spark.getDeviceId());
 
@@ -31,16 +38,16 @@ public class DummySparkMaxAnswerTest {
         assertNotNull(spark.getAnalog((Mode) null));
         assertNotNull(spark.getEncoder());
         assertNotNull(spark.getForwardLimitSwitch((Type) null));
-        assertNotNull(spark.getPIDController());
+        assertNotNull(spark.getClosedLoopController());
 
         // Check that all REV specific objects return "null" values
         assertEquals(0, spark.getEncoder().getPosition(), 0.01);
         assertEquals(0, spark.getEncoder().getVelocity(), 0.01);
         assertEquals(IdleMode.kBrake, spark.getIdleMode());
         assertEquals(MotorType.kBrushless, spark.getMotorType());
-        assertEquals(AccelStrategy.kTrapezoidal, spark.getPIDController().getSmartMotionAccelStrategy(0));
+        assertEquals(AccelStrategy.kTrapezoidal, spark.getClosedLoopController().getSmartMotionAccelStrategy(0));
         assertEquals(REVLibError.kOk, spark.getLastError());
-        assertEquals(REVLibError.kOk, spark.getPIDController().setP(0, 0));
+        assertEquals(REVLibError.kOk, spark.getClosedLoopController().setP(0, 0));
         assertEquals(REVLibError.kOk, spark.getEncoder().setAverageDepth(0));
         assertEquals(REVLibError.kOk, spark.getAnalog((Mode) null).setInverted(false));
     }
@@ -51,3 +58,4 @@ public class DummySparkMaxAnswerTest {
     }
 
 }
+

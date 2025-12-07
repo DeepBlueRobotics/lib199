@@ -10,8 +10,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.ctre.phoenix.ErrorCode;
 import com.revrobotics.REVLibError;
-import com.revrobotics.CANSparkMax;
+// import com.revrobotics.SparkMax;
 import com.revrobotics.CANSparkBase.FaultID;
+
+import com.revrobotics.spark.SparkMax;
 
 import org.carlmontrobotics.lib199.testUtils.ErrStreamTest;
 import org.junit.Test;

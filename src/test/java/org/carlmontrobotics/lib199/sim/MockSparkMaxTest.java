@@ -3,7 +3,7 @@ package org.carlmontrobotics.lib199.sim;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-import com.revrobotics.CANSparkLowLevel.MotorType;
+import com.revrobotics.spark.SparkLowLevel.MotorType;
 
 import org.carlmontrobotics.lib199.testUtils.TestRules;
 import org.junit.ClassRule;
