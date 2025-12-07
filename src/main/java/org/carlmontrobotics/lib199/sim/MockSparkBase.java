@@ -43,7 +43,7 @@ public class MockSparkBase extends MockedMotorBase {
     private final SparkBase motor;
     private final SparkSim spark;
     private final SparkClosedLoopController pidController;
-    private final MockedSparkMaxPIDController pidControllerImpl;
+    private final MockedSparkClosedLoopController pidControllerImpl;
     private SparkAbsoluteEncoder absoluteEncoder = null;
     private SparkAbsoluteEncoderSim absoluteEncoderImpl = null;
     private SparkMaxAlternateEncoder alternateEncoder = null;
@@ -106,7 +106,7 @@ public class MockSparkBase extends MockedMotorBase {
             encoder = new MockedEncoder(SimDevice.create("CANEncoder:" + name, port), countsPerRev, false, false);
         }
 
-        pidControllerImpl = new MockedSparkMaxPIDController(this);
+        pidControllerImpl = new MockedSparkClosedLoopController(this);
         pidController = Mocks.createMock(SparkClosedLoopController.class, pidControllerImpl, new REVLibErrorAnswer());
         // pidController.feedbackSensor(encoder);
         

@@ -4,9 +4,12 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.revrobotics.REVLibError;
+import com.revrobotics.spark.ClosedLoopSlot;
 import com.revrobotics.spark.SparkAbsoluteEncoder;
 import com.revrobotics.spark.SparkAnalogSensor;
+import com.revrobotics.spark.SparkBase;
 import com.revrobotics.spark.SparkClosedLoopController;
+import com.revrobotics.spark.SparkClosedLoopController.ArbFFUnits;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.SparkMaxAlternateEncoder;
 import com.revrobotics.spark.SparkRelativeEncoder;
@@ -20,11 +23,12 @@ import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj.motorcontrol.MotorController;
 
 // NOT THREAD SAFE
-public class MockedSparkMaxPIDController {
+public class MockedSparkClosedLoopController {
 
     public final Map<Integer, Slot> slots = new ConcurrentHashMap<>();
     public final MockedMotorBase motor;
     public Slot activeSlot;
+    public ClosedLoopSlot activeClosedLoopSlot;
     public SparkMax.ControlType controlType = SparkMax.ControlType.kDutyCycle;
     public MotorController leader = null;
     public boolean invertLeader = false;
@@ -34,6 +38,180 @@ public class MockedSparkMaxPIDController {
     public boolean positionPIDWrappingEnabled = false;
     public double positionPIDWrappingMinInput = 0.0;
     public double positionPIDWrappingMaxInput = 0.0;
+
+    public MockedSparkClosedLoopController(MockedMotorBase motor) {
+        this.motor = motor;
+        slots.put(0, activeSlot = new Slot(positionPIDWrappingMinInput, positionPIDWrappingMaxInput, positionPIDWrappingEnabled));
+    }
+
+    //Actually Real Methods
+
+    /** Get the selected control type used when setReference(double, SparkBase.ControlType) was last called.*/
+    public SparkBase.ControlType getControlType() {
+        return controlType;
+    }
+
+    /** Get the I accumulator of the closed loop controller. */
+    public double getIAccum() {
+        System.err.println("(MockedSparkMaxPIDController): getIAccum() is not currently implemented");
+        return 0;
+    }
+
+    /**Get the MAXMotion internal setpoint position. */
+    public double getMAXMotionSetpointPosition() {
+        return setpoint;
+    } 
+
+    /**Get the MAXMotion internal setpoint velocity. */
+    public double getMAXMotionSetpointVelocity() {
+        return setpoint;
+    }
+
+    /** Get the selected closed loop PID slot. */
+    public ClosedLoopSlot getSelectedSlot() {
+        return activeClosedLoopSlot;
+    }
+
+    /**Get the internal setpoint of the closed loop controller. */
+    public double getSetpoint() {
+        return setpoint;
+    }
+    
+    /** Determine if the setpoint has been reached.*/
+    public boolean isAtSetpoint() {return false;}
+    
+    /** Set the I accumulator of the closed loop controller. */
+    public REVLibError setIAccum(double iAccum) {
+        System.err.println("(MockedSparkMaxPIDController): setIAccum() is not currently implemented");
+        return REVLibError.kNotImplemented;
+    }
+    /** Deprecated, for removal: This API element is subject to removal in a future version. 
+     * Use {@link #setSetpoint(double, SparkBase.ControlType)} instead
+    */
+    @Deprecated
+    public REVLibError setReference(double value, SparkMax.ControlType ctrl) {
+        return setReference(value, ctrl, ClosedLoopSlot.kSlot0);
+    }
+    /** Deprecated, for removal: This API element is subject to removal in a future version.
+     * Use {@link #setSetpoint(double, SparkBase.ControlType, ClosedLoopSlot)} instead
+    */
+    @Deprecated
+    public REVLibError setReference(double value, SparkMax.ControlType ctrl, ClosedLoopSlot pidSlot) {
+        return setReference(value, ctrl, pidSlot, 0);
+    }
+    /** Deprecated, for removal: This API element is subject to removal in a future version. 
+     * Use {@link #setSetpoint(double, SparkBase.ControlType, ClosedLoopSlot, double)} instead*/
+    @Deprecated
+    public REVLibError setReference(double value, SparkMax.ControlType ctrl, ClosedLoopSlot pidSlot, double arbFeedforward) {
+        return setReference(value, ctrl, pidSlot, arbFeedforward, SparkClosedLoopController.ArbFFUnits.kVoltage);
+    }
+    /** Deprecated, for removal: This API element is subject to removal in a future version.
+     * Use {@link #setSetpoint(double, SparkBase.ControlType, ClosedLoopSlot, double, ArbFFUnits)} instead
+    */
+    @Deprecated
+    public REVLibError setReference(double value, SparkMax.ControlType ctrl, ClosedLoopSlot pidSlot, double arbFeedforward, SparkClosedLoopController.ArbFFUnits arbFFUnits) {
+        if(ctrl == SparkMax.ControlType.kSmartVelocity) {
+            System.err.println("(MockedSparkMaxPIDController): setReference() with ControlType.kSmartVelocity is not currently implemented");
+            return REVLibError.kNotImplemented;
+        }
+
+        setpoint = value;
+        controlType = ctrl;
+        leader = null;
+
+        switch(ctrl) {
+            case kDutyCycle:
+            case kVoltage:
+                motor.setClosedLoopControl(false);
+                break;
+            case kPosition:
+            case kVelocity:
+            case kSmartMotion:
+            case kMAXMotionPositionControl:
+            case kMAXMotionVelocityControl:
+            case kCurrent:
+                motor.setClosedLoopControl(true);
+                break;
+            case kSmartVelocity:
+                break; // This should never happen
+        }
+
+        activeSlot = getSlot(pidSlot.value);
+        activeClosedLoopSlot = pidSlot;
+
+        switch(arbFFUnits) {
+            case kVoltage:
+                break;
+            case kPercentOut:
+                arbFeedforward *= 12.0;
+                break;
+            default:
+                throw new IllegalArgumentException("Unsupported ArbFFUnits: " + arbFFUnits);
+        }
+
+        this.arbFF = arbFeedforward;
+
+        return REVLibError.kOk;
+    }
+    REVLibError setSetpoint(double setpoint, SparkBase.ControlType ctrl) {return null;}//Set the controller setpoint based on the selected control mode.
+    REVLibError setSetpoint(double setpoint, SparkBase.ControlType ctrl, ClosedLoopSlot slot) {return null;}//Set the controller setpoint based on the selected control mode.
+    REVLibError setSetpoint(double setpoint, SparkBase.ControlType ctrl, ClosedLoopSlot slot, double arbFeedforward) {return null;}//Set the controller setpoint based on the selected control mode.
+    REVLibError setSetpoint(double setpoint, SparkBase.ControlType ctrl, ClosedLoopSlot slot, double arbFeedforward, SparkClosedLoopController.ArbFFUnits arbFFUnits) {return null;}//Set the controller setpoint based on the selected control mode.
+
+    public interface ExtraMethods {
+        double calculate(double currentDraw);
+        void setDutyCycle(double speed);
+        void follow(MotorController leader, boolean invert);
+        void stopFollowing();
+        boolean isFollower();
+        double getD();
+        double getD(int slotID);
+        double getFF();
+        double getFF(int slotID);
+        double getI();
+        double getI(int slotID);
+        double getIMaxAccum(int slotID);
+        double getIZone();
+        double getIZone(int slotID);
+        double getOutputMax();
+        double getOutputMax(int slotID);
+        double getOutputMin();
+        double getOutputMin(int slotID);
+        boolean getPositionPIDWrappingEnabled();
+        double getPositionPIDWrappingMaxInput();
+        double getPositionPIDWrappingMinInput();
+        REVLibError setPositionPIDWrappingEnabled(boolean enable);
+        REVLibError setPositionPIDWrappingMaxInput(double max);
+        REVLibError setPositionPIDWrappingMinInput(double min);
+        double getP();
+        double getP(int slotID);
+        MAXMotionConfig.MAXMotionPositionMode getSmartMotionAccelStrategy(int slotID);
+        double getSmartMotionAllowedClosedLoopError(int slotID);
+        double getSmartMotionMaxAccel(int slotID);
+        double getSmartMotionMaxVelocity(int slotID);
+        double getSmartMotionMinOutputVelocity(int slotID);
+        REVLibError setD(double gain);
+        REVLibError setD(double gain, int slotID);
+        REVLibError setFeedbackDevice(Object sensor);
+        REVLibError setFF(double gain);
+        REVLibError setFF(double gain, int slotID);
+        REVLibError setI(double gain);
+        REVLibError setI(double gain, int slotID);
+        REVLibError setIMaxAccum(double iMaxAccum, int slotID);
+        REVLibError setIZone(double IZone);
+        REVLibError setIZone(double IZone, int slotID);
+        REVLibError setOutputRange(double min, double max);
+        REVLibError setOutputRange(double min, double max, int slotID);
+        REVLibError setP(double gain);
+        REVLibError setP(double gain, int slotID);
+        REVLibError setSmartMotionAccelStrategy(MAXMotionConfig.MAXMotionPositionMode accelStrategy, int slotID);
+        REVLibError setSmartMotionAllowedClosedLoopError(double allowedErr, int slotId);
+        REVLibError setSmartMotionMaxAccel(double maxAccel, int slotID);
+        REVLibError setSmartMotionMaxVelocity(double maxVel, int slotID);
+        REVLibError setSmartMotionMinOutputVelocity(double minVel, int slotID);
+        Slot getSlot(int slotID);
+    }
+
 
     // Methods to interface with MockSparkMax
     public double calculate(double currentDraw) {
@@ -94,13 +272,7 @@ public class MockedSparkMaxPIDController {
         return leader != null;
     }
 
-    public MockedSparkMaxPIDController(MockedMotorBase motor) {
-        this.motor = motor;
-        slots.put(0, activeSlot = new Slot(positionPIDWrappingMinInput, positionPIDWrappingMaxInput, positionPIDWrappingEnabled));
-    }
-
     // Overrides
-
     public double getD() {
         return getD(0);
     }
@@ -125,11 +297,6 @@ public class MockedSparkMaxPIDController {
     public double getI(int slotID) {
         Slot slot = getSlot(slotID);
         return slot.pidController.getI();
-    }
-
-    public double getIAccum() {
-        System.err.println("(MockedSparkMaxPIDController): getIAccum() is not currently implemented");
-        return 0;
     }
 
     public double getIMaxAccum(int slotID) {
@@ -343,11 +510,6 @@ public class MockedSparkMaxPIDController {
         return REVLibError.kOk;
     }
 
-    public REVLibError setIAccum(double iAccum) {
-        System.err.println("(MockedSparkMaxPIDController): setIAccum() is not currently implemented");
-        return REVLibError.kNotImplemented;
-    }
-
     public REVLibError setIMaxAccum(double iMaxAccum, int slotID) {
         Slot slot = getSlot(slotID);
         slot.pidController.setIntegratorRange(-iMaxAccum, iMaxAccum);
@@ -387,59 +549,6 @@ public class MockedSparkMaxPIDController {
         return REVLibError.kOk;
     }
 
-    public REVLibError setReference(double value, SparkMax.ControlType ctrl) {
-        return setReference(value, ctrl, 0);
-    }
-
-    public REVLibError setReference(double value, SparkMax.ControlType ctrl, int pidSlot) {
-        return setReference(value, ctrl, pidSlot, 0);
-    }
-
-    public REVLibError setReference(double value, SparkMax.ControlType ctrl, int pidSlot, double arbFeedforward) {
-        return setReference(value, ctrl, pidSlot, arbFeedforward, SparkClosedLoopController.ArbFFUnits.kVoltage);
-    }
-
-    public REVLibError setReference(double value, SparkMax.ControlType ctrl, int pidSlot, double arbFeedforward, SparkClosedLoopController.ArbFFUnits arbFFUnits) {
-        if(ctrl == SparkMax.ControlType.kSmartVelocity) {
-            System.err.println("(MockedSparkMaxPIDController): setReference() with ControlType.kSmartVelocity is not currently implemented");
-            return REVLibError.kNotImplemented;
-        }
-
-        setpoint = value;
-        controlType = ctrl;
-        leader = null;
-
-        switch(ctrl) {
-            case kDutyCycle:
-            case kVoltage:
-                motor.setClosedLoopControl(false);
-                break;
-            case kPosition:
-            case kVelocity:
-            case kSmartMotion:
-            case kCurrent:
-                motor.setClosedLoopControl(true);
-                break;
-            case kSmartVelocity:
-                break; // This should never happen
-        }
-
-        activeSlot = getSlot(pidSlot);
-
-        switch(arbFFUnits) {
-            case kVoltage:
-                break;
-            case kPercentOut:
-                arbFeedforward *= 12.0;
-                break;
-            default:
-                throw new IllegalArgumentException("Unsupported ArbFFUnits: " + arbFFUnits);
-        }
-
-        this.arbFF = arbFeedforward;
-
-        return REVLibError.kOk;
-    }
 
     public REVLibError setSmartMotionAccelStrategy(MAXMotionConfig.MAXMotionPositionMode accelStrategy, int slotID) {
         if(accelStrategy != MAXMotionConfig.MAXMotionPositionMode.kMAXMotionTrapezoidal) {

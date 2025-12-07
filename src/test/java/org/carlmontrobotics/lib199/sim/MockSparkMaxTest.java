@@ -5,6 +5,7 @@ import static org.junit.Assert.assertNotNull;
 
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 
+import org.carlmontrobotics.lib199.sim.MockSparkBase.NEOType;
 import org.carlmontrobotics.lib199.testUtils.TestRules;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -21,7 +22,7 @@ public class MockSparkMaxTest {
 
     @Test
     public void testHasEncoder() {
-        var mockSpark = new MockSparkMax(0, MotorType.kBrushless);
+        var mockSpark = new MockSparkMax(0, MotorType.kBrushless, NEOType.NEO);
         SimDeviceSim simSpark = new SimDeviceSim("CANMotor:CANSparkMax", 0);
         assertNotNull(simSpark);
         SimDeviceSim simEncoder = new SimDeviceSim("CANEncoder:CANSparkMax", 0);
@@ -33,7 +34,7 @@ public class MockSparkMaxTest {
     @Test
     public void testCanRecreateIfClosed() {
         for (int i = 0; i < 2; i++) {
-            try (var mockSpark = new MockSparkMax(0, MotorType.kBrushless)) {
+            try (var mockSpark = new MockSparkMax(0, MotorType.kBrushless, NEOType.NEO)) {
                 SimDeviceSim simSpark =
                         new SimDeviceSim("CANMotor:CANSparkMax", 0);
                 assertNotNull(simSpark);
@@ -48,7 +49,7 @@ public class MockSparkMaxTest {
 
     @Test
     public void testGetOutputCurrent() {
-        var mockSpark = new MockSparkMax(0, MotorType.kBrushless);
+        var mockSpark = new MockSparkMax(0, MotorType.kBrushless, NEOType.NEO);
         SimDeviceSim simSpark = new SimDeviceSim("CANMotor:CANSparkMax", 0);
         assertNotNull(simSpark);
         SimDouble simCurrent = simSpark.getDouble("motorCurrent");
