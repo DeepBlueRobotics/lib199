@@ -128,38 +128,42 @@ public class MockedEncoder implements AbsoluteEncoder, AnalogInput, AutoCloseabl
                 * velocityConversionFactor;
     }
 
-    // @Override
-    // public REVLibError setPositionConversionFactor(double factor) {
-    //     positionConversionFactor = factor;
-    //     return REVLibError.kOk;
-    // }
+    //Let Mock to map these methods although they don't exist in the original class
+    public interface RemovedMethods {
+        REVLibError setPositionConversionFactor(double factor);
+        double getPositionConversionFactor();
+        REVLibError setVelocityConversionFactor(double factor);
+        double getVelocityConversionFactor();
+        REVLibError setInverted(boolean inverted);
+        boolean getInverted();
+    }
 
-    // @Override
-    // public double getPositionConversionFactor() {
-    //     return positionConversionFactor;
-    // }
+    public REVLibError setPositionConversionFactor(double factor) {
+        positionConversionFactor = factor;
+        return REVLibError.kOk;
+    }
 
-    // @Override
-    // public REVLibError setVelocityConversionFactor(double factor) {
-    //     velocityConversionFactor = factor;
-    //     return REVLibError.kOk;
-    // }
+    public double getPositionConversionFactor() {
+        return positionConversionFactor;
+    }
 
-    // @Override
-    // public double getVelocityConversionFactor() {
-    //     return velocityConversionFactor;
-    // }
+    public REVLibError setVelocityConversionFactor(double factor) {
+        velocityConversionFactor = factor;
+        return REVLibError.kOk;
+    }
 
-    // @Override
-    // public REVLibError setInverted(boolean inverted) {
-    //     this.inverted = inverted;
-    //     return REVLibError.kOk;
-    // }
+    public double getVelocityConversionFactor() {
+        return velocityConversionFactor;
+    }
 
-    // @Override
-    // public boolean getInverted() {
-    //     return inverted;
-    // }
+    public REVLibError setInverted(boolean inverted) {
+        this.inverted = inverted;
+        return REVLibError.kOk;
+    }
+
+    public boolean getInverted() {
+        return inverted;
+    }
 
     // @Override
     // public REVLibError setAverageDepth(int depth) {
