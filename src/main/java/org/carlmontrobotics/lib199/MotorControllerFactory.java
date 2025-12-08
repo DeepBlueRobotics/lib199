@@ -98,8 +98,7 @@ public class MotorControllerFactory {
     if (RobotBase.isReal()) {
       spark = new SparkMax(id, SparkLowLevel.MotorType.kBrushless);
     } else {
-      System.err.println("heyy... lib199 doesn't have sim support sorri");
-      // spark = MockSparkMax.createMockSparkMax(id, SparkLowLevel.MotorType.kBrushless);
+      spark = MockSparkMax.createMockSparkMax(id, SparkLowLevel.MotorType.kBrushless, MockSparkMax.NEOType.NEO);
     }
 
     // config.setPeriodicFramePeriod(SparkLowLevel.PeriodicFrame.kStatus0, 1);
@@ -152,7 +151,6 @@ public class MotorControllerFactory {
     if (RobotBase.isReal()) {
       spark = new SparkFlex(id, SparkLowLevel.MotorType.kBrushless);
     } else {
-      System.err.println("heyy... lib199 doesn't have sim support sorri");
       spark = MockSparkFlex.createMockSparkFlex(id, MotorType.kBrushless);
     }
 
@@ -177,8 +175,7 @@ public class MotorControllerFactory {
     if (RobotBase.isReal()) {
       spark = new SparkFlex(id, SparkLowLevel.MotorType.kBrushless);
     } else {
-      System.err.println("heyy... lib199 doesn't have sim support sorri");
-      // spark = MockSparkFlex.createMockSparkFlex(id, SparkLowLevel.MotorType.kBrushless);
+      spark = MockSparkFlex.createMockSparkFlex(id, SparkLowLevel.MotorType.kBrushless);
     }
     if (spark!=null)
       spark.configure(
