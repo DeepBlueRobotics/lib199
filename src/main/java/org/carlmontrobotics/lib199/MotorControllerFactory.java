@@ -128,7 +128,7 @@ public class MotorControllerFactory {
     if (RobotBase.isReal()) {
       spark = new SparkMax(id, SparkLowLevel.MotorType.kBrushless);
     } else {
-      spark = MockSparkMax.createMockSparkMax(id, SparkLowLevel.MotorType.kBrushless, MockSparkMax.NEOType.NEO);
+      spark = MockSparkMax.createMockSparkMax(id, SparkLowLevel.MotorType.kBrushless, MockSparkMax.NEOType.NEO); //what if the Mocked motor is a 550 with a custom config?
     }
     if (spark!=null)
       spark.configure(
