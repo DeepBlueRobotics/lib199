@@ -1,0 +1,8 @@
+package org.carlmontrobotics.lib199.simplemechs.elevator;
+
+public final class ElevatorConfig {
+
+    public ElevatorConfig() {
+
+    }
+}
