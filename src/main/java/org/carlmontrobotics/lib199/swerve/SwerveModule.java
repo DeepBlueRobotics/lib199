@@ -64,6 +64,14 @@ public class SwerveModule implements Sendable {
 
     private double turnSpeedCorrectionVolts, turnFFVolts, turnVolts;
     private double maxTurnVelocityWithoutTippingRps;
+    
+    // Store encoder and config values since configAccessor is not available in new REV API
+    private IdleMode driveIdleMode = IdleMode.kBrake;
+    private IdleMode turnIdleMode = IdleMode.kBrake;
+    private static final int NEO_HALL_COUNTS_PER_REV = 42;
+    private static final int ENCODER_POSITION_PERIOD_MS = 20;
+    private int encoderAverageDepth = 2;
+    
     public SwerveModule(SwerveConfig config, ModuleType type, SparkMax drive, SparkMax turn, CANcoder turnEncoder,
                         int arrIndex, Supplier<Float> pitchDegSupplier, Supplier<Float> rollDegSupplier) {
         //SmartDashboard.putNumber("Target Angle (deg)", 0.0);
@@ -81,9 +89,11 @@ public class SwerveModule implements Sendable {
 
         double drivePositionFactor = config.wheelDiameterMeters * Math.PI / config.driveGearing;
         final double driveVelocityFactor = drivePositionFactor / 60;
+        encoderAverageDepth = 2; // Store the value we're configuring
         driveConfig.encoder
             .positionConversionFactor(drivePositionFactor)
-            .velocityConversionFactor(driveVelocityFactor);
+            .velocityConversionFactor(driveVelocityFactor)
+            .quadratureAverageDepth(encoderAverageDepth);
 
         maxControllableAccerlationRps2 = 0;
         final double normalForceNewtons = 83.2 /* lbf */ * 4.4482 /* N/lbf */ / 4 /* numModules */;
@@ -109,8 +119,8 @@ public class SwerveModule implements Sendable {
         
         /* offset for 1 relative encoder count */
         drivetoleranceMPerS = (1.0 
-            / (double)(drive.configAccessor.encoder.getCountsPerRevolution()) * drivePositionFactor) 
-            / Units.millisecondsToSeconds(drive.configAccessor.signals.getPrimaryEncoderPositionPeriodMs() * drive.configAccessor.encoder.getQuadratureAverageDepth());
+            / (double)(NEO_HALL_COUNTS_PER_REV) * drivePositionFactor) 
+            / Units.millisecondsToSeconds(ENCODER_POSITION_PERIOD_MS * encoderAverageDepth);
         drivePIDController.setTolerance(drivetoleranceMPerS);
 
         //System.out.println("Velocity Constant: " + (positionConstant / 60));
@@ -426,17 +436,21 @@ public class SwerveModule implements Sendable {
     }
 
     public void toggleMode() {
-        if (drive.configAccessor.getIdleMode() == IdleMode.kBrake && turn.configAccessor.getIdleMode() == IdleMode.kCoast) coast();
+        if (driveIdleMode == IdleMode.kBrake && turnIdleMode == IdleMode.kCoast) coast();
         else brake();
     }
 
     public void brake() {
+        driveIdleMode = IdleMode.kBrake;
+        turnIdleMode = IdleMode.kBrake;
         SparkBaseConfig config = new SparkMaxConfig().idleMode(IdleMode.kBrake);
         drive.configure(config, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
         turn .configure(config, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
     }
 
     public void coast() {
+        driveIdleMode = IdleMode.kCoast;
+        turnIdleMode = IdleMode.kCoast;
         SparkBaseConfig config = new SparkMaxConfig().idleMode(IdleMode.kCoast);
         drive.configure(config, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
         turn .configure(config, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
