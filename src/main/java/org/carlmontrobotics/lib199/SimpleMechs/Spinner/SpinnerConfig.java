@@ -1,4 +1,4 @@
-package org.carlmontrobotics.SimpleMechs.Spinner;
+package org.carlmontrobotics.lib199.SimpleMechs.Spinner;
 
 public final class SpinnerConfig {
     

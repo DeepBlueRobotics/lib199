@@ -1,4 +1,4 @@
-package org.carlmontrobotics.SimpleMechs.Drivetrain;
+package org.carlmontrobotics.lib199.SimpleMechs.Drivetrain;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.function.Supplier;
@@ -161,51 +161,10 @@ public class SimpleDrivetrain extends SubsystemBase {
      * @param trackWidth in meters
      */
     public SimpleDrivetrain(
-        double wheelBase,
-        double trackWidth,
-        double wheelDiameterMeters,
-        double driveGearing,
-        double kForwardVolts,
-        double kBackwardVolts,
-        double kForwardVels,
-        double kForwardAccels,
-        double kBackwardVels,
-        double kBackwardAccels,
-        double[] drivePID, // [kP, kI, kD]
-        double[] turnPID, // [kP, kI, kD]
-        double[] turnFeedForward,//[kS, kV, kA]
-        double[] turnZeroDeg, //(FL, FR, BL, BR)
-        boolean[] driveInversion, //(FL, FR, BL, BR)
-        boolean[] reversed, //FIXME what does this do (FL, FR, BL, BR) 
-        double driveModifier, //Max speed applier
-        boolean[] turnInversion //(FL, FR, BL, BR)
+        SwerveConfig swerveconfig
     ) 
     {
-        swerveConfig = new SwerveConfig(
-        wheelDiameterMeters, 
-        driveGearing, 
-        mu, 
-        autoCentripetalAccel, 
-        kForwardVolts, 
-        kForwardVels, 
-        kForwardAccels, 
-        kBackwardVolts, 
-        kBackwardVels, 
-        kBackwardAccels, 
-        drivePID[0], 
-        drivePID[1], 
-        drivePID[2], 
-        turnPID[0], 
-        turnPID[1], 
-        turnPID[2], 
-        turnFeedForward[0], 
-        turnFeedForward[1], 
-        turnFeedForward[2], 
-        turnZeroDeg, 
-        driveInversion, 
-        reversed, 
-        driveModifier, 
-        turnInversion);
+        this.swerveConfig = swerveConfig;
 
         AutoBuilder();
 
