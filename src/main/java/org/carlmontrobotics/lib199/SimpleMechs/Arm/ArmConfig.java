@@ -66,7 +66,7 @@ public final class ArmConfig {
      * @param armKFeedForward (kS, kG, kV, kA) of arm
      * @param armMainAbsoluteEncoder null if no absolute
      * @param armMotorIDOfBackupRelativeEncoder -1 if none
-     * @param armAbsoluteZeroOffset zeroOffset (in degrees) of abs enc, 0 should always be down!
+     * @param armAbsoluteZeroOffset zeroOffset (in degrees) of abs enc, 0 should always be horizontal!
      * @param bottomLimit lowest value the arm can achieve (soft limit)
      * @param topLimit highest value the arm can achieve (soft limit)
      */

@@ -44,6 +44,8 @@ public class SimpleArm extends SubsystemBase {
 
   Timer armTimer = new Timer();
 
+  private final double defaultRelativeEncoderResetValue = -90;
+
   public enum ArmControlState {
     AUTO,
     MANUAL,
@@ -120,7 +122,7 @@ public class SimpleArm extends SubsystemBase {
       armFeedbackEncoder.setPosition((armResetEncoder.getPosition() + armConfig.armAbsoluteZeroOffset)/armConfig.armAbsoluteGearReduction*armConfig.armRelativeGearReduction);
     }
     else {
-      armFeedbackEncoder.setPosition(0);
+      armFeedbackEncoder.setPosition(defaultRelativeEncoderResetValue);
     }
   }
 
@@ -145,7 +147,7 @@ public class SimpleArm extends SubsystemBase {
     }
 
     if (armConfig.armFeedForwardExists) {
-      feedforwardOutput = armConfig.armFeedForward.calculate(armGoal/360*2*Math.PI + Math.PI/2, 0);
+      feedforwardOutput = armConfig.armFeedForward.calculate(armGoal/360*2*Math.PI, 0);
     }
     else {
       feedforwardOutput = 0;
