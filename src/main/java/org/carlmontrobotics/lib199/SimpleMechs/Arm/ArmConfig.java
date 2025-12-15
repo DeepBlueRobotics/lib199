@@ -118,7 +118,6 @@ public final class ArmConfig {
      * @param armMasterMotorType
      * @param armMasterInversed
      * @param armKPID
-     * @param armStates
      * @param bottomLimit
      * @param topLimit
      * @return
@@ -136,7 +135,6 @@ public final class ArmConfig {
      * @param armMasterMotorId
      * @param armMasterMotorType
      * @param armMasterInversed
-     * @param armStates
      * @param bottomLimit
      * @param topLimit
      * @return
@@ -154,7 +152,6 @@ public final class ArmConfig {
      * @param armMasterMotorId
      * @param armMasterInversed
      * @param armKPID
-     * @param armStates
      * @param bottomLimit
      * @param topLimit
      * @return
@@ -171,7 +168,6 @@ public final class ArmConfig {
      * Create a single NEO arm config without PID
      * @param armMasterMotorId
      * @param armMasterInversed
-     * @param armStates
      * @param bottomLimit
      * @param topLimit
      * @return
@@ -189,7 +185,6 @@ public final class ArmConfig {
      * @param armMasterMotorId
      * @param armMasterInversed
      * @param armKPID
-     * @param armStates
      * @param bottomLimit
      * @param topLimit
      * @return
@@ -206,7 +201,6 @@ public final class ArmConfig {
      * Create a single vortex arm config, no PID
      * @param armMasterMotorId
      * @param armMasterInversed
-     * @param armStates
      * @param bottomLimit
      * @param topLimit
      * @return
@@ -221,7 +215,6 @@ public final class ArmConfig {
 
     /**
      * Check that arguments are good and set some of the parameters of the config.
-     * @param armStates give stateEnum
      * @param armMotorOfBackupRelativeEncoderId give motor Id
      */
     private void checkRequirements(
