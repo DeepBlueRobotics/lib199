@@ -184,6 +184,44 @@ public class MotorControllerFactory {
     return spark;
   }
 
+  public static SparkBaseConfig sparkConfig(SparkMotorType motor){
+    SparkBaseConfig config = null;
+    switch(motor.getControllerType()){
+      case SPARK_MAX:
+        config = baseSparkMaxConfig();
+        break;
+      case SPARK_FLEX:
+        config = baseSparkFlexConfig();
+        break;
+    }
+    //configs that apply to all motors
+    config.idleMode(IdleMode.kBrake);
+    config.voltageCompensation(12);
+    config.smartCurrentLimit(40); //40 amps is the fuse rating for fuses for each individual motor on the PDP
+
+    config.closedLoop
+      .minOutput(-1)
+      .maxOutput(1)
+      .pid(0,0,0)
+      .velocityFF(0);
+
+
+    //motor specific configs
+    switch(motor){
+      case NEO:
+        break;
+      case NEO550:
+        config.smartCurrentLimit(20); //so motor no go smoky
+        break;
+      case VORTEX, SOLO_VORTEX: // the config for a vortex should be the same if it uses a spark max with a solo adapter or a spark flex, so I just combined them together
+        break;
+      case NEO_2:
+        break;
+    }
+
+    return config;
+  }
+
   //does this not do the same as baseSparkMaxConfig, as it also creates a Spark MaxConfig?
   public static SparkBaseConfig baseSparkConfig() {
     SparkMaxConfig config = new SparkMaxConfig();
