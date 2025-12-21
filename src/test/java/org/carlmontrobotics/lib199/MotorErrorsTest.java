@@ -10,8 +10,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.ctre.phoenix.ErrorCode;
 import com.revrobotics.REVLibError;
-// import com.revrobotics.SparkMax;
-//import com.revrobotics.spark.SparkBase.Faults;
 
 import com.revrobotics.spark.SparkMax;
 
@@ -165,12 +163,6 @@ public class MotorErrorsTest extends ErrStreamTest {
         MotorErrors.checkSparkMaxErrors(stickySensorFaultSparkMax);
         assertEquals(0, errStream.toByteArray().length);
     }
-
-    //FIXME: do we need this?
-    // @Test
-    // public void testDummySparkMax() {
-    //     DummySparkMaxAnswerTest.assertTestResponses(MotorErrors.createDummySparkMax());
-    // }
 
     @Test
     public void testReportSparkMaxTemp() {

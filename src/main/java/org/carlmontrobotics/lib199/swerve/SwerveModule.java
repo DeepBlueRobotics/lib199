@@ -26,8 +26,8 @@ import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.units.measure.Mass;
 import edu.wpi.first.units.Measure;
+import edu.wpi.first.units.measure.Mass;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.util.sendable.SendableRegistry;
@@ -66,8 +66,7 @@ public class SwerveModule implements Sendable {
     private double maxTurnVelocityWithoutTippingRps;
     
     // Store encoder and config values since configAccessor is not available in new REV API
-    private IdleMode driveIdleMode = IdleMode.kBrake;
-    private IdleMode turnIdleMode = IdleMode.kBrake;
+    private IdleMode idleMode = IdleMode.kBrake;
     private static final int NEO_HALL_COUNTS_PER_REV = 42;
     private static final int ENCODER_POSITION_PERIOD_MS = 20;
     private int encoderAverageDepth = 2;
@@ -197,7 +196,7 @@ public class SwerveModule implements Sendable {
     private double prevTurnVelocity = 0;
     public void periodic() {
         drivePeriodic();
-        updateSmartDashboard();
+        // updateSmartDashboard();
         turnPeriodic();
     }
 
@@ -208,8 +207,8 @@ public class SwerveModule implements Sendable {
         double targetVoltage = (actualSpeed >= 0 ? forwardSimpleMotorFF : backwardSimpleMotorFF)
             .calculateWithVelocities(
                 actualSpeed, 
-                desiredSpeed + extraAccel * TimedRobot.kDefaultPeriod//m/s + ( m/s^2 * s )
-            );//clippedAcceleration);        
+                desiredSpeed + extraAccel * TimedRobot.kDefaultPeriod  //m/s + ( m/s^2 * s )
+            );
         // Use robot characterization as a simple physical model to account for internal resistance, frcition, etc.
         // Add a PID adjustment for error correction (also "drives" the actual speed to the desired speed)
         double pidVolts = drivePIDController.calculate(actualSpeed, desiredSpeed);
@@ -436,21 +435,20 @@ public class SwerveModule implements Sendable {
     }
 
     public void toggleMode() {
-        if (driveIdleMode == IdleMode.kBrake && turnIdleMode == IdleMode.kCoast) coast();
+        if (idleMode == IdleMode.kBrake && idleMode == IdleMode.kCoast) coast();
         else brake();
     }
 
     public void brake() {
-        driveIdleMode = IdleMode.kBrake;
-        turnIdleMode = IdleMode.kBrake;
+        idleMode = IdleMode.kBrake;
         SparkBaseConfig config = new SparkMaxConfig().idleMode(IdleMode.kBrake);
         drive.configure(config, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
         turn .configure(config, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
     }
 
     public void coast() {
-        driveIdleMode = IdleMode.kCoast;
-        turnIdleMode = IdleMode.kCoast;
+        idleMode = IdleMode.kCoast;
+        idleMode = IdleMode.kCoast;
         SparkBaseConfig config = new SparkMaxConfig().idleMode(IdleMode.kCoast);
         drive.configure(config, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
         turn .configure(config, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);

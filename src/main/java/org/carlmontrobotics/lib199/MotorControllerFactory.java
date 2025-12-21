@@ -124,30 +124,29 @@ public class MotorControllerFactory {
    * @param config the custom config to set
    */
   public static SparkMax createSparkMax(int id, SparkBaseConfig config) {
-    SparkMax spark = null;
+    SparkMax spark;
     if (RobotBase.isReal()) {
       spark = new SparkMax(id, SparkLowLevel.MotorType.kBrushless);
     } else {
       spark = MockSparkMax.createMockSparkMax(id, SparkLowLevel.MotorType.kBrushless, MockSparkMax.NEOType.NEO); //what if the Mocked motor is a 550 with a custom config?
     }
-    if (spark!=null)
-      spark.configure(
-        config, 
-        SparkBase.ResetMode.kResetSafeParameters,
-        SparkBase.PersistMode.kNoPersistParameters
-      );
+    spark.configure(
+      config, 
+      SparkBase.ResetMode.kResetSafeParameters,
+      SparkBase.PersistMode.kNoPersistParameters
+    );
 
     return spark;
   }
   /**
-   * Create a default sparkFlex-Vortex controller.
+   * Create a default SparkFlex-Vortex controller.  
    * 
    * @param id the port of the motor controller
    */
   public static SparkFlex createSparkFlex(int id) {
     MotorConfig motorConfig = MotorConfig.NEO_VORTEX;
 
-    SparkFlex spark=null;
+    SparkFlex spark;
     if (RobotBase.isReal()) {
       spark = new SparkFlex(id, SparkLowLevel.MotorType.kBrushless);
     } else {
@@ -155,8 +154,7 @@ public class MotorControllerFactory {
     }
 
     // config.setPeriodicFramePeriod(SparkLowLevel.PeriodicFrame.kStatus0, 1);
-    if (spark!=null)
-      MotorErrors.reportSparkTemp(spark, motorConfig.temperatureLimitCelsius);
+    MotorErrors.reportSparkTemp(spark, motorConfig.temperatureLimitCelsius);
     
     MotorErrors.checkSparkErrors(spark);
 
@@ -181,7 +179,7 @@ public class MotorControllerFactory {
       spark.configure(
         config, 
         SparkBase.ResetMode.kResetSafeParameters,
-        SparkBase.PersistMode.kNoPersistParameters
+        SparkBase.PersistMode.kPersistParameters
       );
 
     return spark;
