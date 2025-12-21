@@ -32,7 +32,6 @@ import org.carlmontrobotics.lib199.sim.MockSparkMax;
 import org.carlmontrobotics.lib199.sim.MockTalonSRX;
 import org.carlmontrobotics.lib199.sim.MockVictorSPX;
 import org.carlmontrobotics.lib199.sim.MockedCANCoder;
-import org.mockito.Mock;
 
 import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.cscore.UsbCamera;
@@ -209,7 +208,7 @@ public class MotorControllerFactory {
   public static SparkBaseConfig baseSparkConfig(SparkMaxConfig config) {
     config.idleMode(IdleMode.kBrake);
     
-    config.voltageCompensation(12);//FIXME does this need to be different for different motors?
+    config.voltageCompensation(12);
     config.smartCurrentLimit(50);
     
     config.closedLoop
@@ -237,7 +236,7 @@ public class MotorControllerFactory {
     //typical operating voltage: 12V. ( same as sparkMax )
     config.idleMode(IdleMode.kBrake);
     
-    config.voltageCompensation(12);//FIXME does this need to be different for different motors?
+    config.voltageCompensation(12);
     config.smartCurrentLimit(50);
     
     config.closedLoop
@@ -253,7 +252,7 @@ public class MotorControllerFactory {
 
     config.idleMode(IdleMode.kBrake);
     
-    config.voltageCompensation(12);//FIXME does this need to be different for different motors?
+    config.voltageCompensation(12);
     config.smartCurrentLimit(50);
     
     config.closedLoop
@@ -263,49 +262,5 @@ public class MotorControllerFactory {
       .velocityFF(0);
 
     return config;
-  }
-
-  /**
-   * @deprecated Use {@link SensorFactory#createCANCoder(int)} instead.
-   */
-  @Deprecated
-  public static CANcoder createCANCoder(int port) {
-    CANcoder canCoder = new CANcoder(port);
-    if(RobotBase.isSimulation()) new MockedCANCoder(canCoder);
-    return canCoder;
-  }
-
-  /**
-   * Configures a USB Camera.
-   * See {@link CameraServer#startAutomaticCapture} for more details.
-   * This MUST be called AFTER AHRS initialization or the code will be unable to connect to the gyro.
-   *
-   * @return The configured camera
-   *
-   * @deprecated Use {@link SensorFactory#configureCamera()} instead.
-   */
-  @Deprecated
-  public static UsbCamera configureCamera() {
-    UsbCamera camera = CameraServer.startAutomaticCapture();
-    camera.setConnectionStrategy(ConnectionStrategy.kKeepOpen);
-    CameraServer.getServer().setSource(camera);
-    return camera;
-  }
-
-  /**
-   * This method is equivalent to calling {@link #configureCamera()} {@code numCameras} times.
-   * The last camera will be set as the primary Camera feed.
-   * To change it, call {@code CameraServer.getServer().setSource()}.
-   *
-   * @param numCameras The number of cameras to configure
-   * @return The configured cameras.
-   *
-   * @deprecated Use {@link SensorFactory#configureCameras(int)} instead.
-   */
-  @Deprecated
-  public static UsbCamera[] configureCameras(int numCameras) {
-    UsbCamera[] cameras = new UsbCamera[numCameras];
-    for(int i = 0; i < numCameras; i++) cameras[i] = configureCamera();
-    return cameras;
   }
 }
