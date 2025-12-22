@@ -42,6 +42,10 @@ import edu.wpi.first.wpilibj.RobotBase;
  * Add your docs here.
  */
 public class MotorControllerFactory {
+  @Deprecated
+  /**
+   * @deprecated VictorSPX motor controllers are no longer legal for the 2026 season: https://community.firstinspires.org/2025-robot-rules-preview-for-2026
+   */
   public static WPI_VictorSPX createVictor(int port) {
     WPI_VictorSPX victor;
     if (RobotBase.isReal()) {
@@ -86,35 +90,20 @@ public class MotorControllerFactory {
     return talon;
   }
 
+  @Deprecated
   /**
+   * @deprecated Use {@link MotorControllerFactory#createSparkMax(int id, MotorConfig motorConfig)} instead.
    * Create a default sparkMax controller (NEO or 550).
    * 
    * @param id the port of the motor controller
    * @param motorConfig either MotorConfig.NEO or MotorConfig.NEO_550
    */
   public static SparkMax createSparkMax(int id, MotorConfig motorConfig) {
-    SparkMax spark=null;
-    if (RobotBase.isReal()) {
-      spark = new SparkMax(id, SparkLowLevel.MotorType.kBrushless);
-    } else {
-      spark = MockSparkMax.createMockSparkMax(id, SparkLowLevel.MotorType.kBrushless, MockSparkMax.NEOType.NEO);
+    if (motorConfig.temperatureLimitCelsius == MotorConfig.NEO.temperatureLimitCelsius) {
+      return createSparkMax(id, sparkConfig(SparkMotorType.NEO));
+    }else{
+      return createSparkMax(id, sparkConfig(SparkMotorType.NEO550));
     }
-
-    // config.setPeriodicFramePeriod(SparkLowLevel.PeriodicFrame.kStatus0, 1);
-    if (spark!=null)
-      MotorErrors.reportSparkMaxTemp(spark, motorConfig.temperatureLimitCelsius);
-    
-    MotorErrors.checkSparkMaxErrors(spark);
-
-    if (motorConfig==MotorConfig.NEO || motorConfig==MotorConfig.NEO_550)
-      spark.configure(baseSparkMaxConfig(), SparkBase.ResetMode.kResetSafeParameters, SparkBase.PersistMode.kPersistParameters);
-    else if (motorConfig==MotorConfig.NEO_VORTEX)
-      spark.configure(baseSparkFlexConfig(), SparkBase.ResetMode.kResetSafeParameters, SparkBase.PersistMode.kPersistParameters);
-    else
-      spark.configure(baseSparkConfig(), SparkBase.ResetMode.kResetSafeParameters, SparkBase.PersistMode.kPersistParameters);
-
-
-    return spark;
   }
   /**
    * Create a sparkMax controller (NEO or 550) with custom settings.
@@ -143,23 +132,7 @@ public class MotorControllerFactory {
    * @param id the port of the motor controller
    */
   public static SparkFlex createSparkFlex(int id) {
-    MotorConfig motorConfig = MotorConfig.NEO_VORTEX;
-
-    SparkFlex spark;
-    if (RobotBase.isReal()) {
-      spark = new SparkFlex(id, SparkLowLevel.MotorType.kBrushless);
-    } else {
-      spark = MockSparkFlex.createMockSparkFlex(id, MotorType.kBrushless);
-    }
-
-    // config.setPeriodicFramePeriod(SparkLowLevel.PeriodicFrame.kStatus0, 1);
-    MotorErrors.reportSparkTemp(spark, motorConfig.temperatureLimitCelsius);
-    
-    MotorErrors.checkSparkErrors(spark);
-
-    spark.configure(baseSparkFlexConfig(), SparkBase.ResetMode.kResetSafeParameters, SparkBase.PersistMode.kPersistParameters);
-
-    return spark;
+    return createSparkFlex(id, sparkConfig(SparkMotorType.VORTEX));
   }
   /**
    * Create a sparkFlex controller (VORTEX) with custom settings.
@@ -167,7 +140,7 @@ public class MotorControllerFactory {
    * @param id the port of the motor controller
    * @param config the custom config to set
    */
-  public static SparkFlex createSparkFlex(int id, SparkFlexConfig config) {
+  public static SparkFlex createSparkFlex(int id, SparkBaseConfig config) {
     SparkFlex spark = null;
     if (RobotBase.isReal()) {
       spark = new SparkFlex(id, SparkLowLevel.MotorType.kBrushless);
@@ -188,10 +161,10 @@ public class MotorControllerFactory {
     SparkBaseConfig config = null;
     switch(motor.getControllerType()){
       case SPARK_MAX:
-        config = baseSparkMaxConfig();
+        config = new SparkMaxConfig();
         break;
       case SPARK_FLEX:
-        config = baseSparkFlexConfig();
+        config = new SparkFlexConfig();
         break;
     }
     //configs that apply to all motors
@@ -218,86 +191,6 @@ public class MotorControllerFactory {
       case NEO_2:
         break;
     }
-
-    return config;
-  }
-
-  //does this not do the same as baseSparkMaxConfig, as it also creates a Spark MaxConfig?
-  public static SparkBaseConfig baseSparkConfig() {
-    SparkMaxConfig config = new SparkMaxConfig();
-
-    config.idleMode(IdleMode.kBrake);
-    
-    config.voltageCompensation(12);
-    config.smartCurrentLimit(50);
-    
-    config.closedLoop
-      .minOutput(-1)
-      .maxOutput(1)
-      .pid(0,0,0)
-      .velocityFF(0);
-
-    return config;
-  }
-  /**
-   * Overrides an old config - but does not change other settings.
-   */
-  //does this not do the same as baseSparkMaxConfig, as it also creates a Spark MaxConfig?
-  public static SparkBaseConfig baseSparkConfig(SparkMaxConfig config) {
-    config.idleMode(IdleMode.kBrake);
-    
-    config.voltageCompensation(12);
-    config.smartCurrentLimit(50);
-    
-    config.closedLoop
-      .minOutput(-1)
-      .maxOutput(1)
-      .pid(0,0,0)
-      .velocityFF(0);
-
-    return config;
-  }
-  /**
-   * Overrides an old config - but does not change other settings.
-   */
-  public static SparkMaxConfig baseSparkMaxConfig(SparkMaxConfig config){
-    //typical operating voltage: 12V.
-    return (SparkMaxConfig) baseSparkConfig(config);//FIXME apply needed config changes for each controller
-  }
-  public static SparkMaxConfig baseSparkMaxConfig(){
-    return (SparkMaxConfig) baseSparkConfig();
-  }
-  /**
-   * Overrides an old config - but does not change other settings.
-   */
-  public static SparkFlexConfig baseSparkFlexConfig(SparkFlexConfig config){
-    //typical operating voltage: 12V. ( same as sparkMax )
-    config.idleMode(IdleMode.kBrake);
-    
-    config.voltageCompensation(12);
-    config.smartCurrentLimit(50);
-    
-    config.closedLoop
-      .minOutput(-1)
-      .maxOutput(1)
-      .pid(0,0,0)
-      .velocityFF(0);
-
-    return config;
-  }
-  public static SparkFlexConfig baseSparkFlexConfig(){//why? no Se.
-    SparkFlexConfig config = new SparkFlexConfig();
-
-    config.idleMode(IdleMode.kBrake);
-    
-    config.voltageCompensation(12);
-    config.smartCurrentLimit(50);
-    
-    config.closedLoop
-      .minOutput(-1)
-      .maxOutput(1)
-      .pid(0,0,0)
-      .velocityFF(0);
 
     return config;
   }

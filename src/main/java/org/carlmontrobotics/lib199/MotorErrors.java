@@ -130,7 +130,7 @@ public final class MotorErrors {
         lastSparkErrorIndexReported = (lastSparkErrorIndexReported + n) % flags.size();
     }
 
-    public static boolean isSparkOverheated(SparkBase spark){  
+    public static boolean isSparkOverheated(SparkBase spark){
       int id = spark.getDeviceId();
       int motorMaxTemp = sparkTemperatureLimits.get(id);
       return ( spark.getMotorTemperature() >= motorMaxTemp );
