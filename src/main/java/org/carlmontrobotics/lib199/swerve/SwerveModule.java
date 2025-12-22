@@ -6,16 +6,18 @@ import static edu.wpi.first.units.Units.Pounds;
 
 import java.util.function.Supplier;
 
+import org.carlmontrobotics.lib199.SparkMotorType;
 import org.mockito.internal.reporting.SmartPrinter;
 
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.hardware.CANcoder;
-import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.SparkBase;
 import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.SparkBase.ResetMode;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkBaseConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
+import com.revrobotics.spark.config.SparkFlexConfig;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
@@ -45,11 +47,11 @@ public class SwerveModule implements Sendable {
     public enum ModuleType {FL, FR, BL, BR};
 
     private SwerveConfig config;
-    private SparkMaxConfig turnConfig = new SparkMaxConfig();
-    private SparkMaxConfig driveConfig = new SparkMaxConfig();
+    private SparkBaseConfig turnConfig;
+    private SparkBaseConfig driveConfig;
 
     private ModuleType type;
-    private SparkMax drive, turn;
+    private SparkBase drive, turn;
     private CANcoder turnEncoder;
     private PIDController drivePIDController;
     private ProfiledPIDController turnPIDController;
@@ -70,9 +72,30 @@ public class SwerveModule implements Sendable {
     private static final int NEO_HALL_COUNTS_PER_REV = 42;
     private static final int ENCODER_POSITION_PERIOD_MS = 20;
     private int encoderAverageDepth = 2;
+
+    SparkMotorType driveMotorType;
+    SparkMotorType turnMotorType;
     
-    public SwerveModule(SwerveConfig config, ModuleType type, SparkMax drive, SparkMax turn, CANcoder turnEncoder,
+    public SwerveModule(SwerveConfig config, ModuleType type, SparkBase drive, SparkBase turn, SparkMotorType driveMotorType, SparkMotorType turnMotorType, CANcoder turnEncoder,
                         int arrIndex, Supplier<Float> pitchDegSupplier, Supplier<Float> rollDegSupplier) {
+        this.driveMotorType = driveMotorType;
+        this.turnMotorType = turnMotorType;
+        switch(driveMotorType) {
+            case NEO, NEO550, NEO_2, SOLO_VORTEX:
+                driveConfig = new SparkMaxConfig();
+                break;
+            case VORTEX:
+                driveConfig = new SparkFlexConfig();
+                break;
+        }
+        switch(turnMotorType) {
+            case NEO, NEO550, NEO_2, SOLO_VORTEX:
+                turnConfig = new SparkMaxConfig();
+                break;
+            case VORTEX:
+                turnConfig = new SparkFlexConfig();
+                break;
+        }
         //SmartDashboard.putNumber("Target Angle (deg)", 0.0);
         String moduleString = type.toString();
         this.timer = new Timer();
@@ -441,15 +464,30 @@ public class SwerveModule implements Sendable {
 
     public void brake() {
         idleMode = IdleMode.kBrake;
-        SparkBaseConfig config = new SparkMaxConfig().idleMode(IdleMode.kBrake);
+        SparkBaseConfig config = null;
+        switch(driveMotorType){
+            case NEO, NEO550, NEO_2, SOLO_VORTEX:
+                config = new SparkMaxConfig().idleMode(IdleMode.kBrake);
+                break;
+            case VORTEX:
+                config = new SparkFlexConfig().idleMode(IdleMode.kBrake);
+                break;
+        }
         drive.configure(config, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
         turn .configure(config, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
     }
 
     public void coast() {
         idleMode = IdleMode.kCoast;
-        idleMode = IdleMode.kCoast;
-        SparkBaseConfig config = new SparkMaxConfig().idleMode(IdleMode.kCoast);
+        SparkBaseConfig config = null;
+        switch(driveMotorType){
+            case NEO, NEO550, NEO_2, SOLO_VORTEX:
+                config = new SparkMaxConfig().idleMode(IdleMode.kCoast);
+                break;
+            case VORTEX:
+                config = new SparkFlexConfig().idleMode(IdleMode.kCoast);
+                break;
+        }
         drive.configure(config, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
         turn .configure(config, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
     }
