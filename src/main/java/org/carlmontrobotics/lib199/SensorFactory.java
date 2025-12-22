@@ -23,16 +23,9 @@ public class SensorFactory {
      * @return The CANCoder object
      */
     public static CANcoder createCANCoder(int port) {
-        // CANcoder canCoder = new CANcoder(port);
-        // if (RobotBase.isSimulation())
-        //     canCoder = MockedCANCoder.createMock(canCoder);
-        // return canCoder;
-        CANcoder canCoder;
-        if (RobotBase.isReal()) {
-            canCoder = new CANcoder(port);
-        } else {
-            canCoder = MockedCANCoder.createMock(new CANcoder(port));
-        }
+        CANcoder canCoder = new CANcoder(port);
+        if (RobotBase.isSimulation())
+            new MockedCANCoder(canCoder);
         return canCoder;
     }
 
