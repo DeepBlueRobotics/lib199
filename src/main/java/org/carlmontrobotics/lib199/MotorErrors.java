@@ -113,11 +113,6 @@ public final class MotorErrors {
         return formatFaults(f);
     }
 
-    @Deprecated
-    public static void printSparkMaxErrorMessages() {
-        printSparkErrorMessages();
-    }
-
     public static void printSparkErrorMessages() {
         flags.keySet().forEach(MotorErrors::checkSparkErrors);
     }
@@ -141,11 +136,6 @@ public final class MotorErrors {
         temperatureSparks.put(id, spark);
         sparkTemperatureLimits.put(id, temperatureLimit);
         overheatedSparks.put(id, 0);
-    }
-
-    @Deprecated
-    public static void doReportSparkMaxTemp() {
-        doReportSparkTemp();
     }
 
     public static void doReportSparkTemp() {
@@ -210,16 +200,4 @@ public final class MotorErrors {
     }
 
     private MotorErrors() {}
-
-    @Deprecated
-    public static enum TemperatureLimit {
-        NEO(70), NEO_550(40);
-
-        public final int limit;
-
-        private TemperatureLimit(int limit) {
-            this.limit = limit;
-        }
-    }
-
 }
