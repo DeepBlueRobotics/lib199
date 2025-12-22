@@ -15,6 +15,7 @@ import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
 import edu.wpi.first.math.controller.ArmFeedforward;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.wpilibj.DriverStation;
 
 
 public final class ArmConfig {
@@ -261,7 +262,7 @@ public final class ArmConfig {
             }
         }
         if (armMasterMotorType != MotorConfig.NEO && armMasterMotorType != MotorConfig.NEO_VORTEX && armMasterMotorType != MotorConfig.NEO_550) {
-            throw new IllegalArgumentException("What is this config???");
+            throw new IllegalArgumentException("What is this config??? If null pls change, if not null you're cooked");
         }
     }
 
@@ -325,7 +326,7 @@ public final class ArmConfig {
         }
         else {
             armMainRelativeEncoderExists = false;
-            System.out.println("Arm does not have backup encoder, highly recommended");
+            DriverStation.reportWarning("Arm does not have backup encoder, highly recommended", true);
         }
 
         
@@ -342,7 +343,7 @@ public final class ArmConfig {
                 if (armPIDContinuousInput) {
                     armPID.enableContinuousInput(-180, 180);
                 }
-                armPIDExists = false;
+                armPIDExists = true;
                 return;
             }
             throw new IllegalArgumentException("Need to have 3 values for PID");
@@ -351,7 +352,7 @@ public final class ArmConfig {
         armKI = 0;
         armKD = 0;
         armPIDExists = false;
-        System.out.println("ArmPID is off");
+        DriverStation.reportWarning("ArmPID is off", true);
     }
 
     private void checkFeedForward() {
@@ -370,8 +371,9 @@ public final class ArmConfig {
         armKS = 0;
         armKG = 0;
         armKV = 0;
+        armKA = 0;
         armFeedForwardExists = false;
-        System.out.println("ArmFeedForward is off");
+        DriverStation.reportWarning("ArmFeedForward is off", true);
     }   
 
     private void checkGearReduction() {
@@ -422,7 +424,7 @@ public final class ArmConfig {
     //         this.armStates = (Enum<?>) armStates;
     //     }
     //     else {
-    //         System.out.println("Daniel is sad that you don't like states");
+    //         DriverStation.reportWarning("Daniel is sad that you don't like states", true);
     //     }
     // }
 

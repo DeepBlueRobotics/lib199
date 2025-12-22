@@ -155,16 +155,82 @@ public class SimpleDrivetrain extends SubsystemBase {
     double mu = 1;
     double autoCentripetalAccel = mu * g * 2;
 
+
+    //Extra
+    double wheelBase;
+    double trackWidth;
+
+    int driveFrontLeftPort;
+    int turnFrontLeftPort;
+    int canCoderPortFL;
+
+    int driveFrontRightPort;
+    int turnFrontRightPort;
+    int canCoderPortFR;
+    
+    int driveBackLeftPort;
+    int turnBackLeftPort;
+    int canCoderPortBL;
+
+    int driveBackRightPort;
+    int turnBackRightPort;
+    int canCoderPortBR;
+
+    double secsPer12Volts;
+    double wheelDiameterMeters;
+    double driveGearing;
+    double turnGearing;
+
+    boolean isGyroReversed;
+    double maxSpeed;
+
+    RobotConfig robotConfig;
+
+    double COLLISION_ACCELERATION_THRESHOLD;
+
+    
+
     /**
      * 
      * @param wheelBase in meters
      * @param trackWidth in meters
      */
     public SimpleDrivetrain(
-        SwerveConfig swerveconfig
+        SwerveConfig swerveConfig,
+        double wheelBase, double trackWidth,
+        int driveFrontLeftPort, int turnFrontLeftPort, int canCoderPortFL,
+        int driveFrontRightPort, int turnFrontRightPort, int canCoderPortFR,
+        int driveBackLeftPort, int turnBackLeftPort, int canCoderPortBL,
+        int driveBackRightPort, int turnBackRightPort, int canCoderPortBR,
+        double secsPer12Volts, double wheelDiameterMeters, double driveGearing, double turnGearing,
+        boolean isGyroReversed, double maxSpeed,
+        RobotConfig robotConfig,
+        double COLLISION_ACCELERATION_THRESHOLD
     ) 
     {
         this.swerveConfig = swerveConfig;
+        this.wheelBase = wheelBase;
+        this.trackWidth = trackWidth;
+        this.driveFrontLeftPort = driveFrontLeftPort;
+        this.turnFrontLeftPort = turnFrontLeftPort;
+        this.canCoderPortFL = canCoderPortFL;
+        this.driveFrontRightPort = driveFrontRightPort;
+        this.turnFrontRightPort = turnFrontRightPort;
+        this.canCoderPortFR = canCoderPortFR;
+        this.driveBackLeftPort = driveBackLeftPort;
+        this.turnBackLeftPort = turnBackLeftPort;
+        this.canCoderPortBL = canCoderPortBL;
+        this.driveBackRightPort = driveBackRightPort;
+        this.turnBackRightPort = turnBackRightPort;
+        this.canCoderPortBR = canCoderPortBR;
+        this.secsPer12Volts = secsPer12Volts;
+        this.wheelDiameterMeters = wheelDiameterMeters;
+        this.driveGearing = driveGearing;
+        this.turnGearing = turnGearing;
+        this.isGyroReversed = isGyroReversed;
+        this.maxSpeed = maxSpeed;
+        this.robotConfig = robotConfig;
+        this.COLLISION_ACCELERATION_THRESHOLD = COLLISION_ACCELERATION_THRESHOLD;
 
         AutoBuilder();
 
@@ -214,22 +280,22 @@ public class SimpleDrivetrain extends SubsystemBase {
             moduleFL = new SwerveModule(swerveConfig, SwerveModule.ModuleType.FL, 
                 driveMotors[0] = MotorControllerFactory.createSparkFlex(driveFrontLeftPort), 
                 turnMotors[0] = MotorControllerFactory.createSparkMax(turnFrontLeftPort, MotorConfig.NEO), 
-                turnEncoders[0] = SensorFactory.createCANCoder(Constants.Drivetrainc.canCoderPortFL), 0, pitchSupplier, rollSupplier);
+                turnEncoders[0] = SensorFactory.createCANCoder(canCoderPortFL), 0, pitchSupplier, rollSupplier);
             //SmartDashboard.putNumber("FL Motor Val", turnMotors[0].getEncoder().getPosition());
-            moduleFR = new SwerveModule(Constants.Drivetrainc.swerveConfig, SwerveModule.ModuleType.FR, 
+            moduleFR = new SwerveModule(swerveConfig, SwerveModule.ModuleType.FR, 
                 driveMotors[1] = MotorControllerFactory.createSparkFlex(driveFrontRightPort), 
                 turnMotors[1] = MotorControllerFactory.createSparkMax(turnFrontRightPort, MotorConfig.NEO), 
-                turnEncoders[1] = SensorFactory.createCANCoder(Constants.Drivetrainc.canCoderPortFR), 1, pitchSupplier, rollSupplier);
+                turnEncoders[1] = SensorFactory.createCANCoder(canCoderPortFR), 1, pitchSupplier, rollSupplier);
 
-            moduleBL = new SwerveModule(Constants.Drivetrainc.swerveConfig, SwerveModule.ModuleType.BL, 
+            moduleBL = new SwerveModule(swerveConfig, SwerveModule.ModuleType.BL, 
                 driveMotors[2] = MotorControllerFactory.createSparkFlex(driveBackLeftPort), 
                 turnMotors[2] = MotorControllerFactory.createSparkMax(turnBackLeftPort, MotorConfig.NEO), 
-                turnEncoders[2] = SensorFactory.createCANCoder(Constants.Drivetrainc.canCoderPortBL), 2, pitchSupplier, rollSupplier);
+                turnEncoders[2] = SensorFactory.createCANCoder(canCoderPortBL), 2, pitchSupplier, rollSupplier);
 
-            moduleBR = new SwerveModule(Constants.Drivetrainc.swerveConfig, SwerveModule.ModuleType.BR, 
+            moduleBR = new SwerveModule(swerveConfig, SwerveModule.ModuleType.BR, 
                 driveMotors[3] = MotorControllerFactory.createSparkFlex(driveBackRightPort), 
                 turnMotors[3] = MotorControllerFactory.createSparkMax(turnBackRightPort, MotorConfig.NEO),
-                turnEncoders[3] = SensorFactory.createCANCoder(Constants.Drivetrainc.canCoderPortBR), 3, pitchSupplier, rollSupplier);
+                turnEncoders[3] = SensorFactory.createCANCoder(canCoderPortBR), 3, pitchSupplier, rollSupplier);
             modules = new SwerveModule[] { moduleFL, moduleFR, moduleBL, moduleBR };
             turnPidControllers[0] = turnMotors[0].getClosedLoopController();
             turnPidControllers[1] = turnMotors[1].getClosedLoopController();
@@ -588,7 +654,7 @@ public class SimpleDrivetrain extends SubsystemBase {
      * Configures PathPlanner AutoBuilder
      */
     public void AutoBuilder() {
-        RobotConfig config = Constants.Drivetrainc.Autoc.robotConfig;
+        RobotConfig config = robotConfig;
         AutoBuilder.configure(
                 //Supplier<Pose2d> poseSupplier,
                 this::getPose, // Robot pose supplier

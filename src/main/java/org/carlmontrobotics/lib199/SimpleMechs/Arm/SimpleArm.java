@@ -20,29 +20,30 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class SimpleArm extends SubsystemBase {
   /** Creates a new SimpleArm. */
-  ArmConfig armConfig;
-  SparkBase armMasterMotor;
-  RelativeEncoder armFeedbackEncoder;
-  AbsoluteEncoder armResetEncoder;
-  RelativeEncoder armBackupEncoder;
-  SparkBase[] armFollowMotors;
-  double currentDif = 0;
-  double pastDif = 0;
-  final double difDanger = 1;
+  private ArmConfig armConfig;
+  private SparkBase armMasterMotor;
+  private RelativeEncoder armFeedbackEncoder;
+  private AbsoluteEncoder armResetEncoder;
+  private RelativeEncoder armBackupEncoder;
+  private SparkBase[] armFollowMotors;
+  private double currentDif = 0;
+  private double pastDif = 0;
+  private final double difDanger = 1;
 
-  double armGoal; // in degrees
-  double latestManualInput; // in percentage of power (-1, 1)
+  private double armGoal; // in degrees
+  private double latestManualInput; // in percentage of power (-1, 1)
 
-  ArmControlState currentState = ArmControlState.AUTO;
-  IdleMode armIdleMode = IdleMode.kBrake;
+  private ArmControlState currentState = ArmControlState.AUTO;
+  private IdleMode armIdleMode = IdleMode.kBrake;
 
-  Timer armTimer = new Timer();
+  private Timer armTimer = new Timer();
 
   private final double defaultRelativeEncoderResetValue = -90;
 
@@ -51,7 +52,6 @@ public class SimpleArm extends SubsystemBase {
     MANUAL,
     BRAKE,
     COAST
-
   }
 
   public SimpleArm(ArmConfig armConfig) {
@@ -64,8 +64,16 @@ public class SimpleArm extends SubsystemBase {
     if (goal <= armConfig.topLimit && goal >= armConfig.bottomLimit) {armGoal = goal;}
   }
 
+  public double getGoal() {
+    return armGoal;
+  }
+
   public void setManualInput(double input) {
     latestManualInput = input;
+  }
+
+  public double getLatestManualInput() {
+    return latestManualInput;
   }
 
   public void toggleControlMode() {
@@ -79,20 +87,20 @@ public class SimpleArm extends SubsystemBase {
 
   public void setArmControlState(ArmControlState controlState) {
     switch (controlState) {
-      case AUTO -> setAdjustingOn();
+      case AUTO -> setAutoOn();
       case MANUAL -> setManualOn();
       case BRAKE -> setBrakeOn();
       case COAST -> setCoastOn();
-      default -> System.out.println("Such control mode has not been implemented yet");
+      default -> DriverStation.reportWarning("Such control mode has not been implemented yet", true);
     }
   }
 
-  public void setAdjustingOn() {
+  public void setAutoOn() {
     if (armConfig.armPIDExists || armConfig.armFeedForwardExists) {
       currentState = ArmControlState.AUTO;
     }
     else {
-      System.out.println("Any sort of autonomous control mode is disabled due to no PID or FeedForward");
+      DriverStation.reportWarning("Any sort of autonomous control mode is disabled due to no PID or FeedForward", true);
     }
   }
 
@@ -130,7 +138,7 @@ public class SimpleArm extends SubsystemBase {
     pastDif = currentDif;
     currentDif = armFeedbackEncoder.getPosition() - armBackupEncoder.getPosition();
     if (currentDif - pastDif > difDanger) {
-      System.out.println("Arm encoder seems to be off!");
+      DriverStation.reportWarning("Arm encoder seems to be off!", true);
     }
   }
     
@@ -284,6 +292,10 @@ public class SimpleArm extends SubsystemBase {
     }
   }
 
+  public void stopArm() {
+    armMasterMotor.set(0);
+  }
+
   /**
    * Use this to do any fun stuff you want to do, for armSubsystemPeriodic
    */
@@ -311,8 +323,12 @@ public class SimpleArm extends SubsystemBase {
    */
   @Override
   public void periodic() {
-    if (currentState == ArmControlState.AUTO) {autoArm();}
-    else if (currentState == ArmControlState.MANUAL) {manualArm();}
+    switch (currentState) {
+      case AUTO -> autoArm();
+      case MANUAL -> manualArm();
+      case BRAKE -> stopArm();
+      case COAST -> stopArm();
+    }
     checkFeedBackEncoder();
     userPeriodic();
     postSmartDashboardValues();
