@@ -16,7 +16,7 @@ import edu.wpi.first.networktables.StringPublisher;
 import edu.wpi.first.networktables.StringTopic;
 /**
  * A class that provides methods for interacting with the Elastic dashboard, including sending
- * notifications and selecting tabs. This taken striaght from the official Elastic documentation 
+ * notifications and selecting tabs. This taken straight from the official Elastic documentation 
  * (see https://frc-elastic.gitbook.io/docs/additional-features-and-references/robot-notifications-with-elasticlib for documentation
  * and for original code https://github.com/Gold872/elastic-dashboard/blob/main/elasticlib/Elastic.java)
  */
