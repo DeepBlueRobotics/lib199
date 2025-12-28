@@ -10,7 +10,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.ctre.phoenix.ErrorCode;
 import com.revrobotics.REVLibError;
-
+import com.revrobotics.spark.SparkBase.Faults;
 import com.revrobotics.spark.SparkMax;
 
 import org.carlmontrobotics.lib199.testUtils.ErrStreamTest;
@@ -19,36 +19,19 @@ import org.junit.Test;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class MotorErrorsTest extends ErrStreamTest {
-    public enum FaultID {
-		kBrownout(0), kOvercurrent(1), kOvervoltage(2), kMotorFault(3), kSensorFault(4), kStall(5), kEEPROMCRC(6),
-		kCANTX(7), kCANRX(8), kHasReset(9), kDRVFault(10), kOtherFault(11), kSoftLimitFwd(12), kSoftLimitRev(13),
-		kHardLimitFwd(14), kHardLimitRev(15);
-
-		@SuppressWarnings("MemberName")
-		public final int value;
-
-		FaultID(int value) {
-			this.value = value;
-		}
-	}
-
     public static class SensorFaultSparkMax {
+        Faults sensorFault = new Faults(4);
         public short getFaults() {
-            return (short)FaultID.kSensorFault.value;
-        }
-
-        public boolean getFault(FaultID faultID) {
-            return faultID == FaultID.kSensorFault;
+            // return (short)FaultID.kSensorFault.value;
+            return (short)sensorFault.rawBits;
         }
     }
 
     public static class StickySensorFaultSparkMax {
+        Faults sensorFault = new Faults(4);
         public short getStickyFaults() {
-            return (short)FaultID.kSensorFault.value;
-        }
-
-        public boolean getStickyFault(FaultID faultID) {
-            return faultID == FaultID.kSensorFault;
+            // return (short)FaultID.kSensorFault.value;
+            return (short)sensorFault.rawBits;
         }
     }
 
