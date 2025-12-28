@@ -5,7 +5,7 @@
 
 // From: https://frc-elastic.gitbook.io/docs/additional-features-and-references/robot-notifications-with-elasticlib and https://github.com/Gold872/elastic-dashboard/blob/main/elasticlib/Elastic.java 
 
-package org.carlmontrobotics.lib199;
+package org.carlmontrobotics.lib199.vendorLibs;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
