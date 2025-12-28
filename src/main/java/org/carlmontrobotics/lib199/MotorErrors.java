@@ -18,6 +18,8 @@ import com.revrobotics.REVLibError;
 
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
+import org.carlmontrobotics.lib199.MotorControllerFactory;
+
 public final class MotorErrors {
 
     private static final Map<Integer, SparkBase> temperatureSparks = new ConcurrentSkipListMap<>();
@@ -183,18 +185,21 @@ public final class MotorErrors {
                 System.err.println("Port " + port + " spark is operating at " + temp
                         + " degrees Celsius! It will be disabled until the robot code is restarted.");
             }
-            if (spark.getClass() == SparkMax.class) {
-                spark.configure(
-                    OVERHEAT_MAX_CONFIG,
-                    SparkBase.ResetMode.kNoResetSafeParameters,
-                    SparkBase.PersistMode.kNoPersistParameters);
-            } else if (spark.getClass() == SparkFlex.class) {
-                spark.configure(
-                    OVERHEAT_FLEX_CONFIG,
-                    SparkBase.ResetMode.kNoResetSafeParameters,
-                    SparkBase.PersistMode.kNoPersistParameters);
-            }else{
-                System.err.println("Unknown spark :(");
+            switch(MotorControllerFactory.getControllerType(spark)){
+                case SPARK_MAX:
+                    spark.configure(
+                        OVERHEAT_MAX_CONFIG,
+                        SparkBase.ResetMode.kNoResetSafeParameters,
+                        SparkBase.PersistMode.kNoPersistParameters);
+                    break;
+                case SPARK_FLEX:
+                    spark.configure(
+                        OVERHEAT_FLEX_CONFIG,
+                        SparkBase.ResetMode.kNoResetSafeParameters,
+                        SparkBase.PersistMode.kNoPersistParameters);
+                    break;
+                default:
+                    System.err.println("Unknown spark :(");
             }
         }
     }

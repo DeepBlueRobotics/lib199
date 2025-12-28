@@ -157,6 +157,28 @@ public class MotorControllerFactory {
     return spark;
   }
 
+  public static SparkBaseConfig createConfig(MotorControllerType type) {
+    SparkBaseConfig config = null;
+    switch(type){
+      case SPARK_MAX:
+        config = new SparkMaxConfig();
+        break;
+      case SPARK_FLEX:
+        config = new SparkFlexConfig();
+        break;
+    }
+    return config;
+  }
+
+  public static MotorControllerType getControllerType(SparkBase motor){
+    if(motor instanceof SparkMax){
+      return MotorControllerType.SPARK_MAX;
+    }else if(motor instanceof SparkFlex){
+      return MotorControllerType.SPARK_FLEX;
+    }
+    return null;
+  }
+
   public static SparkBaseConfig sparkConfig(SparkMotorType motor){
     SparkBaseConfig config = null;
     switch(motor.getControllerType()){

@@ -6,6 +6,7 @@ import static edu.wpi.first.units.Units.Pounds;
 
 import java.util.function.Supplier;
 
+import org.carlmontrobotics.lib199.MotorControllerType;
 import org.carlmontrobotics.lib199.SparkMotorType;
 import org.mockito.internal.reporting.SmartPrinter;
 
@@ -73,26 +74,26 @@ public class SwerveModule implements Sendable {
     private static final int ENCODER_POSITION_PERIOD_MS = 20;
     private int encoderAverageDepth = 2;
 
-    SparkMotorType driveMotorType;
-    SparkMotorType turnMotorType;
+    MotorControllerType driveMotorType;
+    MotorControllerType turnMotorType;
     
-    public SwerveModule(SwerveConfig config, ModuleType type, SparkBase drive, SparkBase turn, SparkMotorType driveMotorType, SparkMotorType turnMotorType, CANcoder turnEncoder,
+    public SwerveModule(SwerveConfig config, ModuleType type, SparkBase drive, SparkBase turn, MotorControllerType driveMotorType, MotorControllerType turnMotorType, CANcoder turnEncoder,
                         int arrIndex, Supplier<Float> pitchDegSupplier, Supplier<Float> rollDegSupplier) {
         this.driveMotorType = driveMotorType;
         this.turnMotorType = turnMotorType;
         switch(driveMotorType) {
-            case NEO, NEO550, NEO_2, SOLO_VORTEX:
+            case SPARK_MAX:
                 driveConfig = new SparkMaxConfig();
                 break;
-            case VORTEX:
+            case SPARK_FLEX:
                 driveConfig = new SparkFlexConfig();
                 break;
         }
         switch(turnMotorType) {
-            case NEO, NEO550, NEO_2, SOLO_VORTEX:
+            case SPARK_MAX:
                 turnConfig = new SparkMaxConfig();
                 break;
-            case VORTEX:
+            case SPARK_FLEX:
                 turnConfig = new SparkFlexConfig();
                 break;
         }
@@ -466,10 +467,10 @@ public class SwerveModule implements Sendable {
         idleMode = IdleMode.kBrake;
         SparkBaseConfig config = null;
         switch(driveMotorType){
-            case NEO, NEO550, NEO_2, SOLO_VORTEX:
+            case SPARK_MAX:
                 config = new SparkMaxConfig().idleMode(IdleMode.kBrake);
                 break;
-            case VORTEX:
+            case SPARK_FLEX:
                 config = new SparkFlexConfig().idleMode(IdleMode.kBrake);
                 break;
         }
@@ -481,10 +482,10 @@ public class SwerveModule implements Sendable {
         idleMode = IdleMode.kCoast;
         SparkBaseConfig config = null;
         switch(driveMotorType){
-            case NEO, NEO550, NEO_2, SOLO_VORTEX:
+            case SPARK_MAX:
                 config = new SparkMaxConfig().idleMode(IdleMode.kCoast);
                 break;
-            case VORTEX:
+            case SPARK_FLEX:
                 config = new SparkFlexConfig().idleMode(IdleMode.kCoast);
                 break;
         }
