@@ -7,7 +7,6 @@ import static edu.wpi.first.units.Units.Pounds;
 import java.util.function.Supplier;
 
 import org.carlmontrobotics.lib199.MotorControllerType;
-import org.carlmontrobotics.lib199.SparkMotorType;
 import org.mockito.internal.reporting.SmartPrinter;
 
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
@@ -77,26 +76,12 @@ public class SwerveModule implements Sendable {
     MotorControllerType driveMotorType;
     MotorControllerType turnMotorType;
     
-    public SwerveModule(SwerveConfig config, ModuleType type, SparkBase drive, SparkBase turn, MotorControllerType driveMotorType, MotorControllerType turnMotorType, CANcoder turnEncoder,
+    public SwerveModule(SwerveConfig config, ModuleType type, SparkBase drive, SparkBase turn, CANcoder turnEncoder,
                         int arrIndex, Supplier<Float> pitchDegSupplier, Supplier<Float> rollDegSupplier) {
-        this.driveMotorType = driveMotorType;
-        this.turnMotorType = turnMotorType;
-        switch(driveMotorType) {
-            case SPARK_MAX:
-                driveConfig = new SparkMaxConfig();
-                break;
-            case SPARK_FLEX:
-                driveConfig = new SparkFlexConfig();
-                break;
-        }
-        switch(turnMotorType) {
-            case SPARK_MAX:
-                turnConfig = new SparkMaxConfig();
-                break;
-            case SPARK_FLEX:
-                turnConfig = new SparkFlexConfig();
-                break;
-        }
+        driveMotorType = MotorControllerType.getMotorControllerType(drive);
+        turnMotorType = MotorControllerType.getMotorControllerType(turn);
+        driveConfig = driveMotorType.createConfig();
+        turnConfig = turnMotorType.createConfig();
         //SmartDashboard.putNumber("Target Angle (deg)", 0.0);
         String moduleString = type.toString();
         this.timer = new Timer();
@@ -466,31 +451,19 @@ public class SwerveModule implements Sendable {
     public void brake() {
         idleMode = IdleMode.kBrake;
         SparkBaseConfig config = null;
-        switch(driveMotorType){
-            case SPARK_MAX:
-                config = new SparkMaxConfig().idleMode(IdleMode.kBrake);
-                break;
-            case SPARK_FLEX:
-                config = new SparkFlexConfig().idleMode(IdleMode.kBrake);
-                break;
-        }
+        config = driveMotorType.createConfig().idleMode(idleMode);
         drive.configure(config, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
-        turn .configure(config, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
+        config = turnMotorType.createConfig().idleMode(idleMode);
+        turn.configure(config, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
     }
 
     public void coast() {
         idleMode = IdleMode.kCoast;
         SparkBaseConfig config = null;
-        switch(driveMotorType){
-            case SPARK_MAX:
-                config = new SparkMaxConfig().idleMode(IdleMode.kCoast);
-                break;
-            case SPARK_FLEX:
-                config = new SparkFlexConfig().idleMode(IdleMode.kCoast);
-                break;
-        }
+        config = driveMotorType.createConfig().idleMode(idleMode);
         drive.configure(config, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
-        turn .configure(config, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
+        config = turnMotorType.createConfig().idleMode(idleMode);
+        turn.configure(config, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
     }
 
     /**

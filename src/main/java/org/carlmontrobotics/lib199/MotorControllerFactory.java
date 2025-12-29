@@ -99,11 +99,7 @@ public class MotorControllerFactory {
    * @param motorConfig either MotorConfig.NEO or MotorConfig.NEO_550
    */
   public static SparkMax createSparkMax(int id, MotorConfig motorConfig) {
-    if (motorConfig.temperatureLimitCelsius == MotorConfig.NEO.temperatureLimitCelsius) {
-      return createSparkMax(id, sparkConfig(SparkMotorType.NEO));
-    }else{
-      return createSparkMax(id, sparkConfig(SparkMotorType.NEO550));
-    }
+    return createSparkMax(id, motorConfig, sparkConfig(motorConfig));
   }
   /**
    * Create a sparkMax controller (NEO or 550) with custom settings.
@@ -111,7 +107,7 @@ public class MotorControllerFactory {
    * @param id the port of the motor controller
    * @param config the custom config to set
    */
-  public static SparkMax createSparkMax(int id, SparkBaseConfig config) {
+  public static SparkMax createSparkMax(int id, MotorConfig motorConfig, SparkBaseConfig config) {
     SparkMax spark;
     if (RobotBase.isReal()) {
       spark = new SparkMax(id, SparkLowLevel.MotorType.kBrushless);
@@ -123,6 +119,8 @@ public class MotorControllerFactory {
       SparkBase.ResetMode.kResetSafeParameters,
       SparkBase.PersistMode.kNoPersistParameters
     );
+    MotorErrors.reportSparkTemp(spark, motorConfig.temperatureLimitCelsius);
+    MotorErrors.checkSparkErrors(spark);
 
     return spark;
   }
@@ -132,7 +130,7 @@ public class MotorControllerFactory {
    * @param id the port of the motor controller
    */
   public static SparkFlex createSparkFlex(int id) {
-    return createSparkFlex(id, sparkConfig(SparkMotorType.VORTEX));
+    return createSparkFlex(id, MotorConfig.NEO_VORTEX, sparkConfig(MotorConfig.NEO_VORTEX));
   }
   /**
    * Create a sparkFlex controller (VORTEX) with custom settings.
@@ -140,7 +138,7 @@ public class MotorControllerFactory {
    * @param id the port of the motor controller
    * @param config the custom config to set
    */
-  public static SparkFlex createSparkFlex(int id, SparkBaseConfig config) {
+  public static SparkFlex createSparkFlex(int id, MotorConfig motorConfig, SparkBaseConfig config) {
     SparkFlex spark = null;
     if (RobotBase.isReal()) {
       spark = new SparkFlex(id, SparkLowLevel.MotorType.kBrushless);
@@ -153,6 +151,9 @@ public class MotorControllerFactory {
         SparkBase.ResetMode.kResetSafeParameters,
         SparkBase.PersistMode.kPersistParameters
       );
+
+    MotorErrors.reportSparkTemp(spark, motorConfig.temperatureLimitCelsius);
+    MotorErrors.checkSparkErrors(spark);
 
     return spark;
   }
@@ -179,9 +180,9 @@ public class MotorControllerFactory {
     return null;
   }
 
-  public static SparkBaseConfig sparkConfig(SparkMotorType motor){
+  public static SparkBaseConfig sparkConfig(MotorConfig motorConfig){
     SparkBaseConfig config = null;
-    switch(motor.getControllerType()){
+    switch(motorConfig.getControllerType()){
       case SPARK_MAX:
         config = new SparkMaxConfig();
         break;
@@ -192,27 +193,13 @@ public class MotorControllerFactory {
     //configs that apply to all motors
     config.idleMode(IdleMode.kBrake);
     config.voltageCompensation(12);
-    config.smartCurrentLimit(40); //40 amps is the fuse rating for fuses for each individual motor on the PDP
+    config.smartCurrentLimit(motorConfig.currentLimitAmps);
 
     config.closedLoop
       .minOutput(-1)
       .maxOutput(1)
       .pid(0,0,0)
       .velocityFF(0);
-
-
-    //motor specific configs
-    switch(motor){
-      case NEO:
-        break;
-      case NEO550:
-        config.smartCurrentLimit(20); //so motor no go smoky
-        break;
-      case VORTEX, SOLO_VORTEX: // the config for a vortex should be the same if it uses a spark max with a solo adapter or a spark flex, so I just combined them together
-        break;
-      case NEO_2:
-        break;
-    }
 
     return config;
   }

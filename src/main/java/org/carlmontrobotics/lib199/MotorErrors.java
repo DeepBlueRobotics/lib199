@@ -90,6 +90,8 @@ public final class MotorErrors {
         System.err.println("Sticky Faults! (spark id " + spark.getDeviceId() + "): [" + formatStickyFaults(spark) + "], Ouch!");
         }
         spark.clearFaults();
+        flags.put(spark, faults);
+        stickyFlags.put(spark, stickyFaults);
     }
 
     private static String formatFaults(Faults f) {
