@@ -23,7 +23,7 @@ public class SwerveModuleSim {
     private Timer timer = new Timer();
 
     /**
-     * Constructs a SwerveModuleSim that simulates the physics of a swerve module.
+     * Constructs a SwerveModuleSim that simulates the physics of a swerve module with Neos.
      * 
      * @param drivePortNum the port of the SparkMax drive motor
      * @param driveGearing the gearing reduction between the drive motor and the wheel
@@ -35,13 +35,61 @@ public class SwerveModuleSim {
      */
     public SwerveModuleSim(int drivePortNum, double driveGearing, double driveMoiKgM2, 
                             int turnMotorPortNum, int turnEncoderPortNum, double turnGearing, double turnMoiKgM2) {
-        driveMotorSim = new SimDeviceSim("CANMotor:CANSparkMax", drivePortNum);
-        driveEncoderSim = new SimDeviceSim("CANEncoder:CANSparkMax", drivePortNum);
+        driveMotorSim = new SimDeviceSim("CANMotor:SparkMax", drivePortNum);
+        driveEncoderSim = new SimDeviceSim("CANEncoder:SparkMax", drivePortNum);
         DCMotor dcmotor = DCMotor.getNEO(1);
         drivePhysicsSim = new DCMotorSim(LinearSystemId.createDCMotorSystem(dcmotor, driveMoiKgM2, driveGearing),  dcmotor);//FIXME WHAT DO WE WANT THE MEASUREMENT STDDEVS TO BE? (LAST ARG)
         this.driveGearing = driveGearing;
 
-        turnMotorSim = new SimDeviceSim("CANMotor:CANSparkMax", turnMotorPortNum);
+        turnMotorSim = new SimDeviceSim("CANMotor:SparkMax", turnMotorPortNum);
+        turnEncoderSim = new SimDeviceSim("CANDutyCycle:CANCoder", turnEncoderPortNum);
+        turnPhysicsSim = new DCMotorSim(
+            LinearSystemId.createDCMotorSystem(dcmotor, turnMoiKgM2, turnGearing), 
+            dcmotor);
+    }
+
+    /**
+     * Constructs a SwerveModuleSim that simulates the physics of a swerve module with Neos and Neo Vortexes.
+     * 
+     * @param drivePortNum the port of the SparkMax drive motor
+     * @param driveGearing the gearing reduction between the drive motor and the wheel
+     * @param driveMoiKgM2 the effective moment of inertia around the wheel axle (typciall the mass of the robot divided the number of modules times the square of the wheel radius)
+     * @param turnMotorPortNum the port of the SparkMax turn motor
+     * @param turnEncoderPortNum the port of the CANCoder measuring the module's angle
+     * @param turnGearing the gearing reduction between the turn motor and the module
+     * @param turnMoiKgM2 the moment of inertia of the part of the module turned by the turn motor (in kg m^2)
+     * @param useFlexDrive boolean for whether to use Vortex or Neos for drive motors
+     * @param useFlexTurn boolean for whether to use Vortex or Neos for turn motors
+     */
+    public SwerveModuleSim(int drivePortNum, double driveGearing, double driveMoiKgM2, 
+                            int turnMotorPortNum, int turnEncoderPortNum, double turnGearing, double turnMoiKgM2, boolean useFlexDrive, boolean useFlexTurn) {
+        DCMotor dcmotor;
+        double[] measurementStdDevs = {
+            0.01,  // position noise
+            0.1    // velocity noise
+        };
+        if (useFlexDrive) {
+            driveMotorSim = new SimDeviceSim("CANMotor:SparkFlex", drivePortNum);
+            driveEncoderSim = new SimDeviceSim("CANEncoder:SparkFlex", drivePortNum);
+            dcmotor = DCMotor.getNeoVortex(1);
+        }
+        else {
+            driveMotorSim = new SimDeviceSim("CANMotor:SparkMax", drivePortNum);
+            driveEncoderSim = new SimDeviceSim("CANEncoder:SparkMax", drivePortNum);
+            dcmotor = DCMotor.getNEO(1);
+        }
+
+        drivePhysicsSim = new DCMotorSim(LinearSystemId.createDCMotorSystem(dcmotor, driveMoiKgM2, driveGearing),  dcmotor, measurementStdDevs);
+        this.driveGearing = driveGearing;
+
+        if (useFlexTurn) {
+            turnMotorSim = new SimDeviceSim("CANMotor:SparkFlex", turnMotorPortNum);
+            dcmotor = DCMotor.getNeoVortex(1);
+        }
+        else {
+            turnMotorSim = new SimDeviceSim("CANMotor:SparkMax", turnMotorPortNum);
+            dcmotor = DCMotor.getNEO(1);
+        }
         turnEncoderSim = new SimDeviceSim("CANDutyCycle:CANCoder", turnEncoderPortNum);
         turnPhysicsSim = new DCMotorSim(
             LinearSystemId.createDCMotorSystem(dcmotor, turnMoiKgM2, turnGearing), 

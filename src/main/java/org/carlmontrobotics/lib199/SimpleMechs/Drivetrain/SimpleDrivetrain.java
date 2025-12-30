@@ -2,6 +2,9 @@ package org.carlmontrobotics.lib199.SimpleMechs.Drivetrain;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.function.Supplier;
+
+import javax.print.attribute.standard.PrinterInfo;
+
 import org.carlmontrobotics.lib199.MotorConfig;
 import org.carlmontrobotics.lib199.MotorControllerFactory;
 import org.carlmontrobotics.lib199.SensorFactory;
@@ -30,6 +33,7 @@ import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.SparkBase.ResetMode;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.config.SparkBaseConfig;
+import com.revrobotics.spark.config.SparkFlexConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.config.ClosedLoopConfig;
 import com.revrobotics.spark.config.ClosedLoopConfig.FeedbackSensor;
@@ -63,6 +67,7 @@ import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.MutableMeasure;
 import edu.wpi.first.units.measure.Velocity;
 import edu.wpi.first.units.measure.Voltage;
+import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.util.sendable.SendableRegistry;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -98,15 +103,17 @@ public class SimpleDrivetrain extends SubsystemBase {
     private Pose2d autoGyroOffset = new Pose2d(0., 0., new Rotation2d(0.));
     // ^used by PathPlanner for chaining paths
     private SwerveDriveKinematics kinematics = null;
-    // private SwerveDriveOdometry odometry = null;
+    private SwerveDriveOdometry odometry = null;
     private SwerveDrivePoseEstimator poseEstimator = null;
 
     private SwerveModule modules[];
     private boolean fieldOriented = true;
     private double fieldOffset = 0;
 
-    private SparkFlex[] driveMotors = new SparkFlex[] { null, null, null, null };
-    private SparkMax[] turnMotors = new SparkMax[] { null, null, null, null };
+    private SparkFlex[] flexDriveMotors = new SparkFlex[] { null, null, null, null };
+    private SparkFlex[] flexTurnMotors = new SparkFlex[] { null, null, null, null };
+    private SparkMax[] maxDriveMotors = new SparkMax[] { null, null, null, null };
+    private SparkMax[] maxTurnMotors = new SparkMax[] { null, null, null, null };
     private CANcoder[] turnEncoders = new CANcoder[] { null, null, null, null };
     private final SparkClosedLoopController[] turnPidControllers = new SparkClosedLoopController[] {null, null, null, null};
     public final float initPitch;
@@ -151,42 +158,49 @@ public class SimpleDrivetrain extends SubsystemBase {
     }
 
     //Constants
-    double g = 9.8; //m/s^2
-    double mu = 1;
-    double autoCentripetalAccel = mu * g * 2;
+    private double g = 9.8; //m/s^2
+    private double mu = 1;
+    private double autoCentripetalAccel = mu * g * 2;
 
 
     //Extra
-    double wheelBase;
-    double trackWidth;
+    private double wheelBase;
+    private double trackWidth;
 
-    int driveFrontLeftPort;
-    int turnFrontLeftPort;
-    int canCoderPortFL;
+    private int driveFrontLeftPort;
+    private int turnFrontLeftPort;
+    private int canCoderPortFL;
 
-    int driveFrontRightPort;
-    int turnFrontRightPort;
-    int canCoderPortFR;
+    private int driveFrontRightPort;
+    private int turnFrontRightPort;
+    private int canCoderPortFR;
     
-    int driveBackLeftPort;
-    int turnBackLeftPort;
-    int canCoderPortBL;
+    private int driveBackLeftPort;
+    private int turnBackLeftPort;
+    private int canCoderPortBL;
 
-    int driveBackRightPort;
-    int turnBackRightPort;
-    int canCoderPortBR;
+    private int driveBackRightPort;
+    private int turnBackRightPort;
+    private int canCoderPortBR;
 
-    double secsPer12Volts;
-    double wheelDiameterMeters;
-    double driveGearing;
-    double turnGearing;
+    private double secsPer12Volts;
+    private double wheelDiameterMeters;
+    private double driveGearing;
+    private double turnGearing;
 
-    boolean isGyroReversed;
-    double maxSpeed;
+    private boolean isGyroReversed;
+    private double maxSpeed;
 
-    RobotConfig robotConfig;
+    private RobotConfig robotConfig;
 
-    double COLLISION_ACCELERATION_THRESHOLD;
+    private double COLLISION_ACCELERATION_THRESHOLD;
+
+    private boolean setupSysId;
+
+    private boolean useFlexDrive;
+    private boolean useFlexTurn;
+
+    private Rotation2d simGyroOffset = new Rotation2d();
 
     
 
@@ -205,7 +219,9 @@ public class SimpleDrivetrain extends SubsystemBase {
         double secsPer12Volts, double wheelDiameterMeters, double driveGearing, double turnGearing,
         boolean isGyroReversed, double maxSpeed,
         RobotConfig robotConfig,
-        double COLLISION_ACCELERATION_THRESHOLD
+        double COLLISION_ACCELERATION_THRESHOLD,
+        boolean useFlexDrive,
+        boolean useFlexTurn
     ) 
     {
         this.swerveConfig = swerveConfig;
@@ -231,6 +247,8 @@ public class SimpleDrivetrain extends SubsystemBase {
         this.maxSpeed = maxSpeed;
         this.robotConfig = robotConfig;
         this.COLLISION_ACCELERATION_THRESHOLD = COLLISION_ACCELERATION_THRESHOLD;
+        this.useFlexDrive = useFlexDrive;
+        this.useFlexTurn = useFlexDrive;
 
         AutoBuilder();
 
@@ -276,109 +294,235 @@ public class SimpleDrivetrain extends SubsystemBase {
             // Supplier<Float> pitchSupplier = () -> gyro.getPitch();
             // Supplier<Float> rollSupplier = () -> gyro.getRoll();
 
+            if (useFlexDrive) {
+                if (useFlexTurn) {
+                    moduleFL = new SwerveModule(swerveConfig, SwerveModule.ModuleType.FL, 
+                        flexDriveMotors[0] = MotorControllerFactory.createSparkFlex(driveFrontLeftPort), 
+                        flexTurnMotors[0] = MotorControllerFactory.createSparkFlex(turnFrontLeftPort), 
+                        turnEncoders[0] = SensorFactory.createCANCoder(canCoderPortFL), 0, pitchSupplier, rollSupplier);
+                    moduleFR = new SwerveModule(swerveConfig, SwerveModule.ModuleType.FR, 
+                        flexDriveMotors[1] = MotorControllerFactory.createSparkFlex(driveFrontRightPort), 
+                        flexTurnMotors[1] = MotorControllerFactory.createSparkFlex(turnFrontRightPort), 
+                        turnEncoders[1] = SensorFactory.createCANCoder(canCoderPortFR), 1, pitchSupplier, rollSupplier);
 
-            moduleFL = new SwerveModule(swerveConfig, SwerveModule.ModuleType.FL, 
-                driveMotors[0] = MotorControllerFactory.createSparkFlex(driveFrontLeftPort), 
-                turnMotors[0] = MotorControllerFactory.createSparkMax(turnFrontLeftPort, MotorConfig.NEO), 
-                turnEncoders[0] = SensorFactory.createCANCoder(canCoderPortFL), 0, pitchSupplier, rollSupplier);
-            //SmartDashboard.putNumber("FL Motor Val", turnMotors[0].getEncoder().getPosition());
-            moduleFR = new SwerveModule(swerveConfig, SwerveModule.ModuleType.FR, 
-                driveMotors[1] = MotorControllerFactory.createSparkFlex(driveFrontRightPort), 
-                turnMotors[1] = MotorControllerFactory.createSparkMax(turnFrontRightPort, MotorConfig.NEO), 
-                turnEncoders[1] = SensorFactory.createCANCoder(canCoderPortFR), 1, pitchSupplier, rollSupplier);
+                    moduleBL = new SwerveModule(swerveConfig, SwerveModule.ModuleType.BL, 
+                        flexDriveMotors[2] = MotorControllerFactory.createSparkFlex(driveBackLeftPort), 
+                        flexTurnMotors[2] = MotorControllerFactory.createSparkFlex(turnBackLeftPort), 
+                        turnEncoders[2] = SensorFactory.createCANCoder(canCoderPortBL), 2, pitchSupplier, rollSupplier);
 
-            moduleBL = new SwerveModule(swerveConfig, SwerveModule.ModuleType.BL, 
-                driveMotors[2] = MotorControllerFactory.createSparkFlex(driveBackLeftPort), 
-                turnMotors[2] = MotorControllerFactory.createSparkMax(turnBackLeftPort, MotorConfig.NEO), 
-                turnEncoders[2] = SensorFactory.createCANCoder(canCoderPortBL), 2, pitchSupplier, rollSupplier);
+                    moduleBR = new SwerveModule(swerveConfig, SwerveModule.ModuleType.BR, 
+                        flexDriveMotors[3] = MotorControllerFactory.createSparkFlex(driveBackRightPort), 
+                        flexTurnMotors[3] = MotorControllerFactory.createSparkFlex(turnBackRightPort),
+                        turnEncoders[3] = SensorFactory.createCANCoder(canCoderPortBR), 3, pitchSupplier, rollSupplier);
+                    modules = new SwerveModule[] { moduleFL, moduleFR, moduleBL, moduleBR };
+                    SparkFlexConfig driveConfig = new SparkFlexConfig();
+                    driveConfig.openLoopRampRate(secsPer12Volts);
+                    driveConfig.encoder.positionConversionFactor(wheelDiameterMeters * Math.PI / driveGearing);
+                    driveConfig.encoder.velocityConversionFactor(wheelDiameterMeters * Math.PI / driveGearing / 60);
+                    driveConfig.encoder.uvwAverageDepth(2);
+                    driveConfig.encoder.uvwMeasurementPeriod(16);
+                    driveConfig.smartCurrentLimit(MotorConfig.NEO.currentLimitAmps);
 
-            moduleBR = new SwerveModule(swerveConfig, SwerveModule.ModuleType.BR, 
-                driveMotors[3] = MotorControllerFactory.createSparkFlex(driveBackRightPort), 
-                turnMotors[3] = MotorControllerFactory.createSparkMax(turnBackRightPort, MotorConfig.NEO),
-                turnEncoders[3] = SensorFactory.createCANCoder(canCoderPortBR), 3, pitchSupplier, rollSupplier);
-            modules = new SwerveModule[] { moduleFL, moduleFR, moduleBL, moduleBR };
-            turnPidControllers[0] = turnMotors[0].getClosedLoopController();
-            turnPidControllers[1] = turnMotors[1].getClosedLoopController();
-            turnPidControllers[2] = turnMotors[2].getClosedLoopController();
-            turnPidControllers[3] = turnMotors[3].getClosedLoopController();
+                    for (SparkFlex driveMotor : flexDriveMotors) {
+                        driveMotor.configure(driveConfig, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
+                    }
+                    SparkFlexConfig turnConfig = new SparkFlexConfig();
+                    turnConfig.encoder.positionConversionFactor(360/turnGearing);
+                    turnConfig.encoder.velocityConversionFactor(360/turnGearing/60);
+                    turnConfig.encoder.uvwAverageDepth(2);
+                    turnConfig.encoder.uvwMeasurementPeriod(16);
+
+                    //turnConfig.closedLoop.pid(kP, kI, kD).feedbackSensor(FeedbackSensor.kPrimaryEncoder);
+                    for (SparkFlex turnMotor : flexTurnMotors) {
+                        turnMotor.configure(turnConfig, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
+                    }
+                    turnPidControllers[0] = flexTurnMotors[0].getClosedLoopController();
+                    turnPidControllers[1] = flexTurnMotors[1].getClosedLoopController();
+                    turnPidControllers[2] = flexTurnMotors[2].getClosedLoopController();
+                    turnPidControllers[3] = flexTurnMotors[3].getClosedLoopController();
+                }
+                else {
+                    moduleFL = new SwerveModule(swerveConfig, SwerveModule.ModuleType.FL, 
+                        flexDriveMotors[0] = MotorControllerFactory.createSparkFlex(driveFrontLeftPort), 
+                        maxTurnMotors[0] = MotorControllerFactory.createSparkMax(turnFrontLeftPort, MotorConfig.NEO), 
+                        turnEncoders[0] = SensorFactory.createCANCoder(canCoderPortFL), 0, pitchSupplier, rollSupplier);
+                    moduleFR = new SwerveModule(swerveConfig, SwerveModule.ModuleType.FR, 
+                        flexDriveMotors[1] = MotorControllerFactory.createSparkFlex(driveFrontRightPort), 
+                        maxTurnMotors[1] = MotorControllerFactory.createSparkMax(turnFrontRightPort, MotorConfig.NEO), 
+                        turnEncoders[1] = SensorFactory.createCANCoder(canCoderPortFR), 1, pitchSupplier, rollSupplier);
+
+                    moduleBL = new SwerveModule(swerveConfig, SwerveModule.ModuleType.BL, 
+                        flexDriveMotors[2] = MotorControllerFactory.createSparkFlex(driveBackLeftPort), 
+                        maxTurnMotors[2] = MotorControllerFactory.createSparkMax(turnBackLeftPort, MotorConfig.NEO), 
+                        turnEncoders[2] = SensorFactory.createCANCoder(canCoderPortBL), 2, pitchSupplier, rollSupplier);
+
+                    moduleBR = new SwerveModule(swerveConfig, SwerveModule.ModuleType.BR, 
+                        flexDriveMotors[3] = MotorControllerFactory.createSparkFlex(driveBackRightPort), 
+                        maxTurnMotors[3] = MotorControllerFactory.createSparkMax(turnBackRightPort, MotorConfig.NEO),
+                        turnEncoders[3] = SensorFactory.createCANCoder(canCoderPortBR), 3, pitchSupplier, rollSupplier);
+                    modules = new SwerveModule[] { moduleFL, moduleFR, moduleBL, moduleBR };
+                    SparkFlexConfig driveConfig = new SparkFlexConfig();
+                    driveConfig.openLoopRampRate(secsPer12Volts);
+                    driveConfig.encoder.positionConversionFactor(wheelDiameterMeters * Math.PI / driveGearing);
+                    driveConfig.encoder.velocityConversionFactor(wheelDiameterMeters * Math.PI / driveGearing / 60);
+                    driveConfig.encoder.uvwAverageDepth(2);
+                    driveConfig.encoder.uvwMeasurementPeriod(16);
+                    driveConfig.smartCurrentLimit(MotorConfig.NEO.currentLimitAmps);
+
+                    for (SparkFlex driveMotor : flexDriveMotors) {
+                        driveMotor.configure(driveConfig, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
+                    }
+                    SparkMaxConfig turnConfig = new SparkMaxConfig();
+                    turnConfig.encoder.positionConversionFactor(360/turnGearing);
+                    turnConfig.encoder.velocityConversionFactor(360/turnGearing/60);
+                    turnConfig.encoder.uvwAverageDepth(2);
+                    turnConfig.encoder.uvwMeasurementPeriod(16);
+
+                    //turnConfig.closedLoop.pid(kP, kI, kD).feedbackSensor(FeedbackSensor.kPrimaryEncoder);
+                    for (SparkMax turnMotor : maxTurnMotors) {
+                        turnMotor.configure(turnConfig, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
+                    }
+                    turnPidControllers[0] = maxTurnMotors[0].getClosedLoopController();
+                    turnPidControllers[1] = maxTurnMotors[1].getClosedLoopController();
+                    turnPidControllers[2] = maxTurnMotors[2].getClosedLoopController();
+                    turnPidControllers[3] = maxTurnMotors[3].getClosedLoopController();
+                }
+            }
+            else {
+                if (useFlexTurn) {
+                    moduleFL = new SwerveModule(swerveConfig, SwerveModule.ModuleType.FL, 
+                        maxDriveMotors[0] = MotorControllerFactory.createSparkMax(driveFrontLeftPort, MotorConfig.NEO), 
+                        flexTurnMotors[0] = MotorControllerFactory.createSparkFlex(turnFrontLeftPort), 
+                        turnEncoders[0] = SensorFactory.createCANCoder(canCoderPortFL), 0, pitchSupplier, rollSupplier);
+                    moduleFR = new SwerveModule(swerveConfig, SwerveModule.ModuleType.FR, 
+                        maxDriveMotors[1] = MotorControllerFactory.createSparkMax(driveFrontRightPort, MotorConfig.NEO), 
+                        flexTurnMotors[1] = MotorControllerFactory.createSparkFlex(turnFrontRightPort), 
+                        turnEncoders[1] = SensorFactory.createCANCoder(canCoderPortFR), 1, pitchSupplier, rollSupplier);
+
+                    moduleBL = new SwerveModule(swerveConfig, SwerveModule.ModuleType.BL, 
+                        maxDriveMotors[2] = MotorControllerFactory.createSparkMax(driveBackLeftPort, MotorConfig.NEO), 
+                        flexTurnMotors[2] = MotorControllerFactory.createSparkFlex(turnBackLeftPort), 
+                        turnEncoders[2] = SensorFactory.createCANCoder(canCoderPortBL), 2, pitchSupplier, rollSupplier);
+
+                    moduleBR = new SwerveModule(swerveConfig, SwerveModule.ModuleType.BR, 
+                        maxDriveMotors[3] = MotorControllerFactory.createSparkMax(driveBackRightPort, MotorConfig.NEO), 
+                        flexTurnMotors[3] = MotorControllerFactory.createSparkFlex(turnBackRightPort),
+                        turnEncoders[3] = SensorFactory.createCANCoder(canCoderPortBR), 3, pitchSupplier, rollSupplier);
+                    modules = new SwerveModule[] { moduleFL, moduleFR, moduleBL, moduleBR };
+                    SparkMaxConfig driveConfig = new SparkMaxConfig();
+                    driveConfig.openLoopRampRate(secsPer12Volts);
+                    driveConfig.encoder.positionConversionFactor(wheelDiameterMeters * Math.PI / driveGearing);
+                    driveConfig.encoder.velocityConversionFactor(wheelDiameterMeters * Math.PI / driveGearing / 60);
+                    driveConfig.encoder.uvwAverageDepth(2);
+                    driveConfig.encoder.uvwMeasurementPeriod(16);
+                    driveConfig.smartCurrentLimit(MotorConfig.NEO.currentLimitAmps);
+
+                    for (SparkMax driveMotor : maxDriveMotors) {
+                        driveMotor.configure(driveConfig, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
+                    }
+                    SparkFlexConfig turnConfig = new SparkFlexConfig();
+                    turnConfig.encoder.positionConversionFactor(360/turnGearing);
+                    turnConfig.encoder.velocityConversionFactor(360/turnGearing/60);
+                    turnConfig.encoder.uvwAverageDepth(2);
+                    turnConfig.encoder.uvwMeasurementPeriod(16);
+
+                    //turnConfig.closedLoop.pid(kP, kI, kD).feedbackSensor(FeedbackSensor.kPrimaryEncoder);
+                    for (SparkFlex turnMotor : flexTurnMotors) {
+                        turnMotor.configure(turnConfig, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
+                    }
+                    turnPidControllers[0] = flexTurnMotors[0].getClosedLoopController();
+                    turnPidControllers[1] = flexTurnMotors[1].getClosedLoopController();
+                    turnPidControllers[2] = flexTurnMotors[2].getClosedLoopController();
+                    turnPidControllers[3] = flexTurnMotors[3].getClosedLoopController();
+                }
+                else {
+                    moduleFL = new SwerveModule(swerveConfig, SwerveModule.ModuleType.FL, 
+                        maxDriveMotors[0] = MotorControllerFactory.createSparkMax(driveFrontLeftPort, MotorConfig.NEO), 
+                        maxTurnMotors[0] = MotorControllerFactory.createSparkMax(turnFrontLeftPort, MotorConfig.NEO), 
+                        turnEncoders[0] = SensorFactory.createCANCoder(canCoderPortFL), 0, pitchSupplier, rollSupplier);
+                    moduleFR = new SwerveModule(swerveConfig, SwerveModule.ModuleType.FR, 
+                        maxDriveMotors[1] = MotorControllerFactory.createSparkMax(driveFrontRightPort, MotorConfig.NEO), 
+                        maxTurnMotors[1] = MotorControllerFactory.createSparkMax(turnFrontRightPort, MotorConfig.NEO), 
+                        turnEncoders[1] = SensorFactory.createCANCoder(canCoderPortFR), 1, pitchSupplier, rollSupplier);
+
+                    moduleBL = new SwerveModule(swerveConfig, SwerveModule.ModuleType.BL, 
+                        maxDriveMotors[2] = MotorControllerFactory.createSparkMax(driveBackLeftPort, MotorConfig.NEO), 
+                        maxTurnMotors[2] = MotorControllerFactory.createSparkMax(turnBackLeftPort, MotorConfig.NEO), 
+                        turnEncoders[2] = SensorFactory.createCANCoder(canCoderPortBL), 2, pitchSupplier, rollSupplier);
+
+                    moduleBR = new SwerveModule(swerveConfig, SwerveModule.ModuleType.BR, 
+                        maxDriveMotors[3] = MotorControllerFactory.createSparkMax(driveBackRightPort, MotorConfig.NEO), 
+                        maxTurnMotors[3] = MotorControllerFactory.createSparkMax(turnBackRightPort, MotorConfig.NEO),
+                        turnEncoders[3] = SensorFactory.createCANCoder(canCoderPortBR), 3, pitchSupplier, rollSupplier);
+                    modules = new SwerveModule[] { moduleFL, moduleFR, moduleBL, moduleBR };
+                    SparkMaxConfig driveConfig = new SparkMaxConfig();
+                    driveConfig.openLoopRampRate(secsPer12Volts);
+                    driveConfig.encoder.positionConversionFactor(wheelDiameterMeters * Math.PI / driveGearing);
+                    driveConfig.encoder.velocityConversionFactor(wheelDiameterMeters * Math.PI / driveGearing / 60);
+                    driveConfig.encoder.uvwAverageDepth(2);
+                    driveConfig.encoder.uvwMeasurementPeriod(16);
+                    driveConfig.smartCurrentLimit(MotorConfig.NEO.currentLimitAmps);
+
+                    for (SparkMax driveMotor : maxDriveMotors) {
+                        driveMotor.configure(driveConfig, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
+                    }
+                    SparkMaxConfig turnConfig = new SparkMaxConfig();
+                    turnConfig.encoder.positionConversionFactor(360/turnGearing);
+                    turnConfig.encoder.velocityConversionFactor(360/turnGearing/60);
+                    turnConfig.encoder.uvwAverageDepth(2);
+                    turnConfig.encoder.uvwMeasurementPeriod(16);
+
+                    //turnConfig.closedLoop.pid(kP, kI, kD).feedbackSensor(FeedbackSensor.kPrimaryEncoder);
+                    for (SparkMax turnMotor : maxTurnMotors) {
+                        turnMotor.configure(turnConfig, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
+                    }
+                    turnPidControllers[0] = maxTurnMotors[0].getClosedLoopController();
+                    turnPidControllers[1] = maxTurnMotors[1].getClosedLoopController();
+                    turnPidControllers[2] = maxTurnMotors[2].getClosedLoopController();
+                    turnPidControllers[3] = maxTurnMotors[3].getClosedLoopController();
+                }
+            }
             if (RobotBase.isSimulation()) {
                 moduleSims = new SwerveModuleSim[] {
                     moduleFL.createSim(), moduleFR.createSim(), moduleBL.createSim(), moduleBR.createSim()
                 };
                 gyroYawSim = new SimDeviceSim("navX-Sensor[0]").getDouble("Yaw");
             }
+            
             SmartDashboard.putData("Module FL",moduleFL);
             SmartDashboard.putData("Module FR",moduleFR);
             SmartDashboard.putData("Module BL",moduleBL);
             SmartDashboard.putData("Module BR",moduleBR);
             
-            SmartDashboard.putNumber("bigoal", 0);
-
-            SparkMaxConfig driveConfig = new SparkMaxConfig();
-            driveConfig.openLoopRampRate(secsPer12Volts);
-            driveConfig.encoder.positionConversionFactor(wheelDiameterMeters * Math.PI / driveGearing);
-            driveConfig.encoder.velocityConversionFactor(wheelDiameterMeters * Math.PI / driveGearing / 60);
-            driveConfig.encoder.uvwAverageDepth(2);
-            driveConfig.encoder.uvwMeasurementPeriod(16);
-            driveConfig.smartCurrentLimit(MotorConfig.NEO.currentLimitAmps);
-
-            for (SparkFlex driveMotor : driveMotors) {
-                driveMotor.configure(driveConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
-            }
-            SparkMaxConfig turnConfig = new SparkMaxConfig();
-            turnConfig.encoder.positionConversionFactor(360/turnGearing);
-            turnConfig.encoder.velocityConversionFactor(360/turnGearing/60);
-            turnConfig.encoder.uvwAverageDepth(2);
-            turnConfig.encoder.uvwMeasurementPeriod(16);
-
-            //turnConfig.closedLoop.pid(kP, kI, kD).feedbackSensor(FeedbackSensor.kPrimaryEncoder);
-            for (SparkMax turnMotor : turnMotors) {
-                turnMotor.configure(turnConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
-            }
-
             for (CANcoder coder : turnEncoders) {
                 coder.getAbsolutePosition().setUpdateFrequency(500);
                 coder.getPosition().setUpdateFrequency(500);
                 coder.getVelocity().setUpdateFrequency(500);
             }
-           
-            //SmartDashboard.putData("Field", field);
-            //SmartDashboard.putData("Odometry Field", odometryField);
-            //martDashboard.putData("Pose with Limelight Field", poseWithLimelightField);
 
             accelX = gyro.getWorldLinearAccelX(); // Acceleration along the X-axis
             accelY = gyro.getWorldLinearAccelY(); // Acceleration along the Y-axis
             accelXY = Math.sqrt(gyro.getWorldLinearAccelX() * gyro.getWorldLinearAccelX() + gyro.getWorldLinearAccelY() * gyro.getWorldLinearAccelY());
 
-            // for(SparkMax driveMotor : driveMotors)
-            // driveMotor.setSmartCurrentLimit(80);
 
             // Must call this method for SysId to run
-            if (CONFIG.isSysIdTesting()) {
+            if (setupSysId) {
                 sysIdSetup();
             }
         }
 
-        // odometry = new SwerveDriveOdometry(kinematics,
-        // Rotation2d.fromDegrees(getHeading()), getModulePositions(),
-        // new Pose2d());
-
+        odometry = new SwerveDriveOdometry(kinematics,
+        Rotation2d.fromDegrees(getHeading()), getModulePositions(),
+        new Pose2d());
         poseEstimator = new SwerveDrivePoseEstimator(
                 getKinematics(),
                 Rotation2d.fromDegrees(getHeading()),
                 getModulePositions(),
                 new Pose2d());
-
-        // Setup autopath builder
-        //configurePPLAutoBuilder();
-        // SmartDashboard.putNumber("chassis speeds x", 0);
-        //                 SmartDashboard.putNumber("chassis speeds y", 0);
-
-        //                             SmartDashboard.putNumber("chassis speeds theta", 0);
-        SmartDashboard.putData(this); // For seeing drivetrain data in SmartDashboard
+        
+        SmartDashboard.putData(this);
 
     }
-
 
 
     public boolean isAtAngle(double desiredAngleDeg, double toleranceDeg){
@@ -441,79 +585,44 @@ public class SimpleDrivetrain extends SubsystemBase {
         else {
             mode = IdleMode.kCoast;
         }
-        for (SparkMax turnMotor : turnMotors) {
-            SparkMaxConfig config = new SparkMaxConfig();
-            config.idleMode(mode);
-            turnMotor.configure(config, SparkBase.ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);      
+        if (useFlexDrive) {
+            for (SparkFlex driveMotor : flexDriveMotors) {
+                SparkFlexConfig config = new SparkFlexConfig();
+                config.idleMode(mode);
+                driveMotor.configure(config, SparkBase.ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);     
+            }
         }
-        for (SparkFlex driveMotor : driveMotors) {
-            SparkMaxConfig config = new SparkMaxConfig();
-            config.idleMode(mode);
-            driveMotor.configure(config, SparkBase.ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);     
+        else {
+            for (SparkMax driveMotor : maxDriveMotors) {
+                SparkMaxConfig config = new SparkMaxConfig();
+                config.idleMode(mode);
+                driveMotor.configure(config, SparkBase.ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);     
+            }
         }
+        if (useFlexTurn) {
+            for (SparkFlex turnMotor : flexTurnMotors) {
+                SparkFlexConfig config = new SparkFlexConfig();
+                config.idleMode(mode);
+                turnMotor.configure(config, SparkBase.ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);      
+            }
+        }
+        else {
+            for (SparkMax turnMotor : maxTurnMotors) {
+                SparkMaxConfig config = new SparkMaxConfig();
+                config.idleMode(mode);
+                turnMotor.configure(config, SparkBase.ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);      
+            }
+        }
+        
     }
 
     @Override
     public void periodic() {
         detectCollision(); //This does nothing
         PathPlannerLogging.logCurrentPose(getPose());
-
-        //maybe add the field with the position of the robot with only limelight and the field with the position of the robot with only odometry?
-        //We can compare the two fields to see if odometry is causing the pose to be inaccurate when it hits the reef.
-
-        // SmartDashboard.getNumber("GoalPos", turnEncoders[0].getVelocity().getValueAsDouble());
-        // SmartDashboard.putNumber("FL Motor Val", turnMotors[0].getEncoder().getPosition());
-        // double goal = SmartDashboard.getNumber("GoalPos", 0);
-        // PIDController pid = new PIDController(kP, kI, kD);
-        // kP = SmartDashboard.getNumber("kP", 0);
-        // kI = SmartDashboard.getNumber("kI", 0);
-        // kD = SmartDashboard.getNumber("kD", 0);
-        //pid.setIZone(20);
-        //SmartDashboard.putBoolean("atgoal", pid.atSetpoint());
-        // SparkMaxConfig config = new SparkMaxConfig();
         
-        //config.closedLoop.feedbackSensor(ClosedLoopConfig.FeedbackSensor.kPrimaryEncoder);
-        // System.out.println(kP);
-        // config.closedLoop.pid(kP ,kI,kD);
-        // config.encoder.positionConversionFactor(360/Constants.Drivetrainc.turnGearing);
-        // turnMotors[0].configure(config, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
-        // //moduleFL.move(0.0000001, 180);
-        //moduleFL.move(0.01, 180);
-        // moduleFR.move(0.000000001, 0);
-        // moduleBR.move(0.0000001, 0);
-        // moduleFL.move(0.000001, 0);
-        // moduleBL.move(0.000001, 0);
-        // turnPidControllers[0].setReference(goal
-
-        // , ControlType.kPosition, ClosedLoopSlot.kSlot0);
-        
-        
-        // 167 -> -200
-        // 138 -> 360
-        // for (CANcoder coder : turnEncoders) {
-        //     SignalLogger.writeDouble("Regular position " + coder.toString(),
-        //     coder.getPosition().getValue().baseUnitMagnitude());
-        //     SignalLogger.writeDouble("Velocity " + coder.toString(),
-        //     coder.getVelocity().getValue().baseUnitMagnitude());
-        //     SignalLogger.writeDouble("Absolute position " + coder.toString(),
-        //     coder.getAbsolutePosition().getValue().baseUnitMagnitude());
-        // }
-        // String out=""; int i=0;
-        // for (CANcoder coder : turnEncoders) {
-        //     out+=String.format("[i] Abs Pos: %.3f Goal Pos: %.3f ", coder.getAbsolutePosition().getValue().baseUnitMagnitude(),0);
-        //     i++;
-        // }
-        // lobotomized to prevent ucontrollabe swerve behavior
-        // turnMotors[2].setVoltage(SmartDashboard.getNumber("kS", 0));
-        // moduleFL.periodic();
-        // moduleFR.periodic();
-        // moduleBL.periodic();
-        // moduleBR.periodic();
-        double goal = SmartDashboard.getNumber("bigoal", 0);
         for (SwerveModule module : modules) {
-          // module.turnPeriodic();
-          // module.turnPeriodic();
-          module.move(0.00000000001, goal);
+          // module.turnPeriodic(); For testing
           module.periodic();
         }
 
@@ -551,7 +660,7 @@ public class SimpleDrivetrain extends SubsystemBase {
         // SmartDashboard.putNumber("Y position with limelight", getPoseWithLimelight().getY());
         SmartDashboard.putNumber("X position with gyro", getPose().getX());
         SmartDashboard.putNumber("Y position with gyro", getPose().getY());
-        SmartDashboard.putData(CONFIG);
+        SmartDashboard.putBoolean("setupSysId", setupSysId);
         
         //For finding acceleration of drivetrain for collision detector
         SmartDashboard.putNumber("Accel X", accelX);
@@ -572,6 +681,11 @@ public class SimpleDrivetrain extends SubsystemBase {
         SmartDashboard.putNumber("front right encoder", moduleFR.getModuleAngle());
         SmartDashboard.putNumber("back left encoder", moduleBL.getModuleAngle());
         SmartDashboard.putNumber("back right encoder", moduleBR.getModuleAngle());
+        userPeriodic();
+    }
+
+    public void userPeriodic() {
+        //Override this
     }
 
     @Override
@@ -691,12 +805,12 @@ public class SimpleDrivetrain extends SubsystemBase {
 //----------------------------------------------------------
 
    public void autoCancelDtCommand() {
-       if(!(getDefaultCommand() instanceof TeleopDrive) || DriverStation.isAutonomous()) return;
+       if(!(getDefaultCommand() instanceof SimpleTeleopDrive) || DriverStation.isAutonomous()) return;
 
         // Use hasDriverInput to get around acceleration limiting on slowdown
-        if (((TeleopDrive) getDefaultCommand()).hasDriverInput()) {
+        if (((SimpleTeleopDrive) getDefaultCommand()).hasDriverInput()) {
             Command currentDtCommand = getCurrentCommand();
-            if (currentDtCommand != getDefaultCommand() && !(currentDtCommand instanceof RotateToFieldRelativeAngle)
+            if (currentDtCommand != getDefaultCommand() && !(currentDtCommand instanceof SimpleRotateToFieldRelativeAngle)
                     && currentDtCommand != null) {
                 currentDtCommand.cancel();
             }
@@ -784,40 +898,19 @@ public class SimpleDrivetrain extends SubsystemBase {
         // return odometry.getPoseMeters();
         return poseEstimator.getEstimatedPosition();
     }
-
-    private Rotation2d simGyroOffset = new Rotation2d();
+    
     public void setPose(Pose2d initialPose) {
         Rotation2d gyroRotation = gyro.getRotation2d();
-        // odometry.resetPosition(gyroRotation, getModulePositions(), initialPose);
-
         poseEstimator.resetPosition(gyroRotation, getModulePositions(), initialPose);
-        // Remember the offset that the above call to resetPosition() will cause the odometry.update() will add to the gyro rotation in the future
-        // We need the offset so that we can compensate for it during simulationPeriodic().
         simGyroOffset = initialPose.getRotation().minus(gyroRotation);
-        //odometry.resetPosition(Rotation2d.fromDegrees(getHeading()), getModulePositions(), initialPose);
+        odometry.resetPosition(gyroRotation, getModulePositions(), initialPose);
     }
 
     //This method will set the pose using limelight if it sees a tag and if not it is supposed to run like setPose()
-    public void setPoseWithLimelight(Pose2d backupPose){ //the pose will be set to backupPose if no tag is seen
-    //     Rotation2d gyroRotation = gyro.getRotation2d();
-    //     Pose2d pose;
-
-    //     if (LimelightHelpers.getTV(REEF_LL)) {
-            
-    //         pose = LimelightHelpers.getBotPose2d_wpiBlue(REEF_LL);
-
-    //     } else if (LimelightHelpers.getTV(CORAL_LL)) {
-
-    //         pose = LimelightHelpers.getBotPose2d_wpiBlue(CORAL_LL);
-    //     }
-    //     else {
-    //         pose = backupPose;
-    //     }
-
-    //     poseEstimator.resetPosition(gyroRotation, getModulePositions(), pose);
-    //     simGyroOffset = pose.getRotation().minus(gyroRotation);
-        
+    public void setPoseWithLimelight(Pose2d backupPose){
+        DriverStation.reportError("Need to override setPoseWithLimelight and make the method setPose", true);
     }
+
     /**
      * Detects if the robot has experienced a collision based on acceleration thresholds.
      * @return true if a 2D acceleration greater than the {@link #COLLISION_ACCELERATION_THRESHOLD} false otherwise.
@@ -845,6 +938,7 @@ public class SimpleDrivetrain extends SubsystemBase {
     public double getRoll() {
         return gyro.getRoll();
     }
+
     /**
      * true stands for fieldOriented, false stands for robotOriented
      * @return boolean
@@ -860,18 +954,21 @@ public class SimpleDrivetrain extends SubsystemBase {
     public void setFieldOriented(boolean fieldOriented) {
         this.fieldOriented = fieldOriented;
     }
+
     /**
      * Sets the current direction the robot is facing is to be 0
      */
     public void resetFieldOrientation() {
         fieldOffset = gyro.getAngle();
     }
+
     /**
      * Sets the current direction the robot is facing is to be 180
      */
     public void resetFieldOrientationBackwards() {
         fieldOffset = 180 + gyro.getAngle();
     }
+
     /**
      * Sets the current direction the robot is facing is plus @param angle to be 0
      * @param angle in degrees
@@ -879,9 +976,8 @@ public class SimpleDrivetrain extends SubsystemBase {
     public void resetFieldOrientationWithAngle(double angle) {
         fieldOffset = angle + gyro.getAngle();
     }
-    public void resetPoseEstimator() {
-        // odometry.resetPosition(new Rotation2d(), getModulePositions(), new Pose2d());
 
+    public void resetPoseEstimator() {
         poseEstimator.resetPosition(new Rotation2d(), getModulePositions(), new Pose2d());
         gyro.reset();
     }
@@ -977,14 +1073,26 @@ public class SimpleDrivetrain extends SubsystemBase {
 
     // DRIVE
     private void motorLogShort_drive(SysIdRoutineLog log, int id) {
-        String name = new String[] { "fl", "fr", "bl", "br" }[id];
+        if (useFlexDrive) {
+            String name = new String[] { "fl", "fr", "bl", "br" }[id];
         log.motor(name)
                 .voltage(m_appliedVoltage[id].mut_replace(
-                        driveMotors[id].getBusVoltage() * driveMotors[id].getAppliedOutput(), Volts))
+                        flexDriveMotors[id].getBusVoltage() * flexDriveMotors[id].getAppliedOutput(), Volts))
                 .linearPosition(
-                        m_distance[id].mut_replace(driveMotors[id].getEncoder().getPosition(), Meters))
-                .linearVelocity(m_velocity[id].mut_replace(driveMotors[id].getEncoder().getVelocity(),
+                        m_distance[id].mut_replace(flexDriveMotors[id].getEncoder().getPosition(), Meters))
+                .linearVelocity(m_velocity[id].mut_replace(flexDriveMotors[id].getEncoder().getVelocity(),
                         MetersPerSecond));
+        }
+        else {
+            String name = new String[] { "fl", "fr", "bl", "br" }[id];
+        log.motor(name)
+                .voltage(m_appliedVoltage[id].mut_replace(
+                        maxDriveMotors[id].getBusVoltage() * maxDriveMotors[id].getAppliedOutput(), Volts))
+                .linearPosition(
+                        m_distance[id].mut_replace(maxDriveMotors[id].getEncoder().getPosition(), Meters))
+                .linearVelocity(m_velocity[id].mut_replace(maxDriveMotors[id].getEncoder().getVelocity(),
+                        MetersPerSecond));
+        }
     }
 
     // Create a new SysId routine for characterizing the drive.
@@ -993,8 +1101,14 @@ public class SimpleDrivetrain extends SubsystemBase {
             new SysIdRoutine.Mechanism(
                     // Tell SysId how to give the driving voltage to the motors.
                     (Voltage volts) -> {
-                        driveMotors[0].setVoltage(volts.in(Volts));
-                        driveMotors[1].setVoltage(volts.in(Volts));
+                        if (useFlexDrive) {
+                            flexDriveMotors[0].setVoltage(volts.in(Volts));
+                            flexDriveMotors[1].setVoltage(volts.in(Volts));
+                        }
+                        else { 
+                            maxDriveMotors[0].setVoltage(volts.in(Volts));
+                            maxDriveMotors[1].setVoltage(volts.in(Volts));
+                        }
                         modules[2].coast();
                         modules[3].coast();
                     },
@@ -1012,8 +1126,14 @@ public class SimpleDrivetrain extends SubsystemBase {
                         modules[1].coast();
                         modules[2].brake();
                         modules[3].brake();
-                        driveMotors[2].setVoltage(volts.in(Volts));
-                        driveMotors[3].setVoltage(volts.in(Volts));
+                        if (useFlexDrive) {
+                            flexDriveMotors[2].setVoltage(volts.in(Volts));
+                            flexDriveMotors[3].setVoltage(volts.in(Volts));
+                        }
+                        else {
+                            maxDriveMotors[2].setVoltage(volts.in(Volts));
+                            maxDriveMotors[3].setVoltage(volts.in(Volts));
+                        }
                     },
                     log -> {// BACK
                         motorLogShort_drive(log, 2);// bl
@@ -1025,8 +1145,15 @@ public class SimpleDrivetrain extends SubsystemBase {
             defaultSysIdConfig,
             new SysIdRoutine.Mechanism(
                     (Voltage volts) -> {
-                        for (SparkFlex dm : driveMotors) {
-                            dm.setVoltage(volts.in(Volts));
+                        if (useFlexDrive) {
+                            for (SparkFlex dm : flexDriveMotors) {
+                                dm.setVoltage(volts.in(Volts));
+                            }
+                        }
+                        else {
+                            for (SparkMax dm : maxDriveMotors) {
+                                dm.setVoltage(volts.in(Volts));
+                            }
                         }
                     },
                     log -> {
@@ -1038,16 +1165,26 @@ public class SimpleDrivetrain extends SubsystemBase {
                     this));
 
     private SysIdRoutine sysidroutshort_turn(int id, String logname) {
+        double busVoltage;
+        double appliedOutput;
+        if (useFlexTurn) {
+            busVoltage = flexTurnMotors[id].getBusVoltage();
+            appliedOutput = flexTurnMotors[id].getAppliedOutput();
+        }
+        else {
+            busVoltage = maxTurnMotors[id].getBusVoltage();
+            appliedOutput = maxTurnMotors[id].getAppliedOutput();
+        }
         return new SysIdRoutine(
                 defaultSysIdConfig,
                 // new SysIdRoutine.Config(Volts.of(.1).per(Seconds.of(.1)), Volts.of(.6),
                 // Seconds.of(3)),
                 new SysIdRoutine.Mechanism(
-                        (Voltage volts) -> turnMotors[id].setVoltage(volts.in(Volts)),
+                        (Voltage volts) -> {if (useFlexTurn) {flexTurnMotors[id].setVoltage(volts.in(Volts));} else {maxTurnMotors[id].setVoltage(volts.in(Volts));}},
                         log -> log.motor(logname + "_turn")
                                 .voltage(m_appliedVoltage[id + 4].mut_replace(
                                         // ^because drivemotors take up the first 4 slots of the unit holders
-                                        turnMotors[id].getBusVoltage() * turnMotors[id].getAppliedOutput(), Volts))
+                                        busVoltage * appliedOutput, Volts))
                                 .angularPosition(
                                         m_revs[id].mut_replace(turnEncoders[id].getPosition().getValue()))
                                 .angularVelocity(m_revs_vel[id].mut_replace(
@@ -1084,46 +1221,6 @@ public class SimpleDrivetrain extends SubsystemBase {
         {
             Supplier<SequentialCommandGroup> stopNwait = () -> new SequentialCommandGroup(
                     new InstantCommand(this::stop), new WaitCommand(2));
-
-            /*
-             * Alex's old sysId tests
-             * sysIdTab.add("All sysid tests", new SequentialCommandGroup(
-             * new
-             * SequentialCommandGroup(sysIdQuasistatic(SysIdRoutine.Direction.kForward,2),
-             * (Command)stopNwait.get()),
-             * new
-             * SequentialCommandGroup(sysIdQuasistatic(SysIdRoutine.Direction.kReverse,2),
-             * (Command)stopNwait.get()),
-             * new SequentialCommandGroup(sysIdDynamic(SysIdRoutine.Direction.kForward,2),
-             * (Command)stopNwait.get()),
-             * new SequentialCommandGroup(sysIdDynamic(SysIdRoutine.Direction.kReverse,2),
-             * (Command)stopNwait.get())
-             * ));
-             * sysIdTab.add("All sysid tests - FRONT wheels", new SequentialCommandGroup(
-             * new
-             * SequentialCommandGroup(sysIdQuasistatic(SysIdRoutine.Direction.kForward,0),
-             * (Command)stopNwait.get()),
-             * new
-             * SequentialCommandGroup(sysIdQuasistatic(SysIdRoutine.Direction.kReverse,0),
-             * (Command)stopNwait.get()),
-             * new SequentialCommandGroup(sysIdDynamic(SysIdRoutine.Direction.kForward,0),
-             * (Command)stopNwait.get()),
-             * new SequentialCommandGroup(sysIdDynamic(SysIdRoutine.Direction.kReverse,0),
-             * (Command)stopNwait.get())
-             * ));
-             * sysIdTab.add("All sysid tests - BACK wheels", new SequentialCommandGroup(
-             * new
-             * SequentialCommandGroup(sysIdQuasistatic(SysIdRoutine.Direction.kForward,1),
-             * (Command)stopNwait.get()),
-             * new
-             * SequentialCommandGroup(sysIdQuasistatic(SysIdRoutine.Direction.kReverse,1),
-             * (Command)stopNwait.get()),
-             * new SequentialCommandGroup(sysIdDynamic(SysIdRoutine.Direction.kForward,1),
-             * (Command)stopNwait.get()),
-             * new SequentialCommandGroup(sysIdDynamic(SysIdRoutine.Direction.kReverse,1),
-             * (Command)stopNwait.get())
-             * ));
-             */
 
             // sysidtabshorthand_qsi("Quasistatic Forward", SysIdRoutine.Direction.kForward);
             // sysidtabshorthand_qsi("Quasistatic Backward", SysIdRoutine.Direction.kReverse);

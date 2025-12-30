@@ -11,7 +11,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 
 public class SimpleTeleopDrive extends Command {
 
-  private static double robotPeriod = Robot.kDefaultPeriod;
+  private static double robotPeriod = 0.2;
   private final SimpleDrivetrain drivetrain;
   private DoubleSupplier fwd;
   private DoubleSupplier str;
@@ -23,11 +23,25 @@ public class SimpleTeleopDrive extends Command {
   GenericHID manipulatorController;
   BooleanSupplier babyModeSupplier;
 
+
+  //Extra
+  private final double maxForward;
+  private final double maxStrafe;
+  private final double maxRCW;
+  private final double kSlowDriveSpeed = 0.4;
+  private final double kNormalDriveSpeed = 1;
+  private final double kSlowDriveRotation = 0.25;
+  private final double kNormalDriveRotation = 0.5;
+  private final double kBabyDriveSpeed = 0.3;
+  private final double kBabyDriveRotation = 0.2;
+  private final double JOY_THRESH = 0.13;
+
+
   /**
    * Creates a new TeleopDrive.
    */
   public SimpleTeleopDrive(SimpleDrivetrain drivetrain, DoubleSupplier fwd, DoubleSupplier str, DoubleSupplier rcw,
-      BooleanSupplier slow, GenericHID manipulatorController, BooleanSupplier babyModeSupplier) {
+      BooleanSupplier slow, GenericHID manipulatorController, BooleanSupplier babyModeSupplier, double maxSpeed, double swerveRadius ) {
     addRequirements(this.drivetrain = drivetrain);
     this.fwd = fwd;
     this.str = str;
@@ -35,7 +49,10 @@ public class SimpleTeleopDrive extends Command {
     this.slow = slow;
     this.manipulatorController = manipulatorController;
     this.babyModeSupplier = babyModeSupplier;
-  }
+    maxForward = maxSpeed;
+    maxStrafe = maxSpeed;
+    maxRCW = maxSpeed/swerveRadius;
+    }
 
   // Called when the command is initially scheduled.
   @Override
@@ -126,9 +143,9 @@ public class SimpleTeleopDrive extends Command {
   }
 
   public boolean hasDriverInput() {
-    return MathUtil.applyDeadband(fwd.getAsDouble(), Constants.OI.JOY_THRESH)!=0
-        || MathUtil.applyDeadband(str.getAsDouble(), Constants.OI.JOY_THRESH)!=0
-        || MathUtil.applyDeadband(rcw.getAsDouble(), Constants.OI.JOY_THRESH)!=0;
+    return MathUtil.applyDeadband(fwd.getAsDouble(), JOY_THRESH)!=0
+        || MathUtil.applyDeadband(str.getAsDouble(), JOY_THRESH)!=0
+        || MathUtil.applyDeadband(rcw.getAsDouble(), JOY_THRESH)!=0;
   }
 
   // Called once the command ends or is interrupted.
