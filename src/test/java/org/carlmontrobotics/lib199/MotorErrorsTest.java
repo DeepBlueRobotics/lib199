@@ -10,6 +10,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.ctre.phoenix.ErrorCode;
 import com.revrobotics.REVLibError;
+import com.revrobotics.sim.SparkSimFaultManager;
 import com.revrobotics.spark.SparkBase.Faults;
 import com.revrobotics.spark.SparkMax;
 
@@ -19,23 +20,7 @@ import org.junit.Test;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class MotorErrorsTest extends ErrStreamTest {
-    public static class SensorFaultSparkMax {
-        Faults sensorFault = new Faults(4);
-        public short getFaults() {
-            // return (short)FaultID.kSensorFault.value;
-            return (short)sensorFault.rawBits;
-        }
-    }
-
-    public static class StickySensorFaultSparkMax {
-        Faults sensorFault = new Faults(4);
-        public short getStickyFaults() {
-            // return (short)FaultID.kSensorFault.value;
-            return (short)sensorFault.rawBits;
-        }
-    }
-
-    public static interface TemperatureSparkMax {
+        public static interface TemperatureSparkMax {
 
         public void setTemperature(double temperature);
         public int getSmartCurrentLimit();
@@ -127,7 +112,10 @@ public class MotorErrorsTest extends ErrStreamTest {
 
     @Test
     public void testFaultReporting() {
-        SparkMax sensorFaultSparkMax = Mocks.createMock(SparkMax.class, new SensorFaultSparkMax(), false);
+        Faults sensorFault = new Faults(4);
+        SparkMax sensorFaultSparkMax = MotorControllerFactory.createSparkMax(1, MotorConfig.NEO, MotorControllerFactory.sparkConfig(MotorConfig.NEO));
+        SparkSimFaultManager sparkSimFaultManager = new SparkSimFaultManager(sensorFaultSparkMax);
+        sparkSimFaultManager.setFaults(sensorFault);
         errStream.reset();
         MotorErrors.checkSparkErrors(sensorFaultSparkMax);
         assertNotEquals(0, errStream.toByteArray().length);
@@ -138,7 +126,10 @@ public class MotorErrorsTest extends ErrStreamTest {
 
     @Test
     public void testStickyFaultReporting() {
-        SparkMax stickySensorFaultSparkMax = Mocks.createMock(SparkMax.class, new StickySensorFaultSparkMax(), false);
+        Faults sensorFault = new Faults(4);
+        SparkMax stickySensorFaultSparkMax =  MotorControllerFactory.createSparkMax(1, MotorConfig.NEO, MotorControllerFactory.sparkConfig(MotorConfig.NEO));
+        SparkSimFaultManager sparkSimFaultManager = new SparkSimFaultManager(stickySensorFaultSparkMax);
+        sparkSimFaultManager.setStickyFaults(sensorFault);
         errStream.reset();
         MotorErrors.checkSparkErrors(stickySensorFaultSparkMax);
         assertNotEquals(0, errStream.toByteArray().length);
