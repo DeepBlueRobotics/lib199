@@ -77,7 +77,7 @@ public final class SpinnerConfig {
      * @param gearReduction 1 revolution of the spinner / how many revolution is needed by the motor
      * @param maxVolts maximum volts that the spinner can use autonomously
      * @param spinnerKPID 3 values for kP, kI, and kD
-     * @param spinnerKPIDTolerance in rotations per second how much should pid care for speed
+     * @param spinnerPIDTolerance in rotations per second how much should pid care for speed
      */
     public static SpinnerConfig NEOSpinnerConfig(int spinnerMasterId, boolean spinnerMasterInverted, double gearReduction, double maxVolts, double[] spinnerKPID, double spinnerPIDTolerance) {
         return new SpinnerConfig(spinnerMasterId, -1, MotorConfig.NEO, null, spinnerMasterInverted, false, gearReduction, maxVolts, maxVolts/12.0, spinnerKPID, null, spinnerPIDTolerance);
@@ -86,7 +86,7 @@ public final class SpinnerConfig {
     /**
      * Creates a simple single NEO spinner without PID
      * @param spinnerMasterId id of the motor
-     * @param spinnerMasterInversed inversed setting such that whichever is the desired movement of the spinner will be positive
+     * @param spinnerMasterInverted inversed setting such that whichever is the desired movement of the spinner will be positive
      * @param gearReduction 1 revolution of the spinner / how many revolution is needed by the motor
      * @param maxManualInput maximum voltage percentage that the spinner can use while being manually controlled
      * @return
@@ -98,11 +98,11 @@ public final class SpinnerConfig {
     /**
      * Creates a simple single NEO spinner with PID
      * @param spinnerMasterId id of the motor
-     * @param spinnerMasterInversed inversed setting such that whichever is the desired movement of the spinner will be positive
+     * @param spinnerMasterInverted inversed setting such that whichever is the desired movement of the spinner will be positive
      * @param gearReduction 1 revolution of the spinner / how many revolution is needed by the motor
      * @param maxVolts maximum volts that the spinner can use autonomously
      * @param spinnerKPID 3 values for kP, kI, and kD
-     * @param spinnerKPIDTolerance in rotations per second how much should pid care for speed
+     * @param spinnerPIDTolerance in rotations per second how much should pid care for speed
      */
     public static SpinnerConfig VORTEXSpinnerConfig(int spinnerMasterId, boolean spinnerMasterInverted, double gearReduction, double maxVolts, double[] spinnerKPID, double spinnerPIDTolerance) {
         return new SpinnerConfig(spinnerMasterId, -1, MotorConfig.NEO_VORTEX, null, spinnerMasterInverted, false, gearReduction, maxVolts, maxVolts/12.0, spinnerKPID, null, spinnerPIDTolerance);
@@ -111,7 +111,7 @@ public final class SpinnerConfig {
     /**
      * Creates a simple single NEO spinner without PID
      * @param spinnerMasterId id of the motor
-     * @param spinnerMasterInversed inversed setting such that whichever is the desired movement of the spinner will be positive
+     * @param spinnerMasterInverted inversed setting such that whichever is the desired movement of the spinner will be positive
      * @param gearReduction 1 revolution of the spinner / how many revolution is needed by the motor
      * @param maxManualInput maximum voltage percentage that the spinner can use while being manually controlled
      * @return

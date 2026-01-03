@@ -44,7 +44,7 @@ public class MockedEncoder implements AbsoluteEncoder, AnalogInput, AutoCloseabl
      * @param analog Whether the encoder is an analog sensor
      * @param absolute Whether the encoder is an absolute encoder. This flag caps the position to
      *        one rotation via. {@link MathUtil#inputModulus(double, double, double)}, disables
-     *        {@link #setPosition(double)}, and enables {@link #setZeroOffset(double)}.
+     *        {@link #setPosition(double)}, and enables setZeroOffset(double).
      * 
      *        {@link #getVelocity()} will return a value in rpm.
      */
@@ -59,7 +59,7 @@ public class MockedEncoder implements AbsoluteEncoder, AnalogInput, AutoCloseabl
      * @param analog Whether the encoder is an analog sensor
      * @param absolute Whether the encoder is an absolute encoder. This flag caps the position to
      *        one rotation via. {@link MathUtil#inputModulus(double, double, double)}, disables
-     *        {@link #setPosition(double)}, and enables {@link #setZeroOffset(double)}.
+     *        {@link #setPosition(double)}, and enables setZeroOffset(double). //FIXME where is this so called setZero
      * @param useRps Whether getVelocity() should return rps instead of rpm.
      */
     public MockedEncoder(SimDevice device, int countsPerRev, boolean analog,
@@ -106,7 +106,7 @@ public class MockedEncoder implements AbsoluteEncoder, AnalogInput, AutoCloseabl
     // }
 
     /**
-     * @return The current position of the encoder, not accounting for the position offset ({@link #setPosition(double)} and {@link #setZeroOffset(double)})
+     * @return The current position of the encoder, not accounting for the position offset ({@link #setPosition(double)} and setZeroOffset(double)
      */
     public double getRawPosition() {
         double rotationsOrVolts = voltage != null ? voltage.get() : position.get();

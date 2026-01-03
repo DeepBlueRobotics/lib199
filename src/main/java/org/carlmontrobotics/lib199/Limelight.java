@@ -214,6 +214,11 @@ public class Limelight {
         return new Pose3d(rawData[0], rawData[1], rawData[2], new Rotation3d(Math.toRadians(rawData[3]), Math.toRadians(rawData[4]), Math.toRadians(rawData[5])));
     }
 
+    /**
+     * Gets Limelight Network Tables
+     * @param key id of the NT
+     * @return the NT
+     */
     public NetworkTableEntry getNTEntry(String key) {
         return NetworkTableInstance.getDefault().getTable(config.ntName).getEntry(key);
     }

@@ -726,14 +726,6 @@ public class SimpleDrivetrain extends SubsystemBase {
 
     // #region Drive Methods
 
-    /**
-     * Drives the robot using the given x, y, and rotation speed
-     *
-     * @param forward  The desired forward speed, in m/s. Forward is positive.
-     * @param strafe   The desired strafe speed, in m/s. Left is positive.
-     * @param rotation The desired rotation speed, in rad/s. Counter clockwise is
-     *                 positive
-     */
     public void setExtraSpeedMult(double set) {
         extraSpeedMult=set;
     }
