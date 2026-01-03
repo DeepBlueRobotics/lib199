@@ -167,15 +167,7 @@ public class MotorControllerFactory {
   }
 
   public static SparkBaseConfig sparkConfig(MotorConfig motorConfig){
-    SparkBaseConfig config = null;
-    switch(motorConfig.getControllerType()){
-      case SPARK_MAX:
-        config = new SparkMaxConfig();
-        break;
-      case SPARK_FLEX:
-        config = new SparkFlexConfig();
-        break;
-    }
+    SparkBaseConfig config = motorConfig.controllerType.createConfig();
     //configs that apply to all motors
     config.idleMode(IdleMode.kBrake);
     config.voltageCompensation(12);
