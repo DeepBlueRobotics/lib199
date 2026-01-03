@@ -145,12 +145,6 @@ public class MotorControllerFactory {
     } else {
       spark = MockSparkFlex.createMockSparkFlex(id, SparkLowLevel.MotorType.kBrushless);
     }
-    if (spark!=null)
-      spark.configure(
-        config, 
-        SparkBase.ResetMode.kResetSafeParameters,
-        SparkBase.PersistMode.kPersistParameters
-      );
 
     MotorErrors.reportSparkTemp(spark, motorConfig.temperatureLimitCelsius);
     MotorErrors.checkSparkErrors(spark);
@@ -159,15 +153,7 @@ public class MotorControllerFactory {
   }
 
   public static SparkBaseConfig createConfig(MotorControllerType type) {
-    SparkBaseConfig config = null;
-    switch(type){
-      case SPARK_MAX:
-        config = new SparkMaxConfig();
-        break;
-      case SPARK_FLEX:
-        config = new SparkFlexConfig();
-        break;
-    }
+    SparkBaseConfig config = type.createConfig();  
     return config;
   }
 
