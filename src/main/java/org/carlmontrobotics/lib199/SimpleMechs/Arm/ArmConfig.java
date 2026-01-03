@@ -107,7 +107,7 @@ public final class ArmConfig {
     /**
      * Create a single motor arm config with PID, no FeedForward
      * @param armMasterMotorId master id
-     * @param armMasterMotorType @link MotorConfig} of the master motor
+     * @param armMasterMotorType {@link MotorConfig} of the master motor
      * @param armMasterInversed inverse config such that positive direction for the motor will result in the arm moving up
      * @param armKPID double array with 3 values, kP, kI, kD
      * @param bottomLimit lowest angle in degrees the arm can safely achieve with 0 being horizontal
