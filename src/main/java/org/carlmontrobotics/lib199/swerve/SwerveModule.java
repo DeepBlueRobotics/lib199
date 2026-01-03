@@ -14,6 +14,8 @@ import com.ctre.phoenix6.hardware.CANcoder;
 import com.revrobotics.spark.SparkBase;
 import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.SparkBase.ResetMode;
+import com.revrobotics.spark.SparkFlex;
+import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkBaseConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
@@ -66,12 +68,6 @@ public class SwerveModule implements Sendable {
 
     private double turnSpeedCorrectionVolts, turnFFVolts, turnVolts;
     private double maxTurnVelocityWithoutTippingRps;
-    
-    // Store encoder and config values since configAccessor is not available in new REV API
-    private IdleMode idleMode = IdleMode.kBrake;
-    private static final int NEO_HALL_COUNTS_PER_REV = 42;
-    private static final int ENCODER_POSITION_PERIOD_MS = 20;
-    private int encoderAverageDepth = 2;
 
     MotorControllerType driveMotorType;
     MotorControllerType turnMotorType;
@@ -97,11 +93,10 @@ public class SwerveModule implements Sendable {
 
         double drivePositionFactor = config.wheelDiameterMeters * Math.PI / config.driveGearing;
         final double driveVelocityFactor = drivePositionFactor / 60;
-        encoderAverageDepth = 2; // Store the value we're configuring
         driveConfig.encoder
             .positionConversionFactor(drivePositionFactor)
             .velocityConversionFactor(driveVelocityFactor)
-            .quadratureAverageDepth(encoderAverageDepth);
+            .quadratureAverageDepth(2);
 
         maxControllableAccerlationRps2 = 0;
         final double normalForceNewtons = 83.2 /* lbf */ * 4.4482 /* N/lbf */ / 4 /* numModules */;
@@ -126,9 +121,18 @@ public class SwerveModule implements Sendable {
                                                config.drivekD[arrIndex]);
         
         /* offset for 1 relative encoder count */
-        drivetoleranceMPerS = (1.0 
-            / (double)(NEO_HALL_COUNTS_PER_REV) * drivePositionFactor) 
-            / Units.millisecondsToSeconds(ENCODER_POSITION_PERIOD_MS * encoderAverageDepth);
+        switch(MotorControllerType.getMotorControllerType(drive)) {
+            case SPARK_MAX:
+                drivetoleranceMPerS = (1.0 
+                    / (double)(((SparkMax)drive).configAccessor.encoder.getCountsPerRevolution()) * drivePositionFactor) 
+                    / Units.millisecondsToSeconds(((SparkMax)drive).configAccessor.signals.getPrimaryEncoderPositionPeriodMs() * ((SparkMax)drive).configAccessor.encoder.getQuadratureAverageDepth());
+                        break;
+            case SPARK_FLEX:
+                drivetoleranceMPerS = (1.0 
+                    / (double)(((SparkFlex)drive).configAccessor.encoder.getCountsPerRevolution()) * drivePositionFactor) 
+                    / Units.millisecondsToSeconds(((SparkFlex)drive).configAccessor.signals.getPrimaryEncoderPositionPeriodMs() * ((SparkFlex)drive).configAccessor.encoder.getQuadratureAverageDepth());
+                break;
+        }
         drivePIDController.setTolerance(drivetoleranceMPerS);
 
         //System.out.println("Velocity Constant: " + (positionConstant / 60));
@@ -444,25 +448,45 @@ public class SwerveModule implements Sendable {
     }
 
     public void toggleMode() {
-        if (idleMode == IdleMode.kBrake && idleMode == IdleMode.kCoast) coast();
-        else brake();
+        switch(MotorControllerType.getMotorControllerType(drive)) {
+            case SPARK_MAX:
+                switch (MotorControllerType.getMotorControllerType(turn)) {
+                    case SPARK_MAX:
+                        if (((SparkMax)drive).configAccessor.getIdleMode() == IdleMode.kBrake && ((SparkMax)turn).configAccessor.getIdleMode() == IdleMode.kCoast) coast();
+                        else brake();
+                        break;
+                    case SPARK_FLEX:
+                        if (((SparkMax)drive).configAccessor.getIdleMode() == IdleMode.kBrake && ((SparkFlex)turn).configAccessor.getIdleMode() == IdleMode.kCoast) coast();
+                        else brake();
+                        break;
+                }
+            case SPARK_FLEX:
+                switch (MotorControllerType.getMotorControllerType(turn)) {
+                    case SPARK_MAX:
+                        if (((SparkFlex)drive).configAccessor.getIdleMode() == IdleMode.kBrake && ((SparkMax)turn).configAccessor.getIdleMode() == IdleMode.kCoast) coast();
+                        else brake();
+                        break;
+                    case SPARK_FLEX:
+                        if (((SparkFlex)drive).configAccessor.getIdleMode() == IdleMode.kBrake && ((SparkFlex)turn).configAccessor.getIdleMode() == IdleMode.kCoast) coast();
+                        else brake();
+                        break;
+                }
+                break;
+        }
     }
 
     public void brake() {
-        idleMode = IdleMode.kBrake;
-        SparkBaseConfig config = null;
-        config = driveMotorType.createConfig().idleMode(idleMode);
+        SparkBaseConfig config = driveMotorType.createConfig().idleMode(IdleMode.kBrake);
         drive.configure(config, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
-        config = turnMotorType.createConfig().idleMode(idleMode);
+        config = turnMotorType.createConfig().idleMode(IdleMode.kBrake);
         turn.configure(config, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
     }
 
     public void coast() {
-        idleMode = IdleMode.kCoast;
-        SparkBaseConfig config = null;
-        config = driveMotorType.createConfig().idleMode(idleMode);
+        SparkBaseConfig config = driveMotorType.createConfig().idleMode(IdleMode.kCoast);
+
         drive.configure(config, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
-        config = turnMotorType.createConfig().idleMode(idleMode);
+        config = turnMotorType.createConfig().idleMode(IdleMode.kCoast);
         turn.configure(config, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
     }
 
