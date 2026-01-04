@@ -7,64 +7,29 @@
 
 package org.carlmontrobotics.lib199;
 
-import com.ctre.phoenix.motorcontrol.NeutralMode;
-import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
-import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
-import com.ctre.phoenix6.hardware.CANcoder;
-import com.revrobotics.spark.SparkMax;
-import com.revrobotics.spark.SparkBase.PersistMode;
-import com.revrobotics.spark.SparkLowLevel.MotorType;
-import com.revrobotics.spark.config.SparkBaseConfig;
-import com.revrobotics.spark.config.SparkFlexConfig;
-import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
-import com.revrobotics.spark.config.SparkMaxConfig;
-import com.revrobotics.servohub.ServoHub.ResetMode;
-import com.revrobotics.spark.ClosedLoopSlot;
-import com.revrobotics.spark.SparkBase;
-import com.revrobotics.spark.SparkFlex;
-import com.revrobotics.spark.SparkLowLevel;
-import com.revrobotics.spark.SparkClosedLoopController;
-
 import org.carlmontrobotics.lib199.sim.MockSparkFlex;
 import org.carlmontrobotics.lib199.sim.MockSparkMax;
 // import org.carlmontrobotics.lib199.sim.MockSparkFlex;
 // import org.carlmontrobotics.lib199.sim.MockSparkMax;
 import org.carlmontrobotics.lib199.sim.MockTalonSRX;
-import org.carlmontrobotics.lib199.sim.MockVictorSPX;
-import org.carlmontrobotics.lib199.sim.MockedCANCoder;
 
-import edu.wpi.first.cameraserver.CameraServer;
-import edu.wpi.first.cscore.UsbCamera;
-import edu.wpi.first.cscore.VideoSource.ConnectionStrategy;
+import com.ctre.phoenix.motorcontrol.NeutralMode;
+import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
+import com.revrobotics.spark.SparkBase;
+import com.revrobotics.spark.SparkFlex;
+import com.revrobotics.spark.SparkLowLevel;
+import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.config.SparkBaseConfig;
+import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
+import com.revrobotics.spark.config.SparkFlexConfig;
+import com.revrobotics.spark.config.SparkMaxConfig;
+
 import edu.wpi.first.wpilibj.RobotBase;
 
 /**
  * Add your docs here.
  */
 public class MotorControllerFactory {
-  @Deprecated
-  /**
-   * @deprecated VictorSPX motor controllers are no longer legal for the 2026 season: https://community.firstinspires.org/2025-robot-rules-preview-for-2026
-   */
-  public static WPI_VictorSPX createVictor(int port) {
-    WPI_VictorSPX victor;
-    if (RobotBase.isReal()) {
-        victor = new WPI_VictorSPX(port);
-    } else {
-        victor = MockVictorSPX.createMockVictorSPX(port);
-    }
-
-    // Put all configurations for the victor motor controllers in here.
-    MotorErrors.reportError(victor.configNominalOutputForward(0, 10));
-    MotorErrors.reportError(victor.configNominalOutputReverse(0, 10));
-    MotorErrors.reportError(victor.configPeakOutputForward(1, 10));
-    MotorErrors.reportError(victor.configPeakOutputReverse(-1, 10));
-    MotorErrors.reportError(victor.configNeutralDeadband(0.001, 10));
-    victor.setNeutralMode(NeutralMode.Brake);
-
-    return victor;
-  }
-
   public static WPI_TalonSRX createTalon(int id) {
     WPI_TalonSRX talon;
     if (RobotBase.isReal()) {
@@ -89,10 +54,7 @@ public class MotorControllerFactory {
 
     return talon;
   }
-
-  @Deprecated
   /**
-   * @deprecated Use {@link MotorControllerFactory#createSparkMax(int id, MotorConfig motorConfig)} instead.
    * Create a default sparkMax controller (NEO or 550).
    * 
    * @param id the port of the motor controller

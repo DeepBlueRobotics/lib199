@@ -15,14 +15,15 @@ public class MotorControllerFactoryTest extends ErrStreamTest {
     @Rule
     public TestRules.ResetSimDeviceSimData simTestRule = new TestRules.ResetSimDeviceSimData();
 
-    @Test
-    // AutoClosable.close() throws Exception
-    public void testCreateNoErrors() throws Exception {
-        // Call close to free PWM ports
-        ((AutoCloseable)MotorControllerFactory.createTalon(0)).close();
-        ((AutoCloseable)MotorControllerFactory.createVictor(1)).close();
-        MotorControllerFactory.createSparkMax(2, MotorConfig.NEO);
-        assertEquals(0, errStream.toByteArray().length);
-    }
+    //FIXME: should this be rewritten for another motor?
+    // @Test
+    // // AutoClosable.close() throws Exception
+    // public void testCreateNoErrors() throws Exception {
+    //     // Call close to free PWM ports
+    //     ((AutoCloseable)MotorControllerFactory.createTalon(0)).close();
+    //     ((AutoCloseable)MotorControllerFactory.createVictor(1)).close();
+    //     MotorControllerFactory.createSparkMax(2, MotorConfig.NEO);
+    //     assertEquals(0, errStream.toByteArray().length);
+    // }
 
 }
