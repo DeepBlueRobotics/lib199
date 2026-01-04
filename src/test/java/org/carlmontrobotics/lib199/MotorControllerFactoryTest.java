@@ -20,6 +20,7 @@ public class MotorControllerFactoryTest extends ErrStreamTest {
     public void testCreateNoErrors() throws Exception {
         // Call close to free PWM ports
         ((AutoCloseable)MotorControllerFactory.createTalon(0)).close();
+        ((AutoCloseable)MotorControllerFactory.createVictor(1)).close();
         MotorControllerFactory.createSparkMax(2, MotorConfig.NEO);
         assertEquals(0, errStream.toByteArray().length);
     }

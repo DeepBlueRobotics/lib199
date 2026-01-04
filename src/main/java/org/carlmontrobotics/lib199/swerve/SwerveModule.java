@@ -6,9 +6,9 @@ import static edu.wpi.first.units.Units.Pounds;
 
 import java.util.function.Supplier;
 
-import org.carlmontrobotics.lib199.MotorControllerType;
 import org.mockito.internal.reporting.SmartPrinter;
 
+// import com.ctre.phoenix6.signals.AbsoluteSensorRangeValue;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.revrobotics.spark.SparkMax;
@@ -31,8 +31,8 @@ import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.measure.Mass;
+import edu.wpi.first.units.Measure;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.util.sendable.SendableRegistry;
@@ -84,11 +84,7 @@ public class SwerveModule implements Sendable {
 
     private double turnSpeedCorrectionVolts, turnFFVolts, turnVolts;
     private double maxTurnVelocityWithoutTippingRps;
-
-    MotorControllerType driveMotorType;
-    MotorControllerType turnMotorType;
-    
-    public SwerveModule(SwerveConfig config, ModuleType type, SparkBase drive, SparkBase turn, CANcoder turnEncoder,
+    public SwerveModule(SwerveConfig config, ModuleType type, SparkMax drive, SparkMax turn, CANcoder turnEncoder,
                         int arrIndex, Supplier<Float> pitchDegSupplier, Supplier<Float> rollDegSupplier) {
         String moduleString = type.toString();
         this.timer = new Timer();
@@ -201,8 +197,7 @@ public class SwerveModule implements Sendable {
         final double driveVelocityFactor = drivePositionFactor / 60;
         driveMaxConfig.encoder
             .positionConversionFactor(drivePositionFactor)
-            .velocityConversionFactor(driveVelocityFactor)
-            .quadratureAverageDepth(2);
+            .velocityConversionFactor(driveVelocityFactor);
 
         maxControllableAccerlationRps2 = 0;
         double wheelTorqueLimitNewtonMeters = normalForceNewtons * config.mu * config.wheelDiameterMeters / 2;
@@ -477,7 +472,7 @@ public class SwerveModule implements Sendable {
     
     public void periodic() {
         drivePeriodic();
-        // updateSmartDashboard();
+        updateSmartDashboard();
         turnPeriodic();
     }
 
@@ -488,8 +483,10 @@ public class SwerveModule implements Sendable {
         double targetVoltage = (actualSpeed >= 0 ? forwardSimpleMotorFF : backwardSimpleMotorFF)
             .calculateWithVelocities(
                 actualSpeed, 
-                desiredSpeed + extraAccel * TimedRobot.kDefaultPeriod  //m/s + ( m/s^2 * s )
-            );
+                desiredSpeed + extraAccel * TimedRobot.kDefaultPeriod//m/s + ( m/s^2 * s )
+            );//clippedAcceleration);
+        //calculateAntiGravitationalA(pitchDegSupplier.get(), rollDegSupplier.get())
+        
         // Use robot characterization as a simple physical model to account for internal resistance, frcition, etc.
         // Add a PID adjustment for error correction (also "drives" the actual speed to the desired speed)
         double pidVolts = drivePIDController.calculate(actualSpeed, desiredSpeed);
