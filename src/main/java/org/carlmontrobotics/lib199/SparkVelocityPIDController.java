@@ -1,10 +1,9 @@
 package org.carlmontrobotics.lib199;
 
-import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.SparkBase;
 import com.revrobotics.spark.config.ClosedLoopConfig;
 import com.revrobotics.spark.config.SparkBaseConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
-// import com.revrobotics.SparkBase.ControlType;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.ClosedLoopSlot;
 import com.revrobotics.spark.SparkBase;
@@ -20,14 +19,14 @@ import edu.wpi.first.util.sendable.SendableRegistry;
 public class SparkVelocityPIDController implements Sendable {
 
     @SuppressWarnings("unused")
-    private final SparkMax spark;
+    private final SparkBase spark;
     private final SparkClosedLoopController pidController;
     private final RelativeEncoder encoder;
     private final String name;
     private double targetSpeed, tolerance;
     private double currentP, currentI, currentD, kS, kV;
 
-    public SparkVelocityPIDController(String name, SparkMax spark, double defaultP, double defaultI, double defaultD, double kS, double kV, double targetSpeed, double tolerance) {
+    public SparkVelocityPIDController(String name, SparkBase spark, double defaultP, double defaultI, double defaultD, double kS, double kV, double targetSpeed, double tolerance) {
         this.spark = spark;
         this.pidController = spark.getClosedLoopController();
         this.encoder = spark.getEncoder();

@@ -43,8 +43,8 @@ public class MockedEncoder implements AbsoluteEncoder, AnalogInput, AutoCloseabl
      * @param countsPerRev The value that this.getCountsPerRevolution() should return
      * @param analog Whether the encoder is an analog sensor
      * @param absolute Whether the encoder is an absolute encoder. This flag caps the position to
-     *        one rotation via. {@link MathUtil#inputModulus(double, double, double)}, disables
-     *        {@link #setPosition(double)}, and enables setZeroOffset(double).
+    *        one rotation via. {@link MathUtil#inputModulus(double, double, double)}, disables
+    *        {@link #setPosition(double)}, and enables {@code setZeroOffset(double)}.
      * 
      *        {@link #getVelocity()} will return a value in rpm.
      */
@@ -58,8 +58,8 @@ public class MockedEncoder implements AbsoluteEncoder, AnalogInput, AutoCloseabl
      * @param countsPerRev The value that this.getCountsPerRevolution() should return
      * @param analog Whether the encoder is an analog sensor
      * @param absolute Whether the encoder is an absolute encoder. This flag caps the position to
-     *        one rotation via. {@link MathUtil#inputModulus(double, double, double)}, disables
-     *        {@link #setPosition(double)}, and enables setZeroOffset(double). //FIXME where is this so called setZero
+    *        one rotation via. {@link MathUtil#inputModulus(double, double, double)}, disables
+    *        {@link #setPosition(double)}, and enables {@code setZeroOffset(double)}.
      * @param useRps Whether getVelocity() should return rps instead of rpm.
      */
     public MockedEncoder(SimDevice device, int countsPerRev, boolean analog,
@@ -106,7 +106,7 @@ public class MockedEncoder implements AbsoluteEncoder, AnalogInput, AutoCloseabl
     // }
 
     /**
-     * @return The current position of the encoder, not accounting for the position offset ({@link #setPosition(double)} and setZeroOffset(double)
+    * @return The current position of the encoder, not accounting for the position offset ({@link #setPosition(double)} and {@code setZeroOffset(double)})
      */
     public double getRawPosition() {
         double rotationsOrVolts = voltage != null ? voltage.get() : position.get();

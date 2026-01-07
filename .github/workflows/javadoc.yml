@@ -18,12 +18,14 @@ jobs:
       run: ./gradlew javadoc
     - name: Build Artifact
       uses: actions/upload-pages-artifact@v4
+      uses: actions/upload-pages-artifact@v4
       with:
         path: ./build/docs/javadoc
   deploy-javadoc:
     needs: build-javadoc
     if: ${{ github.ref == 'refs/heads/master' }}
     permissions:
+      actions: read
       actions: read
       pages: write
       id-token: write

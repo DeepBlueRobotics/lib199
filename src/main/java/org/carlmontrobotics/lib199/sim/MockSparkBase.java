@@ -52,10 +52,10 @@ public class MockSparkBase extends MockedMotorBase {
     private SparkAnalogSensorSim analogSensorImpl = null;
     private final String name;
 
-    enum NEOType {
+    public enum NEOType { //is it fine if we make it public so that MotorControllerFactory can access it?
         NEO(DCMotor.getNEO(1)),
         NEO550(DCMotor.getNeo550(1)),
-        Vortex(DCMotor.getNeoVortex(1)),
+        VORTEX(DCMotor.getNeoVortex(1)),  
         UNKNOWN(DCMotor.getNEO(1));
 
         public DCMotor dcMotor;
@@ -73,20 +73,21 @@ public class MockSparkBase extends MockedMotorBase {
      * to follow the inversion state of the motor and its {@code setInverted} method will be disabled.
      * @param name the name of the type of controller ("SparkMax" or "SparkFlex")
      * @param countsPerRev the number of counts per revolution of this controller's built-in encoder.
+     * @param neoType the type of NEO motor
      */
     public MockSparkBase(int port, MotorType type, String name, int countsPerRev, NEOType neoType) {
         super(name, port);
         this.type = type;
         this.name = name;
 
-        if (neoType != NEOType.Vortex){ //WARNING can't initialize a sparkbase without an actual spark...
-            this.motor = new SparkMax(port,type);
+        if (neoType == NEOType.VORTEX){ //only vortex uses sparkflex
+            this.motor = new SparkFlex(port,type);
             this.spark = new SparkSim(
                 this.motor,
                 neoType.dcMotor
             );
-        } else { //only vortex uses sparkflex
-            this.motor = new SparkFlex(port,type);
+        } else { //WARNING can't initialize a sparkbase without an actual spark...
+            this.motor = new SparkMax(port,type);
             this.spark = new SparkSim(
                 this.motor,
                 neoType.dcMotor
@@ -229,7 +230,6 @@ public class MockSparkBase extends MockedMotorBase {
         if (encoder != null) {
             encoder.close();
         }
-        //simply drop all references for garbage collection (?)
         absoluteEncoderImpl=null;
         analogSensorImpl=null;
         alternateEncoder=null;

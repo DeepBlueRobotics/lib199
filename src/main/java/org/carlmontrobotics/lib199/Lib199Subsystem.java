@@ -13,9 +13,6 @@ public class Lib199Subsystem implements Subsystem {
     private static final CopyOnWriteArrayList<Runnable> periodicSimulationMethods = new CopyOnWriteArrayList<>();
     private static final Consumer<Runnable> RUN_RUNNABLE = Runnable::run;
 
-    @Deprecated
-    public static final long asyncSleepTime = 20;
-
     static {
         ensureRegistered();
     }
@@ -43,35 +40,8 @@ public class Lib199Subsystem implements Subsystem {
         periodicMethods.add(method);
     }
 
-    @Deprecated
-    /**
-     * @deprecated Use registerSimulationPeriodic
-     * @param method
-     */
-    public static void simulationPeriodic(Runnable method) {
-        registerSimulationPeriodic(method);
-    }
-
     public static void registerSimulationPeriodic(Runnable method) {
         periodicSimulationMethods.add(method);
-    }
-
-    @Deprecated
-    /**
-     * @deprecated Use registerPeriodic
-     * @param method
-     */
-    public static void registerAsyncPeriodic(Runnable method) {
-        registerPeriodic(method);
-    }
-
-    @Deprecated
-    /**
-     * @deprecated Use registerSimulationPeriodic
-     * @param method
-     */
-    public static void registerAsyncSimulationPeriodic(Runnable method) {
-        registerSimulationPeriodic(method);
     }
 
     @Override
@@ -82,13 +52,6 @@ public class Lib199Subsystem implements Subsystem {
     @Override
     public void simulationPeriodic() {
         periodicSimulationMethods.forEach(RUN_RUNNABLE);
-    }
-
-    @Deprecated
-    /**
-     * No longer does anything.
-     */
-    public synchronized void asyncPeriodic() {
     }
 
     private Lib199Subsystem() {}
