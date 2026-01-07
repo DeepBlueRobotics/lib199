@@ -6,21 +6,17 @@ import static edu.wpi.first.units.Units.Pounds;
 
 import java.util.function.Supplier;
 
-import org.mockito.internal.reporting.SmartPrinter;
+import org.carlmontrobotics.lib199.MotorControllerType;
 
-// import com.ctre.phoenix6.signals.AbsoluteSensorRangeValue;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.hardware.CANcoder;
-import com.revrobotics.spark.SparkMax;
-import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkBase;
 import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.SparkBase.ResetMode;
 import com.revrobotics.spark.SparkFlex;
+import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkBaseConfig;
-import com.revrobotics.spark.config.SparkFlexConfig;
-import com.revrobotics.spark.config.SparkMaxConfig;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
@@ -32,14 +28,11 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Mass;
-import edu.wpi.first.units.Measure;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.util.sendable.SendableRegistry;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
-import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 /**
@@ -49,27 +42,12 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 public class SwerveModule implements Sendable {
     public enum ModuleType {FL, FR, BL, BR};
 
-    //constants
-    private final double neoStallTorqueNewtonMeters = 3.36;
-    private final double neoFreeCurrentAmps = 1.3;
-    private final double neoStallCurrentAmps = 166;
-    private final double neoVortexStallTorqueNewtonMeters = 3.6;
-    private final double neoVortexFreeCurrentAmps = 3.6;
-    private final double neoVortexStallCurrentAmps = 211;
-    private final double normalForceNewtons = 83.2 /* lbf */ * 4.4482 /* N/lbf */ / 4 /* numModules */;
-
-
     private SwerveConfig config;
-    private SparkMaxConfig turnMaxConfig = new SparkMaxConfig();
-    private SparkMaxConfig driveMaxConfig = new SparkMaxConfig();
-    private SparkFlexConfig turnFlexConfig = new SparkFlexConfig();
-    private SparkFlexConfig driveFlexConfig = new SparkFlexConfig();
+    private SparkBaseConfig turnConfig;
+    private SparkBaseConfig driveConfig;
 
     private ModuleType type;
-    private SparkMax maxDrive, maxTurn;
-    private SparkFlex flexDrive, flexTurn;
-    private RelativeEncoder driveRelEnc, turnRelEnc;
-    private boolean useFlexDrive, useFlexTurn; //false for max true for flex
+    private SparkBase drive, turn;
     private CANcoder turnEncoder;
     private PIDController drivePIDController;
     private ProfiledPIDController turnPIDController;
@@ -84,32 +62,46 @@ public class SwerveModule implements Sendable {
 
     private double turnSpeedCorrectionVolts, turnFFVolts, turnVolts;
     private double maxTurnVelocityWithoutTippingRps;
-    public SwerveModule(SwerveConfig config, ModuleType type, SparkMax drive, SparkMax turn, CANcoder turnEncoder,
+
+    MotorControllerType driveMotorType;
+    MotorControllerType turnMotorType;
+    
+    public SwerveModule(SwerveConfig config, ModuleType type, SparkBase drive, SparkBase turn, CANcoder turnEncoder,
                         int arrIndex, Supplier<Float> pitchDegSupplier, Supplier<Float> rollDegSupplier) {
+        driveMotorType = MotorControllerType.getMotorControllerType(drive);
+        turnMotorType = MotorControllerType.getMotorControllerType(turn);
+        driveConfig = driveMotorType.createConfig();
+        turnConfig = turnMotorType.createConfig();
+        //SmartDashboard.putNumber("Target Angle (deg)", 0.0);
         String moduleString = type.toString();
         this.timer = new Timer();
         timer.start();
+        // SmartDashboard.putNumber("num periods",1);
+        // SmartDashboard.putNumber("maxOverShootDegree",1);
         this.config = config;
         this.type = type;
-        this.maxDrive = drive;
-        this.useFlexDrive = false;
-        this.driveRelEnc = maxDrive.getEncoder();
+        this.drive = drive;
 
-        driveMaxConfig.inverted(config.driveInversion[arrIndex]);
-        turnMaxConfig.inverted(config.turnInversion[arrIndex]);
+        driveConfig.inverted(config.driveInversion[arrIndex]);
+        turnConfig.inverted(config.turnInversion[arrIndex]);
 
         double drivePositionFactor = config.wheelDiameterMeters * Math.PI / config.driveGearing;
         final double driveVelocityFactor = drivePositionFactor / 60;
-        driveMaxConfig.encoder
+        driveConfig.encoder
             .positionConversionFactor(drivePositionFactor)
-            .velocityConversionFactor(driveVelocityFactor);
+            .velocityConversionFactor(driveVelocityFactor)
+            .quadratureAverageDepth(2);
 
         maxControllableAccerlationRps2 = 0;
+        final double normalForceNewtons = 83.2 /* lbf */ * 4.4482 /* N/lbf */ / 4 /* numModules */;
         double wheelTorqueLimitNewtonMeters = normalForceNewtons * config.mu * config.wheelDiameterMeters / 2;
         double motorTorqueLimitNewtonMeters = wheelTorqueLimitNewtonMeters / config.driveGearing;
+        final double neoStallTorqueNewtonMeters = 3.36;
+        final double neoFreeCurrentAmps = 1.3;
+        final double neoStallCurrentAmps = 166;
         double currentLimitAmps = neoFreeCurrentAmps + 2*motorTorqueLimitNewtonMeters / neoStallTorqueNewtonMeters * (neoStallCurrentAmps-neoFreeCurrentAmps);
         // SmartDashboard.putNumber(type.toString() + " current limit (amps)", currentLimitAmps);
-        driveMaxConfig.smartCurrentLimit(Math.min(50, (int)currentLimitAmps));
+        driveConfig.smartCurrentLimit(Math.min(50, (int)currentLimitAmps));
         
         this.forwardSimpleMotorFF = new SimpleMotorFeedforward(config.kForwardVolts[arrIndex],
                                                                 config.kForwardVels[arrIndex],
@@ -123,15 +115,23 @@ public class SwerveModule implements Sendable {
                                                config.drivekD[arrIndex]);
         
         /* offset for 1 relative encoder count */
-        drivetoleranceMPerS = (1.0 
-            / (double)(maxDrive.configAccessor.encoder.getCountsPerRevolution()) * drivePositionFactor) 
-            / Units.millisecondsToSeconds(maxDrive.configAccessor.signals.getPrimaryEncoderPositionPeriodMs() * maxDrive.configAccessor.encoder.getQuadratureAverageDepth());
+        switch(MotorControllerType.getMotorControllerType(drive)) {
+            case SPARK_MAX:
+                drivetoleranceMPerS = (1.0 
+                    / (double)(((SparkMax)drive).configAccessor.encoder.getCountsPerRevolution()) * drivePositionFactor) 
+                    / Units.millisecondsToSeconds(((SparkMax)drive).configAccessor.signals.getPrimaryEncoderPositionPeriodMs() * ((SparkMax)drive).configAccessor.encoder.getQuadratureAverageDepth());
+                        break;
+            case SPARK_FLEX:
+                drivetoleranceMPerS = (1.0 
+                    / (double)(((SparkFlex)drive).configAccessor.encoder.getCountsPerRevolution()) * drivePositionFactor) 
+                    / Units.millisecondsToSeconds(((SparkFlex)drive).configAccessor.signals.getPrimaryEncoderPositionPeriodMs() * ((SparkFlex)drive).configAccessor.encoder.getQuadratureAverageDepth());
+                break;
+        }
         drivePIDController.setTolerance(drivetoleranceMPerS);
 
+        //System.out.println("Velocity Constant: " + (positionConstant / 60));
 
-        this.maxTurn = turn;
-        this.useFlexTurn = false;
-        this.turnRelEnc = maxTurn.getEncoder();
+        this.turn = turn;
 
         this.turnSimpleMotorFeedforward = new SimpleMotorFeedforward(config.turnkS[arrIndex],
                                                                      config.turnkV[arrIndex],
@@ -171,297 +171,29 @@ public class SwerveModule implements Sendable {
 
         this.rollDegSupplier = rollDegSupplier;
         this.pitchDegSupplier = pitchDegSupplier;
+        // SmartDashboard.putNumber(moduleString + " Swerve kS", turnSimpleMotorFeedforward.ks);
+        // SmartDashboard.putNumber(moduleString + " Swerve kV", turnSimpleMotorFeedforward.kv);
+        // SmartDashboard.putNumber(moduleString + " Swerve kA", turnSimpleMotorFeedforward.ka);
+
+        // SmartDashboard.putNumber(moduleString + " Swerve kP", turnPIDController.getP());
+        // SmartDashboard.putNumber(moduleString +" Swerve kD", turnPIDController.getD());
+        // SmartDashboard.putNumber(moduleString + " Swerve Turn Tolerance", turnToleranceRot);
+
+        // SmartDashboard.putNumber(moduleString + " Drive kP", drivePIDController.getP());
+        // SmartDashboard.putNumber(moduleString + " Drive kD", drivePIDController.getD());
+        // SmartDashboard.putNumber(moduleString + " Drive kS", forwardSimpleMotorFF.ks);
+        // SmartDashboard.putNumber(moduleString + " Drive kV", forwardSimpleMotorFF.kv);
+        // SmartDashboard.putNumber(moduleString + " Drive kA", forwardSimpleMotorFF.ka);
+        // SmartDashboard.putNumber(moduleString + " Drive Tolerance", turnToleranceRot);
+
+        // SmartDashboard.putData(this);
 
         SendableRegistry.addLW(this, "SwerveModule", type.toString());
 
         //do stuff here
-        maxDrive.configure(driveMaxConfig, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
-        maxTurn.configure(turnMaxConfig, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
-    }
+        drive.configure(driveConfig, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
+        turn.configure(turnConfig, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
 
-    public SwerveModule(SwerveConfig config, ModuleType type, SparkMax drive, SparkFlex turn, CANcoder turnEncoder,
-                        int arrIndex, Supplier<Float> pitchDegSupplier, Supplier<Float> rollDegSupplier) {
-        String moduleString = type.toString();
-        this.timer = new Timer();
-        timer.start();
-        this.config = config;
-        this.type = type;
-        this.maxDrive = drive;
-        this.useFlexDrive = false;
-        this.driveRelEnc = maxDrive.getEncoder();
-
-        driveMaxConfig.inverted(config.driveInversion[arrIndex]);
-        turnFlexConfig.inverted(config.turnInversion[arrIndex]);
-
-        double drivePositionFactor = config.wheelDiameterMeters * Math.PI / config.driveGearing;
-        final double driveVelocityFactor = drivePositionFactor / 60;
-        driveMaxConfig.encoder
-            .positionConversionFactor(drivePositionFactor)
-            .velocityConversionFactor(driveVelocityFactor);
-
-        maxControllableAccerlationRps2 = 0;
-        double wheelTorqueLimitNewtonMeters = normalForceNewtons * config.mu * config.wheelDiameterMeters / 2;
-        double motorTorqueLimitNewtonMeters = wheelTorqueLimitNewtonMeters / config.driveGearing;
-        double currentLimitAmps = neoFreeCurrentAmps + 2*motorTorqueLimitNewtonMeters / neoStallTorqueNewtonMeters * (neoStallCurrentAmps-neoFreeCurrentAmps);
-        // SmartDashboard.putNumber(type.toString() + " current limit (amps)", currentLimitAmps);
-        driveMaxConfig.smartCurrentLimit(Math.min(50, (int)currentLimitAmps));
-        
-        this.forwardSimpleMotorFF = new SimpleMotorFeedforward(config.kForwardVolts[arrIndex],
-                                                                config.kForwardVels[arrIndex],
-                                                                config.kForwardAccels[arrIndex]);
-        this.backwardSimpleMotorFF = new SimpleMotorFeedforward(config.kBackwardVolts[arrIndex],
-                                                                config.kBackwardVels[arrIndex],
-                                                                config.kBackwardAccels[arrIndex]);
-
-        drivePIDController = new PIDController(config.drivekP[arrIndex],
-                                               config.drivekI[arrIndex],
-                                               config.drivekD[arrIndex]);
-        
-        /* offset for 1 relative encoder count */
-        drivetoleranceMPerS = (1.0 
-            / (double)(maxDrive.configAccessor.encoder.getCountsPerRevolution()) * drivePositionFactor) 
-            / Units.millisecondsToSeconds(maxDrive.configAccessor.signals.getPrimaryEncoderPositionPeriodMs() * maxDrive.configAccessor.encoder.getQuadratureAverageDepth());
-        drivePIDController.setTolerance(drivetoleranceMPerS);
-
-
-        this.flexTurn = turn;
-        this.useFlexTurn = true;
-        this.turnRelEnc = flexTurn.getEncoder();
-
-        this.turnSimpleMotorFeedforward = new SimpleMotorFeedforward(config.turnkS[arrIndex],
-                                                                     config.turnkV[arrIndex],
-                                                                     config.turnkA[arrIndex]);
-
-        // Voltage = kS + kV * velocity + kA * acceleration
-        // Assume cruising at maximum velocity --> 12 = kS + kV * max velocity + kA * 0 --> max velocity = (12 - kS) / kV
-        // Limit the velocity by a factor of 0.5
-        maxAchievableTurnVelocityRps = 0.5 * turnSimpleMotorFeedforward.maxAchievableVelocity(12.0, 0);
-        maxTurnVelocityWithoutTippingRps = maxAchievableTurnVelocityRps;
-        // Assume accelerating while at limited speed --> 12 = kS + kV * limited speed + kA * acceleration
-        // acceleration = (12 - kS - kV * limiedSpeed) / kA
-        turnToleranceRot = Units.degreesToRotations(3 * 360/4096.0); /* degree offset for 3 CANCoder counts */
-        maxAchievableTurnAccelerationRps2 = 0.5 * turnSimpleMotorFeedforward.maxAchievableAcceleration(12.0, maxAchievableTurnVelocityRps);
-
-        turnConstraints = new TrapezoidProfile.Constraints(maxAchievableTurnVelocityRps, maxAchievableTurnAccelerationRps2);
-        lastAngle = 0.0;
-        turnPIDController = new ProfiledPIDController(
-            config.turnkP[arrIndex], 
-            config.turnkI[arrIndex],
-            config.turnkD[arrIndex],
-            turnConstraints);
-        turnPIDController.enableContinuousInput(-.5, .5);
-        turnPIDController.setTolerance(turnToleranceRot);
-
-        this.driveModifier = config.driveModifier;
-        this.reversed = config.reversed[arrIndex];
-        this.turnZeroDeg = config.turnZeroDeg[arrIndex];
-        
-        CANcoderConfiguration CANconfig = new CANcoderConfiguration();
-        CANconfig.MagnetSensor.AbsoluteSensorDiscontinuityPoint = .5;
-        this.turnEncoder = turnEncoder;
-        // CANconfig.MagnetSensor.MagnetOffset=-turnZeroDeg; //done in getModuleAngle.
-        this.turnEncoder.getConfigurator().apply(CANconfig);
-
-        turnPIDController.reset(getModuleAngle());
-
-        this.rollDegSupplier = rollDegSupplier;
-        this.pitchDegSupplier = pitchDegSupplier;
-
-        SendableRegistry.addLW(this, "SwerveModule", type.toString());
-
-        //do stuff here
-        maxDrive.configure(driveMaxConfig, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
-        flexTurn.configure(turnFlexConfig, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
-    }
-
-    public SwerveModule(SwerveConfig config, ModuleType type, SparkFlex drive, SparkMax turn, CANcoder turnEncoder,
-                        int arrIndex, Supplier<Float> pitchDegSupplier, Supplier<Float> rollDegSupplier) {
-        String moduleString = type.toString();
-        this.timer = new Timer();
-        timer.start();
-        this.config = config;
-        this.type = type;
-        this.flexDrive = drive;
-        this.useFlexDrive = true;
-        this.driveRelEnc = maxDrive.getEncoder();
-
-        driveFlexConfig.inverted(config.driveInversion[arrIndex]);
-        turnMaxConfig.inverted(config.turnInversion[arrIndex]);
-
-        double drivePositionFactor = config.wheelDiameterMeters * Math.PI / config.driveGearing;
-        final double driveVelocityFactor = drivePositionFactor / 60;
-        driveFlexConfig.encoder
-            .positionConversionFactor(drivePositionFactor)
-            .velocityConversionFactor(driveVelocityFactor);
-
-        maxControllableAccerlationRps2 = 0;
-        double wheelTorqueLimitNewtonMeters = normalForceNewtons * config.mu * config.wheelDiameterMeters / 2;
-        double motorTorqueLimitNewtonMeters = wheelTorqueLimitNewtonMeters / config.driveGearing;
-        double currentLimitAmps = neoVortexFreeCurrentAmps + 2*motorTorqueLimitNewtonMeters / neoVortexStallCurrentAmps * (neoVortexStallCurrentAmps-neoVortexFreeCurrentAmps);
-        // SmartDashboard.putNumber(type.toString() + " current limit (amps)", currentLimitAmps);
-        driveFlexConfig.smartCurrentLimit(Math.min(50, (int)currentLimitAmps));
-        
-        this.forwardSimpleMotorFF = new SimpleMotorFeedforward(config.kForwardVolts[arrIndex],
-                                                                config.kForwardVels[arrIndex],
-                                                                config.kForwardAccels[arrIndex]);
-        this.backwardSimpleMotorFF = new SimpleMotorFeedforward(config.kBackwardVolts[arrIndex],
-                                                                config.kBackwardVels[arrIndex],
-                                                                config.kBackwardAccels[arrIndex]);
-
-        drivePIDController = new PIDController(config.drivekP[arrIndex],
-                                               config.drivekI[arrIndex],
-                                               config.drivekD[arrIndex]);
-        
-        /* offset for 1 relative encoder count */
-        drivetoleranceMPerS = (1.0 
-            / (double)(flexDrive.configAccessor.encoder.getCountsPerRevolution()) * drivePositionFactor) 
-            / Units.millisecondsToSeconds(flexDrive.configAccessor.signals.getPrimaryEncoderPositionPeriodMs() * flexDrive.configAccessor.encoder.getQuadratureAverageDepth());
-        drivePIDController.setTolerance(drivetoleranceMPerS);
-
-
-        this.maxTurn = turn;
-        this.useFlexTurn = false;
-        this.turnRelEnc = maxTurn.getEncoder();
-
-        this.turnSimpleMotorFeedforward = new SimpleMotorFeedforward(config.turnkS[arrIndex],
-                                                                     config.turnkV[arrIndex],
-                                                                     config.turnkA[arrIndex]);
-
-        // Voltage = kS + kV * velocity + kA * acceleration
-        // Assume cruising at maximum velocity --> 12 = kS + kV * max velocity + kA * 0 --> max velocity = (12 - kS) / kV
-        // Limit the velocity by a factor of 0.5
-        maxAchievableTurnVelocityRps = 0.5 * turnSimpleMotorFeedforward.maxAchievableVelocity(12.0, 0);
-        maxTurnVelocityWithoutTippingRps = maxAchievableTurnVelocityRps;
-        // Assume accelerating while at limited speed --> 12 = kS + kV * limited speed + kA * acceleration
-        // acceleration = (12 - kS - kV * limiedSpeed) / kA
-        turnToleranceRot = Units.degreesToRotations(3 * 360/4096.0); /* degree offset for 3 CANCoder counts */
-        maxAchievableTurnAccelerationRps2 = 0.5 * turnSimpleMotorFeedforward.maxAchievableAcceleration(12.0, maxAchievableTurnVelocityRps);
-
-        turnConstraints = new TrapezoidProfile.Constraints(maxAchievableTurnVelocityRps, maxAchievableTurnAccelerationRps2);
-        lastAngle = 0.0;
-        turnPIDController = new ProfiledPIDController(
-            config.turnkP[arrIndex], 
-            config.turnkI[arrIndex],
-            config.turnkD[arrIndex],
-            turnConstraints);
-        turnPIDController.enableContinuousInput(-.5, .5);
-        turnPIDController.setTolerance(turnToleranceRot);
-
-        this.driveModifier = config.driveModifier;
-        this.reversed = config.reversed[arrIndex];
-        this.turnZeroDeg = config.turnZeroDeg[arrIndex];
-        
-        CANcoderConfiguration CANconfig = new CANcoderConfiguration();
-        CANconfig.MagnetSensor.AbsoluteSensorDiscontinuityPoint = .5;
-        this.turnEncoder = turnEncoder;
-        // CANconfig.MagnetSensor.MagnetOffset=-turnZeroDeg; //done in getModuleAngle.
-        this.turnEncoder.getConfigurator().apply(CANconfig);
-
-        turnPIDController.reset(getModuleAngle());
-
-        this.rollDegSupplier = rollDegSupplier;
-        this.pitchDegSupplier = pitchDegSupplier;
-
-        SendableRegistry.addLW(this, "SwerveModule", type.toString());
-
-        //do stuff here
-        flexDrive.configure(driveFlexConfig, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
-        maxTurn.configure(turnMaxConfig, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
-    }
-
-    public SwerveModule(SwerveConfig config, ModuleType type, SparkFlex drive, SparkFlex turn, CANcoder turnEncoder,
-                        int arrIndex, Supplier<Float> pitchDegSupplier, Supplier<Float> rollDegSupplier) {
-        String moduleString = type.toString();
-        this.timer = new Timer();
-        timer.start();
-        this.config = config;
-        this.type = type;
-        this.flexDrive = drive;
-        this.useFlexDrive = true;
-        this.driveRelEnc = maxDrive.getEncoder();
-
-        driveFlexConfig.inverted(config.driveInversion[arrIndex]);
-        turnFlexConfig.inverted(config.turnInversion[arrIndex]);
-
-        double drivePositionFactor = config.wheelDiameterMeters * Math.PI / config.driveGearing;
-        final double driveVelocityFactor = drivePositionFactor / 60;
-        driveFlexConfig.encoder
-            .positionConversionFactor(drivePositionFactor)
-            .velocityConversionFactor(driveVelocityFactor);
-
-        maxControllableAccerlationRps2 = 0;
-        double wheelTorqueLimitNewtonMeters = normalForceNewtons * config.mu * config.wheelDiameterMeters / 2;
-        double motorTorqueLimitNewtonMeters = wheelTorqueLimitNewtonMeters / config.driveGearing;
-        double currentLimitAmps = neoVortexFreeCurrentAmps + 2*motorTorqueLimitNewtonMeters / neoVortexStallCurrentAmps * (neoVortexStallCurrentAmps-neoVortexFreeCurrentAmps);
-        // SmartDashboard.putNumber(type.toString() + " current limit (amps)", currentLimitAmps);
-        driveFlexConfig.smartCurrentLimit(Math.min(50, (int)currentLimitAmps));
-        
-        this.forwardSimpleMotorFF = new SimpleMotorFeedforward(config.kForwardVolts[arrIndex],
-                                                                config.kForwardVels[arrIndex],
-                                                                config.kForwardAccels[arrIndex]);
-        this.backwardSimpleMotorFF = new SimpleMotorFeedforward(config.kBackwardVolts[arrIndex],
-                                                                config.kBackwardVels[arrIndex],
-                                                                config.kBackwardAccels[arrIndex]);
-
-        drivePIDController = new PIDController(config.drivekP[arrIndex],
-                                               config.drivekI[arrIndex],
-                                               config.drivekD[arrIndex]);
-        
-        /* offset for 1 relative encoder count */
-        drivetoleranceMPerS = (1.0 
-            / (double)(flexDrive.configAccessor.encoder.getCountsPerRevolution()) * drivePositionFactor) 
-            / Units.millisecondsToSeconds(flexDrive.configAccessor.signals.getPrimaryEncoderPositionPeriodMs() * flexDrive.configAccessor.encoder.getQuadratureAverageDepth());
-        drivePIDController.setTolerance(drivetoleranceMPerS);
-
-
-        this.flexTurn = turn;
-        this.useFlexTurn = true;
-        this.turnRelEnc = flexTurn.getEncoder();
-
-        this.turnSimpleMotorFeedforward = new SimpleMotorFeedforward(config.turnkS[arrIndex],
-                                                                     config.turnkV[arrIndex],
-                                                                     config.turnkA[arrIndex]);
-
-        // Voltage = kS + kV * velocity + kA * acceleration
-        // Assume cruising at maximum velocity --> 12 = kS + kV * max velocity + kA * 0 --> max velocity = (12 - kS) / kV
-        // Limit the velocity by a factor of 0.5
-        maxAchievableTurnVelocityRps = 0.5 * turnSimpleMotorFeedforward.maxAchievableVelocity(12.0, 0);
-        maxTurnVelocityWithoutTippingRps = maxAchievableTurnVelocityRps;
-        // Assume accelerating while at limited speed --> 12 = kS + kV * limited speed + kA * acceleration
-        // acceleration = (12 - kS - kV * limiedSpeed) / kA
-        turnToleranceRot = Units.degreesToRotations(3 * 360/4096.0); /* degree offset for 3 CANCoder counts */
-        maxAchievableTurnAccelerationRps2 = 0.5 * turnSimpleMotorFeedforward.maxAchievableAcceleration(12.0, maxAchievableTurnVelocityRps);
-
-        turnConstraints = new TrapezoidProfile.Constraints(maxAchievableTurnVelocityRps, maxAchievableTurnAccelerationRps2);
-        lastAngle = 0.0;
-        turnPIDController = new ProfiledPIDController(
-            config.turnkP[arrIndex], 
-            config.turnkI[arrIndex],
-            config.turnkD[arrIndex],
-            turnConstraints);
-        turnPIDController.enableContinuousInput(-.5, .5);
-        turnPIDController.setTolerance(turnToleranceRot);
-
-        this.driveModifier = config.driveModifier;
-        this.reversed = config.reversed[arrIndex];
-        this.turnZeroDeg = config.turnZeroDeg[arrIndex];
-        
-        CANcoderConfiguration CANconfig = new CANcoderConfiguration();
-        CANconfig.MagnetSensor.AbsoluteSensorDiscontinuityPoint = .5;
-        this.turnEncoder = turnEncoder;
-        // CANconfig.MagnetSensor.MagnetOffset=-turnZeroDeg; //done in getModuleAngle.
-        this.turnEncoder.getConfigurator().apply(CANconfig);
-
-        turnPIDController.reset(getModuleAngle());
-
-        this.rollDegSupplier = rollDegSupplier;
-        this.pitchDegSupplier = pitchDegSupplier;
-
-        SendableRegistry.addLW(this, "SwerveModule", type.toString());
-
-        //do stuff here
-        flexDrive.configure(driveFlexConfig, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
-        flexTurn.configure(turnFlexConfig, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
     }
 
     public ModuleType getType() {
@@ -469,10 +201,9 @@ public class SwerveModule implements Sendable {
     }
 
     private double prevTurnVelocity = 0;
-    
     public void periodic() {
         drivePeriodic();
-        updateSmartDashboard();
+        // updateSmartDashboard();
         turnPeriodic();
     }
 
@@ -483,10 +214,8 @@ public class SwerveModule implements Sendable {
         double targetVoltage = (actualSpeed >= 0 ? forwardSimpleMotorFF : backwardSimpleMotorFF)
             .calculateWithVelocities(
                 actualSpeed, 
-                desiredSpeed + extraAccel * TimedRobot.kDefaultPeriod//m/s + ( m/s^2 * s )
-            );//clippedAcceleration);
-        //calculateAntiGravitationalA(pitchDegSupplier.get(), rollDegSupplier.get())
-        
+                desiredSpeed + extraAccel * TimedRobot.kDefaultPeriod  //m/s + ( m/s^2 * s )
+            );
         // Use robot characterization as a simple physical model to account for internal resistance, frcition, etc.
         // Add a PID adjustment for error correction (also "drives" the actual speed to the desired speed)
         double pidVolts = drivePIDController.calculate(actualSpeed, desiredSpeed);
@@ -500,12 +229,8 @@ public class SwerveModule implements Sendable {
         // SmartDashboard.putNumber(moduleString + " pidVolts", pidVolts);
         double appliedVoltage = MathUtil.clamp(targetVoltage, -12, 12);
         // SmartDashboard.putNumber(moduleString + " appliedVoltage", appliedVoltage);
-        if (useFlexDrive) {
-            flexDrive.setVoltage(appliedVoltage);
-        }
-        else {
-            maxDrive.setVoltage(appliedVoltage);
-        }
+
+        drive.setVoltage(appliedVoltage);
     }
 
     public void turnPeriodic() {
@@ -539,19 +264,9 @@ public class SwerveModule implements Sendable {
             turnFFVolts = turnSimpleMotorFeedforward.calculate(state.velocity);//(state.velocity-prevTurnVelocity) / period);
             turnVolts = turnFFVolts + turnSpeedCorrectionVolts;
             if (!turnPIDController.atGoal()) {
-                if (useFlexTurn) {
-                    flexTurn.setVoltage(MathUtil.clamp(turnVolts, -12.0, 12.0));
-                }
-                else {
-                    maxTurn.setVoltage(MathUtil.clamp(turnVolts, -12.0, 12.0));
-                }
+                turn.setVoltage(MathUtil.clamp(turnVolts, -12.0, 12.0));
             } else {
-                if (useFlexTurn) {
-                    flexTurn.setVoltage(turnSimpleMotorFeedforward.calculate(goal.velocity));
-                }
-                else {
-                    maxTurn.setVoltage(turnSimpleMotorFeedforward.calculate(goal.velocity));
-                }
+                turn.setVoltage(turnSimpleMotorFeedforward.calculate(goal.velocity));
             }
             prevTurnVelocity = state.velocity;
         }   
@@ -646,11 +361,11 @@ public class SwerveModule implements Sendable {
     }
 
     public double getCurrentDistance() {
-        return driveRelEnc.getPosition();
+        return drive.getEncoder().getPosition();
     }
 
     public double getCurrentSpeed() {
-        return driveRelEnc.getVelocity();
+        return drive.getEncoder().getVelocity();
     }
 
     /**
@@ -667,7 +382,7 @@ public class SwerveModule implements Sendable {
         SmartDashboard.putNumber(moduleString + " Absolute Angle (deg)", Units.rotationsToDegrees(turnEncoder.getAbsolutePosition().getValueAsDouble()));
         // Display the module angle as calculated using the absolute encoder.
         SmartDashboard.putNumber(moduleString + " Turn Measured Pos (deg)", getModuleAngle());
-        SmartDashboard.putNumber(moduleString + " Encoder Position", driveRelEnc.getPosition());
+        SmartDashboard.putNumber(moduleString + " Encoder Position", drive.getEncoder().getPosition());
         // Display the speed that the robot thinks it is travelling at.
         SmartDashboard.putNumber(moduleString + " Current Speed", getCurrentSpeed());
         SmartDashboard.putBoolean(moduleString + " Drive is at Goal", drivePIDController.atSetpoint());
@@ -727,40 +442,46 @@ public class SwerveModule implements Sendable {
     }
 
     public void toggleMode() {
-        IdleMode driveIdleMode;
-        IdleMode turnIdleMode;
-        if (useFlexDrive) {
-            driveIdleMode = flexDrive.configAccessor.getIdleMode();
+        switch(MotorControllerType.getMotorControllerType(drive)) {
+            case SPARK_MAX:
+                switch (MotorControllerType.getMotorControllerType(turn)) {
+                    case SPARK_MAX:
+                        if (((SparkMax)drive).configAccessor.getIdleMode() == IdleMode.kBrake && ((SparkMax)turn).configAccessor.getIdleMode() == IdleMode.kCoast) coast();
+                        else brake();
+                        break;
+                    case SPARK_FLEX:
+                        if (((SparkMax)drive).configAccessor.getIdleMode() == IdleMode.kBrake && ((SparkFlex)turn).configAccessor.getIdleMode() == IdleMode.kCoast) coast();
+                        else brake();
+                        break;
+                }
+            case SPARK_FLEX:
+                switch (MotorControllerType.getMotorControllerType(turn)) {
+                    case SPARK_MAX:
+                        if (((SparkFlex)drive).configAccessor.getIdleMode() == IdleMode.kBrake && ((SparkMax)turn).configAccessor.getIdleMode() == IdleMode.kCoast) coast();
+                        else brake();
+                        break;
+                    case SPARK_FLEX:
+                        if (((SparkFlex)drive).configAccessor.getIdleMode() == IdleMode.kBrake && ((SparkFlex)turn).configAccessor.getIdleMode() == IdleMode.kCoast) coast();
+                        else brake();
+                        break;
+                }
+                break;
         }
-        else {
-            driveIdleMode = maxDrive.configAccessor.getIdleMode();
-        }
-        if (useFlexTurn) {
-            turnIdleMode = flexTurn.configAccessor.getIdleMode();
-        }
-        else {
-            turnIdleMode = maxTurn.configAccessor.getIdleMode();
-        }
-        if (driveIdleMode == IdleMode.kBrake && turnIdleMode == IdleMode.kCoast) coast();
-        else brake();
     }
 
     public void brake() {
-        SparkBaseConfig maxConfig = new SparkMaxConfig().idleMode(IdleMode.kBrake);
-        SparkBaseConfig flexConfig = new SparkFlexConfig().idleMode(IdleMode.kBrake);
-        if (useFlexDrive) {flexDrive.configure(flexConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);}
-        else {maxDrive.configure(maxConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);}
-        if (useFlexTurn) {flexTurn.configure(flexConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);}
-        else {maxTurn.configure(maxConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);}
+        SparkBaseConfig config = driveMotorType.createConfig().idleMode(IdleMode.kBrake);
+        drive.configure(config, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
+        config = turnMotorType.createConfig().idleMode(IdleMode.kBrake);
+        turn.configure(config, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
     }
 
     public void coast() {
-        SparkBaseConfig maxConfig = new SparkMaxConfig().idleMode(IdleMode.kCoast);
-        SparkBaseConfig flexConfig = new SparkFlexConfig().idleMode(IdleMode.kCoast);
-        if (useFlexDrive) {flexDrive.configure(flexConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);}
-        else {maxDrive.configure(maxConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);}
-        if (useFlexTurn) {flexTurn.configure(flexConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);}
-        else {maxTurn.configure(maxConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);}
+        SparkBaseConfig config = driveMotorType.createConfig().idleMode(IdleMode.kCoast);
+
+        drive.configure(config, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
+        config = turnMotorType.createConfig().idleMode(IdleMode.kCoast);
+        turn.configure(config, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
     }
 
     /**
@@ -782,7 +503,7 @@ public class SwerveModule implements Sendable {
         builder.addDoubleProperty("Incremental Position", () -> turnEncoder.getPosition().getValueAsDouble(), null);
         builder.addDoubleProperty("Absolute Angle (deg)", () -> Units.rotationsToDegrees(turnEncoder.getAbsolutePosition().getValueAsDouble()), null);
         builder.addDoubleProperty("Turn Measured Pos (deg)", this::getModuleAngle, null);
-        builder.addDoubleProperty("Encoder Position", driveRelEnc::getPosition, null);
+        builder.addDoubleProperty("Encoder Position", drive.getEncoder()::getPosition, null);
         // Display the speed that the robot thinks it is travelling at.
         builder.addDoubleProperty("Current Speed", this::getCurrentSpeed, null);
         builder.addDoubleProperty("Turn Setpoint Pos (deg)", () -> turnPIDController.getSetpoint().position, null);
@@ -810,10 +531,8 @@ public class SwerveModule implements Sendable {
      */
     public SwerveModuleSim createSim(Mass massOnWheel, double turnGearing, double turnMoiKgM2) {
         double driveMoiKgM2 =  massOnWheel.in(Kilogram) * Math.pow(config.wheelDiameterMeters/2, 2);
-        int driveId = useFlexDrive ? flexDrive.getDeviceId() : maxDrive.getDeviceId();
-        int turnId = useFlexTurn ? flexTurn.getDeviceId() : maxTurn.getDeviceId();
-        return new SwerveModuleSim(driveId, config.driveGearing, driveMoiKgM2, 
-            turnId, turnEncoder.getDeviceID(), turnGearing, turnMoiKgM2);
+        return new SwerveModuleSim(drive.getDeviceId(), config.driveGearing, driveMoiKgM2, 
+            turn.getDeviceId(), turnEncoder.getDeviceID(), turnGearing, turnMoiKgM2);
     }
 
     /**
