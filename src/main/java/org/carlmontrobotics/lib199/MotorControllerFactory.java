@@ -9,8 +9,7 @@ package org.carlmontrobotics.lib199;
 
 import org.carlmontrobotics.lib199.sim.MockSparkFlex;
 import org.carlmontrobotics.lib199.sim.MockSparkMax;
-// import org.carlmontrobotics.lib199.sim.MockSparkFlex;
-// import org.carlmontrobotics.lib199.sim.MockSparkMax;
+
 import org.carlmontrobotics.lib199.sim.MockTalonSRX;
 
 import com.ctre.phoenix.motorcontrol.NeutralMode;
@@ -20,6 +19,7 @@ import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkLowLevel;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkBaseConfig;
+import com.revrobotics.spark.config.SparkBaseConfigAccessor;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkFlexConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
@@ -76,11 +76,11 @@ public class MotorControllerFactory {
     } else {
       spark = MockSparkMax.createMockSparkMax(id, SparkLowLevel.MotorType.kBrushless, MockSparkMax.NEOType.NEO);
     }
-    spark.configure(
+    MotorErrors.reportError(spark.configure(
       config, 
       SparkBase.ResetMode.kResetSafeParameters,
       SparkBase.PersistMode.kNoPersistParameters
-    );
+    ));
     MotorErrors.reportSparkTemp(spark, motorConfig.temperatureLimitCelsius);
     MotorErrors.checkSparkErrors(spark);
 
@@ -101,12 +101,17 @@ public class MotorControllerFactory {
    * @param config the custom config to set
    */
   public static SparkFlex createSparkFlex(int id, MotorConfig motorConfig, SparkBaseConfig config) {
-    SparkFlex spark = null;
+    SparkFlex spark;
     if (RobotBase.isReal()) {
       spark = new SparkFlex(id, SparkLowLevel.MotorType.kBrushless);
     } else {
       spark = MockSparkFlex.createMockSparkFlex(id, SparkLowLevel.MotorType.kBrushless);
     }
+    MotorErrors.reportError(spark.configure(
+      config, 
+      SparkBase.ResetMode.kResetSafeParameters,
+      SparkBase.PersistMode.kNoPersistParameters
+    ));
 
     MotorErrors.reportSparkTemp(spark, motorConfig.temperatureLimitCelsius);
     MotorErrors.checkSparkErrors(spark);
@@ -114,6 +119,16 @@ public class MotorControllerFactory {
     return spark;
   }
 
+  public static SparkBaseConfigAccessor getConfigAccessor(SparkBase motor){
+    switch(getControllerType(motor)){
+      case SPARK_MAX:
+        return ((SparkMax)motor).configAccessor;
+      case SPARK_FLEX:
+        return ((SparkFlex)motor).configAccessor;
+      default:
+        return null;
+    }
+  }
   public static SparkBaseConfig createConfig(MotorControllerType type) {
     SparkBaseConfig config = null;
     switch(type){

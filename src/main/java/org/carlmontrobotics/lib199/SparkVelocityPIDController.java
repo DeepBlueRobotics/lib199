@@ -34,7 +34,7 @@ public class SparkVelocityPIDController implements Sendable {
         this.targetSpeed = targetSpeed;
         this.tolerance = tolerance;
         
-        spark.configure(new SparkMaxConfig().apply(
+        spark.configure(MotorControllerFactory.sparkConfig(MotorConfig.NEO).apply(
             new ClosedLoopConfig().pid(
                 this.currentP = defaultP,
                 this.currentI = defaultI,
@@ -85,7 +85,7 @@ public class SparkVelocityPIDController implements Sendable {
     }
 
     private void instantClosedLoopConfig(ClosedLoopConfig clConfig) {
-        spark.configure(new SparkMaxConfig().apply(clConfig), ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
+        spark.configure(MotorControllerFactory.sparkConfig(MotorConfig.NEO).apply(clConfig), ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
     }
 
     @Override
