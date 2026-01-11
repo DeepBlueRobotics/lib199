@@ -71,13 +71,18 @@ public class SwerveModule implements Sendable {
     private double turnSpeedCorrectionVolts, turnFFVolts, turnVolts;
     private double maxTurnVelocityWithoutTippingRps;
 
+    MotorControllerType driveMotorType;
+    MotorControllerType turnMotorType;
+
     SparkBaseConfigAccessor driveConfigAccessor;
     SparkBaseConfigAccessor turnConfigAccessor;
     
     public SwerveModule(SwerveConfig config, ModuleType type, SparkBase drive, SparkBase turn, CANcoder turnEncoder,
                         int arrIndex, Supplier<Float> pitchDegSupplier, Supplier<Float> rollDegSupplier) {
-        driveConfig = MotorControllerType.getMotorControllerType(drive).createConfig();
-        turnConfig = MotorControllerType.getMotorControllerType(turn).createConfig();
+        driveMotorType = MotorControllerType.getMotorControllerType(drive);
+        turnMotorType = MotorControllerType.getMotorControllerType(turn);
+        driveConfig = driveMotorType.createConfig();
+        turnConfig = turnMotorType.createConfig();
         driveConfigAccessor = MotorControllerFactory.getConfigAccessor(drive);
         turnConfigAccessor = MotorControllerFactory.getConfigAccessor(turn);
         //SmartDashboard.putNumber("Target Angle (deg)", 0.0);
