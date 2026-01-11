@@ -6,6 +6,7 @@ import static edu.wpi.first.units.Units.Pounds;
 
 import java.util.function.Supplier;
 
+import org.carlmontrobotics.lib199.MotorControllerFactory;
 import org.carlmontrobotics.lib199.MotorControllerType;
 import org.mockito.internal.reporting.SmartPrinter;
 
@@ -18,6 +19,7 @@ import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkBaseConfig;
+import com.revrobotics.spark.config.SparkBaseConfigAccessor;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.config.SparkFlexConfig;
 
@@ -69,15 +71,15 @@ public class SwerveModule implements Sendable {
     private double turnSpeedCorrectionVolts, turnFFVolts, turnVolts;
     private double maxTurnVelocityWithoutTippingRps;
 
-    MotorControllerType driveMotorType;
-    MotorControllerType turnMotorType;
+    SparkBaseConfigAccessor driveConfigAccessor;
+    SparkBaseConfigAccessor turnConfigAccessor;
     
     public SwerveModule(SwerveConfig config, ModuleType type, SparkBase drive, SparkBase turn, CANcoder turnEncoder,
                         int arrIndex, Supplier<Float> pitchDegSupplier, Supplier<Float> rollDegSupplier) {
-        driveMotorType = MotorControllerType.getMotorControllerType(drive);
-        turnMotorType = MotorControllerType.getMotorControllerType(turn);
-        driveConfig = driveMotorType.createConfig();
-        turnConfig = turnMotorType.createConfig();
+        driveConfig = MotorControllerType.getMotorControllerType(drive).createConfig();
+        turnConfig = MotorControllerType.getMotorControllerType(turn).createConfig();
+        driveConfigAccessor = MotorControllerFactory.getConfigAccessor(drive);
+        turnConfigAccessor = MotorControllerFactory.getConfigAccessor(turn);
         //SmartDashboard.putNumber("Target Angle (deg)", 0.0);
         String moduleString = type.toString();
         this.timer = new Timer();
@@ -121,18 +123,9 @@ public class SwerveModule implements Sendable {
                                                config.drivekD[arrIndex]);
         
         /* offset for 1 relative encoder count */
-        switch(MotorControllerType.getMotorControllerType(drive)) {
-            case SPARK_MAX:
-                drivetoleranceMPerS = (1.0 
-                    / (double)(((SparkMax)drive).configAccessor.encoder.getCountsPerRevolution()) * drivePositionFactor) 
-                    / Units.millisecondsToSeconds(((SparkMax)drive).configAccessor.signals.getPrimaryEncoderPositionPeriodMs() * ((SparkMax)drive).configAccessor.encoder.getQuadratureAverageDepth());
-                        break;
-            case SPARK_FLEX:
-                drivetoleranceMPerS = (1.0 
-                    / (double)(((SparkFlex)drive).configAccessor.encoder.getCountsPerRevolution()) * drivePositionFactor) 
-                    / Units.millisecondsToSeconds(((SparkFlex)drive).configAccessor.signals.getPrimaryEncoderPositionPeriodMs() * ((SparkFlex)drive).configAccessor.encoder.getQuadratureAverageDepth());
-                break;
-        }
+        drivetoleranceMPerS = (1.0 
+            / (double)(driveConfigAccessor.encoder.getCountsPerRevolution()) * drivePositionFactor) 
+            / Units.millisecondsToSeconds(driveConfigAccessor.signals.getPrimaryEncoderPositionPeriodMs() * driveConfigAccessor.encoder.getQuadratureAverageDepth());
         drivePIDController.setTolerance(drivetoleranceMPerS);
 
         //System.out.println("Velocity Constant: " + (positionConstant / 60));
@@ -448,31 +441,8 @@ public class SwerveModule implements Sendable {
     }
 
     public void toggleMode() {
-        switch(MotorControllerType.getMotorControllerType(drive)) {
-            case SPARK_MAX:
-                switch (MotorControllerType.getMotorControllerType(turn)) {
-                    case SPARK_MAX:
-                        if (((SparkMax)drive).configAccessor.getIdleMode() == IdleMode.kBrake && ((SparkMax)turn).configAccessor.getIdleMode() == IdleMode.kCoast) coast();
-                        else brake();
-                        break;
-                    case SPARK_FLEX:
-                        if (((SparkMax)drive).configAccessor.getIdleMode() == IdleMode.kBrake && ((SparkFlex)turn).configAccessor.getIdleMode() == IdleMode.kCoast) coast();
-                        else brake();
-                        break;
-                }
-            case SPARK_FLEX:
-                switch (MotorControllerType.getMotorControllerType(turn)) {
-                    case SPARK_MAX:
-                        if (((SparkFlex)drive).configAccessor.getIdleMode() == IdleMode.kBrake && ((SparkMax)turn).configAccessor.getIdleMode() == IdleMode.kCoast) coast();
-                        else brake();
-                        break;
-                    case SPARK_FLEX:
-                        if (((SparkFlex)drive).configAccessor.getIdleMode() == IdleMode.kBrake && ((SparkFlex)turn).configAccessor.getIdleMode() == IdleMode.kCoast) coast();
-                        else brake();
-                        break;
-                }
-                break;
-        }
+        if (driveConfigAccessor.getIdleMode() == IdleMode.kBrake && turnConfigAccessor.getIdleMode() == IdleMode.kCoast) coast();
+        else brake();
     }
 
     public void brake() {
