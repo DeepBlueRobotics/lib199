@@ -52,7 +52,7 @@ public class MockSparkBase extends MockedMotorBase {
     private SparkAnalogSensorSim analogSensorImpl = null;
     private final String name;
 
-    public enum NEOType { //is it fine if we make it public so that MotorControllerFactory can access it?
+    public enum NEOType { 
         NEO(DCMotor.getNEO(1)),
         NEO550(DCMotor.getNeo550(1)),
         VORTEX(DCMotor.getNeoVortex(1)),  

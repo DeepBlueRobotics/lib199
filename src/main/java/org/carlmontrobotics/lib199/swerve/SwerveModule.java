@@ -446,7 +446,7 @@ public class SwerveModule implements Sendable {
     }
 
     public void toggleMode() {
-        if (driveConfigAccessor.getIdleMode() == IdleMode.kBrake && turnConfigAccessor.getIdleMode() == IdleMode.kCoast) coast();
+        if (driveConfigAccessor.getIdleMode() == IdleMode.kBrake && turnConfigAccessor.getIdleMode() == IdleMode.kBrake) coast();
         else brake();
     }
 
