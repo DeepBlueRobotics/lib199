@@ -1,16 +1,8 @@
 package org.carlmontrobotics.lib199.swerve;
 
-import org.carlmontrobotics.lib199.sim.MockedCANCoder;
-import org.carlmontrobotics.lib199.sim.MockedEncoder;
-
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.system.LinearSystem;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
-import edu.wpi.first.units.measure.Distance;
-import edu.wpi.first.units.measure.Mass;
-import edu.wpi.first.units.Measure;
-import edu.wpi.first.units.measure.Mult;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
@@ -24,7 +16,7 @@ public class SwerveModuleSim {
 
     /**
      * Constructs a SwerveModuleSim that simulates the physics of a swerve module.
-     * 
+     *
      * @param drivePortNum the port of the SparkMax drive motor
      * @param driveGearing the gearing reduction between the drive motor and the wheel
      * @param driveMoiKgM2 the effective moment of inertia around the wheel axle (typciall the mass of the robot divided the number of modules times the square of the wheel radius)
@@ -33,7 +25,7 @@ public class SwerveModuleSim {
      * @param turnGearing the gearing reduction between the turn motor and the module
      * @param turnMoiKgM2 the moment of inertia of the part of the module turned by the turn motor (in kg m^2)
      */
-    public SwerveModuleSim(int drivePortNum, double driveGearing, double driveMoiKgM2, 
+    public SwerveModuleSim(int drivePortNum, double driveGearing, double driveMoiKgM2,
                             int turnMotorPortNum, int turnEncoderPortNum, double turnGearing, double turnMoiKgM2) {
         driveMotorSim = new SimDeviceSim("CANMotor:CANSparkMax", drivePortNum);
         driveEncoderSim = new SimDeviceSim("CANEncoder:CANSparkMax", drivePortNum);
@@ -44,7 +36,7 @@ public class SwerveModuleSim {
         turnMotorSim = new SimDeviceSim("CANMotor:CANSparkMax", turnMotorPortNum);
         turnEncoderSim = new SimDeviceSim("CANDutyCycle:CANCoder", turnEncoderPortNum);
         turnPhysicsSim = new DCMotorSim(
-            LinearSystemId.createDCMotorSystem(dcmotor, turnMoiKgM2, turnGearing), 
+            LinearSystemId.createDCMotorSystem(dcmotor, turnMoiKgM2, turnGearing),
             dcmotor);
     }
 

@@ -79,7 +79,7 @@ public class MotorControllerFactory {
     MotorErrors.reportError(spark.configure(
       config, 
       SparkBase.ResetMode.kResetSafeParameters,
-      SparkBase.PersistMode.kNoPersistParameters
+      SparkBase.PersistMode.kPersistParameters
     ));
     MotorErrors.reportSparkTemp(spark, motorConfig.temperatureLimitCelsius);
     MotorErrors.checkSparkErrors(spark);
@@ -110,7 +110,7 @@ public class MotorControllerFactory {
     MotorErrors.reportError(spark.configure(
       config, 
       SparkBase.ResetMode.kResetSafeParameters,
-      SparkBase.PersistMode.kNoPersistParameters
+      SparkBase.PersistMode.kPersistParameters
     ));
 
     MotorErrors.reportSparkTemp(spark, motorConfig.temperatureLimitCelsius);

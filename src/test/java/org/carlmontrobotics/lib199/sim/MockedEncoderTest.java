@@ -9,13 +9,9 @@ import java.util.stream.Stream;
 
 import com.revrobotics.REVLibError;
 import com.revrobotics.RelativeEncoder;
-import com.revrobotics.spark.SparkBase.PersistMode;
-import com.revrobotics.spark.SparkBase.ResetMode;
-import com.revrobotics.spark.SparkFlex;
-import com.revrobotics.spark.SparkMax;
-import com.revrobotics.spark.config.SparkFlexConfig;
-import com.revrobotics.spark.config.SparkMaxConfig;
-
+import edu.wpi.first.hal.SimDevice;
+import edu.wpi.first.hal.SimDouble;
+import edu.wpi.first.wpilibj.simulation.SimDeviceSim;
 import org.carlmontrobotics.lib199.Mocks;
 import org.carlmontrobotics.lib199.REVLibErrorAnswer;
 import org.carlmontrobotics.lib199.testUtils.SafelyClosable;
@@ -24,16 +20,12 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 
-import edu.wpi.first.hal.SimDevice;
-import edu.wpi.first.hal.SimDouble;
-import edu.wpi.first.wpilibj.simulation.SimDeviceSim;
-
 public class MockedEncoderTest {
 
     @ClassRule
-    public static TestRules.InitializeHAL simClassRule = new TestRules.InitializeHAL(); 
+    public static TestRules.InitializeHAL simClassRule = new TestRules.InitializeHAL();
     @Rule
-    public TestRules.ResetSimDeviceSimData simTestRule = new TestRules.ResetSimDeviceSimData(); 
+    public TestRules.ResetSimDeviceSimData simTestRule = new TestRules.ResetSimDeviceSimData();
 
     @Test
     public void testDeviceCreation() {

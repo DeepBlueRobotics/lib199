@@ -2,34 +2,27 @@ package org.carlmontrobotics.lib199.sim;
 
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.carlmontrobotics.lib199.Lib199Subsystem;
-import org.carlmontrobotics.lib199.Mocks;
-import org.carlmontrobotics.lib199.REVLibErrorAnswer;
-
-import com.revrobotics.spark.config.ClosedLoopConfig;
-import com.revrobotics.spark.config.SparkMaxConfig;
-import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
-import com.revrobotics.spark.SparkClosedLoopController;
-import com.revrobotics.spark.SparkFlex;
-import com.revrobotics.spark.SparkLowLevel;
-import com.revrobotics.spark.SparkLowLevel.MotorType;
-import com.revrobotics.spark.SparkMax;
 import com.revrobotics.REVLibError;
 import com.revrobotics.RelativeEncoder;
+import com.revrobotics.sim.SparkAbsoluteEncoderSim;
 import com.revrobotics.sim.SparkAnalogSensorSim;
 import com.revrobotics.sim.SparkMaxAlternateEncoderSim;
-import com.revrobotics.sim.SparkAbsoluteEncoderSim;
 import com.revrobotics.spark.SparkAbsoluteEncoder;
-import com.revrobotics.spark.SparkMaxAlternateEncoder;
 import com.revrobotics.spark.SparkAnalogSensor;
 import com.revrobotics.spark.SparkBase;
-import com.revrobotics.spark.SparkRelativeEncoder;
+import com.revrobotics.spark.SparkClosedLoopController;
+import com.revrobotics.spark.SparkFlex;
+import com.revrobotics.spark.SparkLowLevel.MotorType;
+import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.SparkMaxAlternateEncoder;
 import com.revrobotics.spark.SparkSim;
-import com.revrobotics.spark.SparkLowLevel;
-
+import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import edu.wpi.first.hal.SimDevice;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.motorcontrol.MotorController;
+import org.carlmontrobotics.lib199.Lib199Subsystem;
+import org.carlmontrobotics.lib199.Mocks;
+import org.carlmontrobotics.lib199.REVLibErrorAnswer;
 
 /**
  * An extension of {@link MockedMotorBase} which implements spark-max-specific functionality
@@ -52,10 +45,10 @@ public class MockSparkBase extends MockedMotorBase {
     private SparkAnalogSensorSim analogSensorImpl = null;
     private final String name;
 
-    public enum NEOType { //is it fine if we make it public so that MotorControllerFactory can access it?
+    public enum NEOType {
         NEO(DCMotor.getNEO(1)),
         NEO550(DCMotor.getNeo550(1)),
-        VORTEX(DCMotor.getNeoVortex(1)),  
+        VORTEX(DCMotor.getNeoVortex(1)),
         UNKNOWN(DCMotor.getNEO(1));
 
         public DCMotor dcMotor;
@@ -110,7 +103,7 @@ public class MockSparkBase extends MockedMotorBase {
         pidControllerImpl = new MockedSparkClosedLoopController(this);
         pidController = Mocks.createMock(SparkClosedLoopController.class, pidControllerImpl, new REVLibErrorAnswer());
         // pidController.feedbackSensor(encoder);
-        
+
 
         controllers.put(port, this);
 
