@@ -18,7 +18,7 @@ public class REVLibErrorAnswerTest {
         assertEquals(0, enc.getVelocity(), 0.01);
 
         // Check that REVLibError functions return REVLibError.kOk
-        assertEquals(REVLibError.kOk, enc.setInverted(false));
+        assertEquals(REVLibError.kOk, enc.setPosition(0));
     }
 
 }

@@ -7,19 +7,16 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import com.revrobotics.REVLibError;
-import com.revrobotics.SparkPIDController;
-import com.revrobotics.CANSparkLowLevel.MotorType;
-
-import org.carlmontrobotics.lib199.Mocks;
-import org.carlmontrobotics.lib199.REVLibErrorAnswer;
+import com.revrobotics.spark.SparkLowLevel.MotorType;
+import org.carlmontrobotics.lib199.sim.MockSparkBase.NEOType;
 import org.junit.Test;
 
-public class MockedSparkMaxPIDControllerTest {
+public class MockedSparkClosedLoopControllerTest {
 
     @Test
     public void testResponses() {
-        MockSparkMax mockSparkMax = new MockSparkMax(0, MotorType.kBrushless);
-        SparkPIDController mock = Mocks.createMock(SparkPIDController.class, new MockedSparkMaxPIDController(mockSparkMax), new REVLibErrorAnswer());
+        MockSparkMax mockSparkMax = new MockSparkMax(0, MotorType.kBrushless, NEOType.NEO);
+        MockedSparkClosedLoopController mock = new MockedSparkClosedLoopController(mockSparkMax);
         assertSlotValueUpdate(mock::setP, mock::setP, mock::getP, mock::getP);
         assertSlotValueUpdate(mock::setI, mock::setI, mock::getI, mock::getI);
         assertSlotValueUpdate(mock::setD, mock::setD, mock::getD, mock::getD);

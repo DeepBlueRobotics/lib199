@@ -2,25 +2,27 @@ package org.carlmontrobotics.lib199.sim;
 
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.revrobotics.REVLibError;
+import com.revrobotics.RelativeEncoder;
+import com.revrobotics.sim.SparkAbsoluteEncoderSim;
+import com.revrobotics.sim.SparkAnalogSensorSim;
+import com.revrobotics.sim.SparkMaxAlternateEncoderSim;
+import com.revrobotics.spark.SparkAbsoluteEncoder;
+import com.revrobotics.spark.SparkAnalogSensor;
+import com.revrobotics.spark.SparkBase;
+import com.revrobotics.spark.SparkClosedLoopController;
+import com.revrobotics.spark.SparkFlex;
+import com.revrobotics.spark.SparkLowLevel.MotorType;
+import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.SparkMaxAlternateEncoder;
+import com.revrobotics.spark.SparkSim;
+import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
+import edu.wpi.first.hal.SimDevice;
+import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.wpilibj.motorcontrol.MotorController;
 import org.carlmontrobotics.lib199.Lib199Subsystem;
 import org.carlmontrobotics.lib199.Mocks;
 import org.carlmontrobotics.lib199.REVLibErrorAnswer;
-
-import com.revrobotics.CANSparkBase;
-import com.revrobotics.CANSparkBase.ExternalFollower;
-import com.revrobotics.CANSparkBase.IdleMode;
-import com.revrobotics.CANSparkLowLevel.MotorType;
-import com.revrobotics.REVLibError;
-import com.revrobotics.RelativeEncoder;
-import com.revrobotics.SparkAbsoluteEncoder;
-import com.revrobotics.SparkMaxAlternateEncoder;
-import com.revrobotics.SparkAnalogSensor;
-import com.revrobotics.SparkPIDController;
-import com.revrobotics.SparkRelativeEncoder;
-import com.revrobotics.SparkRelativeEncoder.Type;
-
-import edu.wpi.first.hal.SimDevice;
-import edu.wpi.first.wpilibj.motorcontrol.MotorController;
 
 /**
  * An extension of {@link MockedMotorBase} which implements spark-max-specific functionality
@@ -31,14 +33,29 @@ public class MockSparkBase extends MockedMotorBase {
 
     public final MotorType type;
     private final MockedEncoder encoder;
-    private final SparkPIDController pidController;
-    private final MockedSparkMaxPIDController pidControllerImpl;
+    private final SparkBase motor;
+    private final SparkSim spark;
+    private final SparkClosedLoopController pidController;
+    private final MockedSparkClosedLoopController pidControllerImpl;
     private SparkAbsoluteEncoder absoluteEncoder = null;
-    private MockedEncoder absoluteEncoderImpl = null;
-    private MockedEncoder alternateEncoder = null;
+    private SparkAbsoluteEncoderSim absoluteEncoderImpl = null;
+    private SparkMaxAlternateEncoder alternateEncoder = null;
+    private SparkMaxAlternateEncoderSim alternateEncoderImpl = null;
     private SparkAnalogSensor analogSensor = null;
-    private MockedEncoder analogSensorImpl = null;
+    private SparkAnalogSensorSim analogSensorImpl = null;
     private final String name;
+
+    public enum NEOType {
+        NEO(DCMotor.getNEO(1)),
+        NEO550(DCMotor.getNeo550(1)),
+        VORTEX(DCMotor.getNeoVortex(1)),
+        UNKNOWN(DCMotor.getNEO(1));
+
+        public DCMotor dcMotor;
+        private NEOType(DCMotor dcmotordata){
+            this.dcMotor=dcmotordata;
+        }
+    }
 
     /**
      * Initializes a new {@link SimDevice} with the given parameters and creates the necessary sim values, and
@@ -47,30 +64,46 @@ public class MockSparkBase extends MockedMotorBase {
      * @param port the port to associate this {@code MockSparkMax} with. Will be used to create the {@link SimDevice} and facilitate motor following.
      * @param type the type of the simulated motor. If this is set to {@link MotorType#kBrushless}, the builtin encoder simulation will be configured
      * to follow the inversion state of the motor and its {@code setInverted} method will be disabled.
-     * @param name the name of the type of controller ("CANSparkMax" or "CANSparkFlex")
+     * @param name the name of the type of controller ("SparkMax" or "SparkFlex")
      * @param countsPerRev the number of counts per revolution of this controller's built-in encoder.
+     * @param neoType the type of NEO motor
      */
-    public MockSparkBase(int port, MotorType type, String name, int countsPerRev) {
+    public MockSparkBase(int port, MotorType type, String name, int countsPerRev, NEOType neoType) {
         super(name, port);
         this.type = type;
         this.name = name;
 
+        if (neoType == NEOType.VORTEX){ //only vortex uses sparkflex
+            this.motor = new SparkFlex(port,type);
+            this.spark = new SparkSim(
+                this.motor,
+                neoType.dcMotor
+            );
+        } else { //WARNING can't initialize a sparkbase without an actual spark...
+            this.motor = new SparkMax(port,type);
+            this.spark = new SparkSim(
+                this.motor,
+                neoType.dcMotor
+            );
+        }
+
         if(type == MotorType.kBrushless) {
             encoder = new MockedEncoder(SimDevice.create("CANEncoder:" + name, port), countsPerRev, false, false) {
-                @Override
-                public REVLibError setInverted(boolean inverted) {
-                    System.err.println(
-                            "(MockedEncoder) SparkRelativeEncoder cannot be inverted separately from the motor in brushless mode!");
-                    return REVLibError.kParamInvalid;
-                }
+                // @Override
+                // public REVLibError setInverted(boolean inverted) {
+                //     System.err.println(
+                //             "(MockedEncoder) SparkRelativeEncoder cannot be inverted separately from the motor in brushless mode!");
+                //     return REVLibError.kParamInvalid;
+                // }
             };
         } else {
             encoder = new MockedEncoder(SimDevice.create("CANEncoder:" + name, port), countsPerRev, false, false);
         }
 
-        pidControllerImpl = new MockedSparkMaxPIDController(this);
-        pidController = Mocks.createMock(SparkPIDController.class, pidControllerImpl, new REVLibErrorAnswer());
-        pidController.setFeedbackDevice(encoder);
+        pidControllerImpl = new MockedSparkClosedLoopController(this);
+        pidController = Mocks.createMock(SparkClosedLoopController.class, pidControllerImpl, new REVLibErrorAnswer());
+        // pidController.feedbackSensor(encoder);
+
 
         controllers.put(port, this);
 
@@ -96,21 +129,30 @@ public class MockSparkBase extends MockedMotorBase {
         pidControllerImpl.setDutyCycle(speed);
     }
 
-    public REVLibError follow(CANSparkBase leader) {
+    public REVLibError follow(SparkBase leader) {
         return follow(leader, false);
     }
 
-    public REVLibError follow(CANSparkBase leader, boolean invert) {
+    public REVLibError follow(SparkBase leader, boolean invert) {
 		pidControllerImpl.follow(leader, invert); // No need to lookup the spark max if we already have it
         return REVLibError.kOk;
 	}
 
-    public REVLibError follow(ExternalFollower leader, int deviceID) {
+    public REVLibError follow(SparkBase leader, int deviceID) {
         return follow(leader, deviceID, false);
     }
 
-    public REVLibError follow(ExternalFollower leader, int deviceID, boolean invert) {
+    public REVLibError follow(SparkBase leader, int deviceID, boolean invert) {
         MotorController controller = null;
+        //ERROR: no way to check if leader is sending following frames or not
+        controller = getControllerWithId(deviceID);
+        if(controller == null) {
+            System.err.println("Error: Attempted to follow unknown motor controller: " + leader + " " + deviceID);
+            return REVLibError.kFollowConfigMismatch;
+        }
+        pidControllerImpl.follow(controller, invert);
+        return REVLibError.kOk;
+        /*
         // Because ExternalFollower does not implement equals, this could result in bugs if the user passes in a custom ExternalFollower object,
         // but I think that it's unlikely and users should use the builtin definitions anyway
         if(leader.equals(ExternalFollower.kFollowerDisabled)) {
@@ -128,6 +170,7 @@ public class MockSparkBase extends MockedMotorBase {
             pidControllerImpl.follow(controller, invert);
         }
         return REVLibError.kOk;
+        */
     }
 
     public boolean isFollower() {
@@ -140,14 +183,6 @@ public class MockSparkBase extends MockedMotorBase {
 
     public RelativeEncoder getEncoder() {
         return encoder;
-    }
-
-    public RelativeEncoder getEncoder(SparkRelativeEncoder.Type type, int countsPerRev) {
-        if(type != Type.kHallSensor) {
-            System.err.println("Error: MockSparkMax only supports hall effect encoders");
-            return null;
-        }
-        return getEncoder();
     }
 
     @Override
@@ -168,7 +203,7 @@ public class MockSparkBase extends MockedMotorBase {
 		return REVLibError.kOk;
     }
 
-    public SparkPIDController getPIDController() {
+    public SparkClosedLoopController getPIDController() {
         return pidController;
     }
 
@@ -188,15 +223,9 @@ public class MockSparkBase extends MockedMotorBase {
         if (encoder != null) {
             encoder.close();
         }
-        if (absoluteEncoderImpl != null) {
-            absoluteEncoderImpl.close();
-        }
-        if (analogSensorImpl != null) {
-            analogSensorImpl.close();
-        }
-        if (alternateEncoder != null) {
-            alternateEncoder.close();
-        }
+        absoluteEncoderImpl=null;
+        analogSensorImpl=null;
+        alternateEncoder=null;
         super.close();
     }
 
@@ -205,14 +234,15 @@ public class MockSparkBase extends MockedMotorBase {
      * After this method has been called once, its output is cached for future invocations.
      * For this reason, the method is also {@code synchronized}.
      *
-     * @param encoderType ignored
      * @return the simulated encoder
      */
-    public synchronized SparkAbsoluteEncoder getAbsoluteEncoder(SparkAbsoluteEncoder.Type encoderType) {
+    public synchronized SparkAbsoluteEncoder getAbsoluteEncoder() {
         if(absoluteEncoder == null) {
-            absoluteEncoderImpl = new MockedEncoder(
-                    SimDevice.create("CANDutyCycle:" + name, port), 0, false,
-                    true, true);
+            if (motor instanceof SparkFlex){
+                absoluteEncoderImpl = new SparkAbsoluteEncoderSim((SparkFlex)motor);
+            } else {
+                absoluteEncoderImpl = new SparkAbsoluteEncoderSim((SparkMax)motor);
+            }
             absoluteEncoder = Mocks.createMock(SparkAbsoluteEncoder.class, absoluteEncoderImpl, new REVLibErrorAnswer());
         }
         return absoluteEncoder;
@@ -227,21 +257,15 @@ public class MockSparkBase extends MockedMotorBase {
      * @param countsPerRev the CPR of the absolute encoder
      * @return the simulated encoder
      */
-    public RelativeEncoder getAlternateEncoder(int countsPerRev) {
-        return getAlternateEncoder(SparkMaxAlternateEncoder.Type.kQuadrature, countsPerRev);
-    }
-
-    /**
-     * Creates a simulated {@link SparkMaxAlternateEncoder} linked to this simulated controller.
-     * After this method has been called once, its output is cached for future invocations.
-     * For this reason, the method is also {@code synchronized}.
-     *
-     * @param encoderType ignored
-     * @return the simulated encoder
-     */
-    public synchronized RelativeEncoder getAlternateEncoder(SparkMaxAlternateEncoder.Type encoderType, int countsPerRev) {
+    public synchronized RelativeEncoder getAlternateEncoder(int countsPerRev) {
+        // return getAlternateEncoder(SparkMaxAlternateEncoder.Type.kQuadrature, countsPerRev);
         if(alternateEncoder == null) {
-            alternateEncoder = new MockedEncoder(SimDevice.create("CANEncoder:%s[%d]-alternate".formatted(name, port)), 0, false, false);
+            if (motor instanceof SparkFlex){
+                System.err.println("Error: Attempted to get Alternate Encoder of a SparkFlex: " + motor.getDeviceId());
+                return encoder;
+            }
+            alternateEncoderImpl = new SparkMaxAlternateEncoderSim((SparkMax)motor);
+            alternateEncoder = Mocks.createMock(SparkMaxAlternateEncoder.class, absoluteEncoderImpl, new REVLibErrorAnswer());
         }
         return alternateEncoder;
     }
@@ -251,14 +275,15 @@ public class MockSparkBase extends MockedMotorBase {
      * After this method has been called once, its output is cached for future invocations.
      * For this reason, the method is also {@code synchronized}.
      *
-     * @param mode setting this to {@link SparkAnalogSensor.Mode#kAbsolute} makes the position relative to the position on startup.
-     * We will assume that this value is always zero, so this parameter has no effect.
      * @return the simulated encoder
      */
-    public synchronized SparkAnalogSensor getAnalog(SparkAnalogSensor.Mode mode) {
+    public synchronized SparkAnalogSensor getAnalog() {
         if(analogSensor == null) {
-            analogSensorImpl = new MockedEncoder(
-                    SimDevice.create("CANAIn:" + name, port), 0, true, true);
+            if (motor instanceof SparkFlex){
+                analogSensorImpl = new SparkAnalogSensorSim((SparkFlex)motor);
+            } else {
+                analogSensorImpl = new SparkAnalogSensorSim((SparkMax)motor);
+            }
             analogSensor = Mocks.createMock(SparkAnalogSensor.class, analogSensorImpl, new REVLibErrorAnswer());
         }
         return analogSensor;
@@ -293,7 +318,7 @@ public class MockSparkBase extends MockedMotorBase {
 
     @Override
     public void disable() {
-        // CANSparkBase sets the motor speed to zero rather than actually disabling the motor
+        // SparkBase sets the motor speed to zero rather than actually disabling the motor
         set(0);
     }
 

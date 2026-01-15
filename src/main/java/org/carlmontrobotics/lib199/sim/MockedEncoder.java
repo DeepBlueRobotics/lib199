@@ -43,8 +43,8 @@ public class MockedEncoder implements AbsoluteEncoder, AnalogInput, AutoCloseabl
      * @param countsPerRev The value that this.getCountsPerRevolution() should return
      * @param analog Whether the encoder is an analog sensor
      * @param absolute Whether the encoder is an absolute encoder. This flag caps the position to
-     *        one rotation via. {@link MathUtil#inputModulus(double, double, double)}, disables
-     *        {@link #setPosition(double)}, and enables {@link #setZeroOffset(double)}.
+    *        one rotation via. {@link MathUtil#inputModulus(double, double, double)}, disables
+    *        {@link #setPosition(double)}, and enables {@code setZeroOffset(double)}.
      * 
      *        {@link #getVelocity()} will return a value in rpm.
      */
@@ -58,8 +58,8 @@ public class MockedEncoder implements AbsoluteEncoder, AnalogInput, AutoCloseabl
      * @param countsPerRev The value that this.getCountsPerRevolution() should return
      * @param analog Whether the encoder is an analog sensor
      * @param absolute Whether the encoder is an absolute encoder. This flag caps the position to
-     *        one rotation via. {@link MathUtil#inputModulus(double, double, double)}, disables
-     *        {@link #setPosition(double)}, and enables {@link #setZeroOffset(double)}.
+    *        one rotation via. {@link MathUtil#inputModulus(double, double, double)}, disables
+    *        {@link #setPosition(double)}, and enables {@code setZeroOffset(double)}.
      * @param useRps Whether getVelocity() should return rps instead of rpm.
      */
     public MockedEncoder(SimDevice device, int countsPerRev, boolean analog,
@@ -88,25 +88,25 @@ public class MockedEncoder implements AbsoluteEncoder, AnalogInput, AutoCloseabl
         return REVLibError.kOk;
     }
 
-    @Override
-    public REVLibError setMeasurementPeriod(int period_ms) {
-        System.err.println("(MockedEncoder) setMeasurementPeriod not implemented");
-        return REVLibError.kNotImplemented;
-    }
+    // @Override
+    // public REVLibError setMeasurementPeriod(int period_ms) {
+    //     System.err.println("(MockedEncoder) setMeasurementPeriod not implemented");
+    //     return REVLibError.kNotImplemented;
+    // }
 
-    @Override
-    public int getMeasurementPeriod() {
-        System.err.println("(MockedEncoder) getMeasurementPeriod not implemented");
-        return 0;
-    }
+    // @Override
+    // public int getMeasurementPeriod() {
+    //     System.err.println("(MockedEncoder) getMeasurementPeriod not implemented");
+    //     return 0;
+    // }
 
-    @Override
-    public int getCountsPerRevolution() {
-        return countsPerRev;
-    }
+    // @Override
+    // public int getCountsPerRevolution() {
+    //     return countsPerRev;
+    // }
 
     /**
-     * @return The current position of the encoder, not accounting for the position offset ({@link #setPosition(double)} and {@link #setZeroOffset(double)})
+    * @return The current position of the encoder, not accounting for the position offset ({@link #setPosition(double)} and {@code setZeroOffset(double)})
      */
     public double getRawPosition() {
         double rotationsOrVolts = voltage != null ? voltage.get() : position.get();
@@ -128,65 +128,69 @@ public class MockedEncoder implements AbsoluteEncoder, AnalogInput, AutoCloseabl
                 * velocityConversionFactor;
     }
 
-    @Override
+    //Let Mock to map these methods although they don't exist in the original class
+    public interface RemovedMethods {
+        REVLibError setPositionConversionFactor(double factor);
+        double getPositionConversionFactor();
+        REVLibError setVelocityConversionFactor(double factor);
+        double getVelocityConversionFactor();
+        REVLibError setInverted(boolean inverted);
+        boolean getInverted();
+    }
+
     public REVLibError setPositionConversionFactor(double factor) {
         positionConversionFactor = factor;
         return REVLibError.kOk;
     }
 
-    @Override
     public double getPositionConversionFactor() {
         return positionConversionFactor;
     }
 
-    @Override
     public REVLibError setVelocityConversionFactor(double factor) {
         velocityConversionFactor = factor;
         return REVLibError.kOk;
     }
 
-    @Override
     public double getVelocityConversionFactor() {
         return velocityConversionFactor;
     }
 
-    @Override
     public REVLibError setInverted(boolean inverted) {
         this.inverted = inverted;
         return REVLibError.kOk;
     }
 
-    @Override
     public boolean getInverted() {
         return inverted;
     }
 
-    @Override
-    public REVLibError setAverageDepth(int depth) {
-        System.err.println("(MockedEncoder) setAverageDepth not implemented");
-        return REVLibError.kNotImplemented;
-    }
+    // @Override
+    // public REVLibError setAverageDepth(int depth) {
+    //     System.err.println("(MockedEncoder) setAverageDepth not implemented");
+    //     return REVLibError.kNotImplemented;
+    // }
 
-    @Override
-    public int getAverageDepth() {
-        System.err.println("(MockedEncoder) getAverageDepth not implemented");
-        return 0;
-    }
+    // @Override
+    // public int getAverageDepth() {
+    //     System.err.println("(MockedEncoder) getAverageDepth not implemented");
+    //     return 0;
+    // }
 
-    @Override
-    public REVLibError setZeroOffset(double offset) {
-        if (!absolute) {
-            System.err.println("(MockedEncoder) setZeroOffset cannot be called on a relative encoder");
-            return REVLibError.kParamAccessMode;
-        }
-        positionOffset = offset;
-        return REVLibError.kOk;
-    }
+    // @Override
+    // public REVLibError setZeroOffset(double offset) {
+    //     if (!absolute) {
+    //         System.err.println("(MockedEncoder) setZeroOffset cannot be called on a relative encoder");
+    //         return REVLibError.kParamAccessMode;
+    //     }
+    //     positionOffset = offset;
+    //     return REVLibError.kOk;
+    // }
 
-    @Override
-    public double getZeroOffset() {
-        return positionOffset;
-    }
+    // @Override
+    // public double getZeroOffset() {
+    //     return positionOffset;
+    // }
 
     @Override
     public void close() {

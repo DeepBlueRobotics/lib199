@@ -9,7 +9,9 @@ import java.util.stream.Stream;
 
 import com.revrobotics.REVLibError;
 import com.revrobotics.RelativeEncoder;
-
+import edu.wpi.first.hal.SimDevice;
+import edu.wpi.first.hal.SimDouble;
+import edu.wpi.first.wpilibj.simulation.SimDeviceSim;
 import org.carlmontrobotics.lib199.Mocks;
 import org.carlmontrobotics.lib199.REVLibErrorAnswer;
 import org.carlmontrobotics.lib199.testUtils.SafelyClosable;
@@ -18,16 +20,12 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 
-import edu.wpi.first.hal.SimDevice;
-import edu.wpi.first.hal.SimDouble;
-import edu.wpi.first.wpilibj.simulation.SimDeviceSim;
-
 public class MockedEncoderTest {
 
     @ClassRule
-    public static TestRules.InitializeHAL simClassRule = new TestRules.InitializeHAL(); 
+    public static TestRules.InitializeHAL simClassRule = new TestRules.InitializeHAL();
     @Rule
-    public TestRules.ResetSimDeviceSimData simTestRule = new TestRules.ResetSimDeviceSimData(); 
+    public TestRules.ResetSimDeviceSimData simTestRule = new TestRules.ResetSimDeviceSimData();
 
     @Test
     public void testDeviceCreation() {
@@ -60,8 +58,8 @@ public class MockedEncoderTest {
     }
 
     private void testFunctionalityWithPositionConversionFactor(double factor, RelativeEncoder enc, SimDouble positionSim) {
-        assertEquals(REVLibError.kOk, enc.setPositionConversionFactor(factor));
-        assertEquals(factor, enc.getPositionConversionFactor(), 0.01);
+        assertEquals(REVLibError.kOk, ((MockedEncoder) enc).setPositionConversionFactor(factor));
+        assertEquals(factor, ((MockedEncoder) enc).getPositionConversionFactor(), 0.01);
         testPosition(10, enc, factor, positionSim);
         testPosition(0, enc, factor, positionSim);
         testPosition(-10, enc, factor, positionSim);
@@ -73,7 +71,7 @@ public class MockedEncoderTest {
         assertEquals(position, enc.getPosition(), 0.02);
         assertEquals(REVLibError.kOk, enc.setPosition(0));
         assertEquals(0, enc.getPosition(), 0.02);
-        positionSim.set(position / enc.getPositionConversionFactor() + positionSim.get());
+        positionSim.set(position / ((MockedEncoder) enc).getPositionConversionFactor() + positionSim.get());
         assertEquals(position, enc.getPosition(), 0.02);
     }
 
@@ -87,11 +85,11 @@ public class MockedEncoderTest {
 
     private SafelyClosable createEncoder(int deviceId) {
         SimDevice device = SimDevice.create("testDevice", deviceId);
-        return (SafelyClosable)Mocks.createMock(
-            RelativeEncoder.class,
-            new MockedEncoder(device, 4096, false, false),
-            new REVLibErrorAnswer(),
-            SafelyClosable.class);
+            return (SafelyClosable)Mocks.createMock(
+                RelativeEncoder.class,
+                new MockedEncoder(device, 4096, false, false),
+                new REVLibErrorAnswer(),
+                SafelyClosable.class, MockedEncoder.RemovedMethods.class);
     }
 
     private void withEncoders(EncoderTest func) {
@@ -112,5 +110,5 @@ public class MockedEncoderTest {
     private interface EncoderTest {
         public void test(RelativeEncoder encoder, SimDeviceSim sim, SimDouble posSim);
     }
-    
+
 }
