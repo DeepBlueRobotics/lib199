@@ -41,8 +41,6 @@ public class SwerveModule implements Sendable {
     public enum ModuleType {FL, FR, BL, BR};
 
     private SwerveConfig config;
-    private SparkBaseConfig turnConfig;
-    private SparkBaseConfig driveConfig;
 
     private ModuleType type;
     private String moduleString;
@@ -72,8 +70,8 @@ public class SwerveModule implements Sendable {
                         int arrIndex, Supplier<Float> pitchDegSupplier, Supplier<Float> rollDegSupplier) {
         driveMotorType = MotorControllerType.getMotorControllerType(drive);
         turnMotorType = MotorControllerType.getMotorControllerType(turn);
-        driveConfig = driveMotorType.createConfig();
-        turnConfig = turnMotorType.createConfig();
+        SparkBaseConfig driveConfig = driveMotorType.createConfig();
+        SparkBaseConfig turnConfig = turnMotorType.createConfig();
         driveConfigAccessor = MotorControllerFactory.getConfigAccessor(drive);
         turnConfigAccessor = MotorControllerFactory.getConfigAccessor(turn);
         //SmartDashboard.putNumber("Target Angle (deg)", 0.0);
@@ -93,8 +91,7 @@ public class SwerveModule implements Sendable {
         final double driveVelocityFactor = drivePositionFactor / 60;
         driveConfig.encoder
             .positionConversionFactor(drivePositionFactor)
-            .velocityConversionFactor(driveVelocityFactor)
-            .quadratureAverageDepth(2);
+            .velocityConversionFactor(driveVelocityFactor);
 
         maxControllableAccerlationRps2 = 0;
         final double normalForceNewtons = 83.2 /* lbf */ * 4.4482 /* N/lbf */ / 4 /* numModules */;
@@ -119,9 +116,9 @@ public class SwerveModule implements Sendable {
                                                config.drivekD[arrIndex]);
 
         /* offset for 1 relative encoder count */
-        drivetoleranceMPerS = (1.0
-            / (double)(driveConfigAccessor.encoder.getCountsPerRevolution()) * drivePositionFactor)
-            / Units.millisecondsToSeconds(driveConfigAccessor.signals.getPrimaryEncoderPositionPeriodMs() * driveConfigAccessor.encoder.getQuadratureAverageDepth());
+        drivetoleranceMPerS = (1.0 
+            / (double)(driveConfigAccessor.encoder.getCountsPerRevolution()) * drivePositionFactor) 
+            / Units.millisecondsToSeconds(driveConfigAccessor.encoder.getUvwMeasurementPeriod()* driveConfigAccessor.encoder.getUvwAverageDepth());
         drivePIDController.setTolerance(drivetoleranceMPerS);
 
         //System.out.println("Velocity Constant: " + (positionConstant / 60));
