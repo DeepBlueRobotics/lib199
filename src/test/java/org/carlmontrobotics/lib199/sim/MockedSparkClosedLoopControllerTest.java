@@ -7,11 +7,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import com.revrobotics.REVLibError;
-import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
-
-import org.carlmontrobotics.lib199.Mocks;
-import org.carlmontrobotics.lib199.REVLibErrorAnswer;
 import org.carlmontrobotics.lib199.sim.MockSparkBase.NEOType;
 import org.junit.Test;
 

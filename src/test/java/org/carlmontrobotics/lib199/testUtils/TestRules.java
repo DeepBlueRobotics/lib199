@@ -1,12 +1,10 @@
 package org.carlmontrobotics.lib199.testUtils;
 
-import org.carlmontrobotics.lib199.Lib199Subsystem;
+import edu.wpi.first.hal.HAL;
+import edu.wpi.first.wpilibj.simulation.SimDeviceSim;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
-
-import edu.wpi.first.hal.HAL;
-import edu.wpi.first.wpilibj.simulation.SimDeviceSim;
 
 public class TestRules {
 

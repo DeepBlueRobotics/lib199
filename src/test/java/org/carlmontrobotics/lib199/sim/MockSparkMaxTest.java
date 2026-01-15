@@ -4,15 +4,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import com.revrobotics.spark.SparkLowLevel.MotorType;
-
+import edu.wpi.first.hal.SimDouble;
+import edu.wpi.first.wpilibj.simulation.SimDeviceSim;
 import org.carlmontrobotics.lib199.sim.MockSparkBase.NEOType;
 import org.carlmontrobotics.lib199.testUtils.TestRules;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
-
-import edu.wpi.first.hal.SimDouble;
-import edu.wpi.first.wpilibj.simulation.SimDeviceSim;
 
 public class MockSparkMaxTest {
     @ClassRule

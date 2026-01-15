@@ -13,9 +13,7 @@ import com.revrobotics.spark.SparkClosedLoopController.ArbFFUnits;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.SparkMaxAlternateEncoder;
 import com.revrobotics.spark.SparkRelativeEncoder;
-import com.revrobotics.spark.config.ClosedLoopConfig;
 import com.revrobotics.spark.config.MAXMotionConfig;
-
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
@@ -60,7 +58,7 @@ public class MockedSparkClosedLoopController {
     /**Get the MAXMotion internal setpoint position. */
     public double getMAXMotionSetpointPosition() {
         return setpoint;
-    } 
+    }
 
     /**Get the MAXMotion internal setpoint velocity. */
     public double getMAXMotionSetpointVelocity() {
@@ -76,16 +74,16 @@ public class MockedSparkClosedLoopController {
     public double getSetpoint() {
         return setpoint;
     }
-    
+
     /** Determine if the setpoint has been reached.*/
     public boolean isAtSetpoint() {return false;}
-    
+
     /** Set the I accumulator of the closed loop controller. */
     public REVLibError setIAccum(double iAccum) {
         System.err.println("(MockedSparkMaxPIDController): setIAccum() is not currently implemented");
         return REVLibError.kNotImplemented;
     }
-    /** Deprecated, for removal: This API element is subject to removal in a future version. 
+    /** Deprecated, for removal: This API element is subject to removal in a future version.
      * Use {@link #setSetpoint(double, SparkBase.ControlType)} instead
     */
     @Deprecated
@@ -99,7 +97,7 @@ public class MockedSparkClosedLoopController {
     public REVLibError setReference(double value, SparkMax.ControlType ctrl, ClosedLoopSlot pidSlot) {
         return setReference(value, ctrl, pidSlot, 0);
     }
-    /** Deprecated, for removal: This API element is subject to removal in a future version. 
+    /** Deprecated, for removal: This API element is subject to removal in a future version.
      * Use {@link #setSetpoint(double, SparkBase.ControlType, ClosedLoopSlot, double)} instead*/
     @Deprecated
     public REVLibError setReference(double value, SparkMax.ControlType ctrl, ClosedLoopSlot pidSlot, double arbFeedforward) {

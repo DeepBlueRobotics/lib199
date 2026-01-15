@@ -6,19 +6,15 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 
 import com.ctre.phoenix.ErrorCode;
+import com.revrobotics.REVLibError;
 import com.revrobotics.spark.SparkBase;
-import com.revrobotics.spark.SparkFlex;
-import com.revrobotics.spark.SparkLowLevel;
-import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.SparkBase.Faults;
+import com.revrobotics.spark.SparkFlex;
+import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkBaseConfig;
 import com.revrobotics.spark.config.SparkFlexConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
-import com.revrobotics.REVLibError;
-
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-
-import org.carlmontrobotics.lib199.MotorControllerFactory;
 
 public final class MotorErrors {
 
@@ -30,8 +26,8 @@ public final class MotorErrors {
     private static final Map<SparkBase, Faults> stickyFlags = new ConcurrentSkipListMap<>(
             (spark1, spark2) -> (spark1.getDeviceId() - spark2.getDeviceId()));
 
-    private static final SparkBaseConfig OVERHEAT_MAX_CONFIG = new SparkMaxConfig().smartCurrentLimit(1);  
-    private static final SparkBaseConfig OVERHEAT_FLEX_CONFIG = new SparkFlexConfig().smartCurrentLimit(1);  
+    private static final SparkBaseConfig OVERHEAT_MAX_CONFIG = new SparkMaxConfig().smartCurrentLimit(1);
+    private static final SparkBaseConfig OVERHEAT_FLEX_CONFIG = new SparkFlexConfig().smartCurrentLimit(1);
 
 
     public static final int kOverheatTripCount = 5;
@@ -80,7 +76,7 @@ public final class MotorErrors {
         // short faults = spark.getFaults();
         Faults faults = spark.getFaults();
         Faults stickyFaults = spark.getStickyFaults();
-        Faults prevFaults = flags.getOrDefault(spark, null);  
+        Faults prevFaults = flags.getOrDefault(spark, null);
         Faults prevStickyFaults = stickyFlags.getOrDefault(spark, null);
 
         if (spark.hasActiveFault() && prevFaults!=null && prevFaults.rawBits != faults.rawBits) {

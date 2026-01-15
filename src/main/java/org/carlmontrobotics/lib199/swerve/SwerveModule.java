@@ -6,23 +6,14 @@ import static edu.wpi.first.units.Units.Pounds;
 
 import java.util.function.Supplier;
 
-import org.carlmontrobotics.lib199.MotorControllerFactory;
-import org.carlmontrobotics.lib199.MotorControllerType;
-import org.mockito.internal.reporting.SmartPrinter;
-
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.revrobotics.spark.SparkBase;
 import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.SparkBase.ResetMode;
-import com.revrobotics.spark.SparkFlex;
-import com.revrobotics.spark.SparkMax;
-import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkBaseConfig;
+import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkBaseConfigAccessor;
-import com.revrobotics.spark.config.SparkMaxConfig;
-import com.revrobotics.spark.config.SparkFlexConfig;
-
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
@@ -32,16 +23,15 @@ import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.measure.Mass;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.util.sendable.SendableRegistry;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
-import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import org.carlmontrobotics.lib199.MotorControllerFactory;
+import org.carlmontrobotics.lib199.MotorControllerType;
 
 /**
  * A class that stores all the variables and methods applicaple to a single swerve module,
@@ -55,6 +45,7 @@ public class SwerveModule implements Sendable {
     private SparkBaseConfig driveConfig;
 
     private ModuleType type;
+    private String moduleString;
     private SparkBase drive, turn;
     private CANcoder turnEncoder;
     private PIDController drivePIDController;
@@ -76,7 +67,7 @@ public class SwerveModule implements Sendable {
 
     SparkBaseConfigAccessor driveConfigAccessor;
     SparkBaseConfigAccessor turnConfigAccessor;
-    
+
     public SwerveModule(SwerveConfig config, ModuleType type, SparkBase drive, SparkBase turn, CANcoder turnEncoder,
                         int arrIndex, Supplier<Float> pitchDegSupplier, Supplier<Float> rollDegSupplier) {
         driveMotorType = MotorControllerType.getMotorControllerType(drive);
@@ -86,7 +77,7 @@ public class SwerveModule implements Sendable {
         driveConfigAccessor = MotorControllerFactory.getConfigAccessor(drive);
         turnConfigAccessor = MotorControllerFactory.getConfigAccessor(turn);
         //SmartDashboard.putNumber("Target Angle (deg)", 0.0);
-        String moduleString = type.toString();
+        this.moduleString = type.toString();
         this.timer = new Timer();
         timer.start();
         // SmartDashboard.putNumber("num periods",1);
@@ -115,7 +106,7 @@ public class SwerveModule implements Sendable {
         double currentLimitAmps = neoFreeCurrentAmps + 2*motorTorqueLimitNewtonMeters / neoStallTorqueNewtonMeters * (neoStallCurrentAmps-neoFreeCurrentAmps);
         // SmartDashboard.putNumber(type.toString() + " current limit (amps)", currentLimitAmps);
         driveConfig.smartCurrentLimit(Math.min(50, (int)currentLimitAmps));
-        
+
         this.forwardSimpleMotorFF = new SimpleMotorFeedforward(config.kForwardVolts[arrIndex],
                                                                 config.kForwardVels[arrIndex],
                                                                 config.kForwardAccels[arrIndex]);
@@ -126,10 +117,10 @@ public class SwerveModule implements Sendable {
         drivePIDController = new PIDController(config.drivekP[arrIndex],
                                                config.drivekI[arrIndex],
                                                config.drivekD[arrIndex]);
-        
+
         /* offset for 1 relative encoder count */
-        drivetoleranceMPerS = (1.0 
-            / (double)(driveConfigAccessor.encoder.getCountsPerRevolution()) * drivePositionFactor) 
+        drivetoleranceMPerS = (1.0
+            / (double)(driveConfigAccessor.encoder.getCountsPerRevolution()) * drivePositionFactor)
             / Units.millisecondsToSeconds(driveConfigAccessor.signals.getPrimaryEncoderPositionPeriodMs() * driveConfigAccessor.encoder.getQuadratureAverageDepth());
         drivePIDController.setTolerance(drivetoleranceMPerS);
 
@@ -154,7 +145,7 @@ public class SwerveModule implements Sendable {
         turnConstraints = new TrapezoidProfile.Constraints(maxAchievableTurnVelocityRps, maxAchievableTurnAccelerationRps2);
         lastAngle = 0.0;
         turnPIDController = new ProfiledPIDController(
-            config.turnkP[arrIndex], 
+            config.turnkP[arrIndex],
             config.turnkI[arrIndex],
             config.turnkD[arrIndex],
             turnConstraints);
@@ -164,7 +155,7 @@ public class SwerveModule implements Sendable {
         this.driveModifier = config.driveModifier;
         this.reversed = config.reversed[arrIndex];
         this.turnZeroDeg = config.turnZeroDeg[arrIndex];
-        
+
         CANcoderConfiguration CANconfig = new CANcoderConfiguration();
         CANconfig.MagnetSensor.AbsoluteSensorDiscontinuityPoint = .5;
         this.turnEncoder = turnEncoder;
@@ -212,12 +203,11 @@ public class SwerveModule implements Sendable {
     }
 
     public void drivePeriodic() {
-        String moduleString = type.toString();
         double actualSpeed = getCurrentSpeed();
         double extraAccel = calculateAntiGravitationalA(pitchDegSupplier.get(), rollDegSupplier.get());
         double targetVoltage = (actualSpeed >= 0 ? forwardSimpleMotorFF : backwardSimpleMotorFF)
             .calculateWithVelocities(
-                actualSpeed, 
+                actualSpeed,
                 desiredSpeed + extraAccel * TimedRobot.kDefaultPeriod  //m/s + ( m/s^2 * s )
             );
         // Use robot characterization as a simple physical model to account for internal resistance, frcition, etc.
@@ -238,7 +228,6 @@ public class SwerveModule implements Sendable {
     }
 
     public void turnPeriodic() {
-        String moduleString = type.toString();
         // Turn Control
         {
             double measuredAngleRots = Units.degreesToRotations(getModuleAngle());
@@ -249,7 +238,7 @@ public class SwerveModule implements Sendable {
 
             double period = turnPIDController.getPeriod();
             double optimalTurnVelocityRps = Math.abs(MathUtil.inputModulus(goal.position-measuredAngleRots, -.5, .5))/period;
-            
+
             double maxOverShootDegree = 1;
             // maxOverShootDegree = SmartDashboard.getNumber("maxOverShootDegree",maxOverShootDegree);
             int numPeriods = 1;
@@ -259,7 +248,7 @@ public class SwerveModule implements Sendable {
             // SmartDashboard.putNumber("maxTurnVelocityWithoutTippingRps", maxTurnVelocityWithoutTippingRps);
             // SmartDashboard.putNumber("maxAcheivableTurnVelcoityRPS", maxAchievableTurnVelocityRps);
             // SmartDashboard.putNumber("optimalTurnVelocityRPS", optimalTurnVelocityRps);
-            
+
             turnSpeedCorrectionVolts = turnPIDController.calculate(measuredAngleRots);
             TrapezoidProfile.State state = turnPIDController.getSetpoint();
 
@@ -273,7 +262,7 @@ public class SwerveModule implements Sendable {
                 turn.setVoltage(turnSimpleMotorFeedforward.calculate(goal.velocity));
             }
             prevTurnVelocity = state.velocity;
-        }   
+        }
     }
 
     /**
@@ -379,7 +368,6 @@ public class SwerveModule implements Sendable {
      */
     @Deprecated
     public void updateSmartDashboard() {
-        String moduleString = type.toString();
         // Display the position of the quadrature encoder.
         SmartDashboard.putNumber(moduleString + " Incremental Position", turnEncoder.getPosition().getValueAsDouble());
         // Display the position of the analog encoder.
@@ -398,7 +386,7 @@ public class SwerveModule implements Sendable {
         //SmartDashboard.putNumber("Gyro Roll", rollDegSupplier.get());
         SmartDashboard.putNumber(moduleString + "Antigravitational Acceleration", calculateAntiGravitationalA(pitchDegSupplier.get(), rollDegSupplier.get()));
         SmartDashboard.putBoolean(moduleString + " Turn is at Goal", turnPIDController.atGoal());
-        
+
         SmartDashboard.putNumber(moduleString + "Turn PID Output (Volts)", turnSpeedCorrectionVolts);
         SmartDashboard.putNumber(moduleString + "Turn FF Output (Volts)", turnFFVolts);
         SmartDashboard.putNumber(moduleString + "Turn Total Output (Volts)", turnVolts);
@@ -466,7 +454,7 @@ public class SwerveModule implements Sendable {
     }
 
     /**
-     * 
+     *
      * @param maxVel velocity in rot/s
      */
     public void setMaxTurnVelocity(double maxVel) {
@@ -504,7 +492,7 @@ public class SwerveModule implements Sendable {
 
     /**
      * Create and return a SwerveModuleSim that simulates the physics of this swerve module.
-     * 
+     *
      * @param massOnWheel the mass on the wheel of this module (typically the mass of the robot divided by the number of modules)
      * @param turnGearing the gearing reduction between the turn motor and the module
      * @param turnMoiKgM2 the moment of inertia of the part of the module turned by the turn motor (in kg m^2)
@@ -512,12 +500,12 @@ public class SwerveModule implements Sendable {
      */
     public SwerveModuleSim createSim(Mass massOnWheel, double turnGearing, double turnMoiKgM2) {
         double driveMoiKgM2 =  massOnWheel.in(Kilogram) * Math.pow(config.wheelDiameterMeters/2, 2);
-        return new SwerveModuleSim(drive.getDeviceId(), config.driveGearing, driveMoiKgM2, 
+        return new SwerveModuleSim(drive.getDeviceId(), config.driveGearing, driveMoiKgM2,
             turn.getDeviceId(), turnEncoder.getDeviceID(), turnGearing, turnMoiKgM2);
     }
 
     /**
-     * 
+     *
      * @return a SwerveModuleSim that simulates this swerve module assuming it is one of 4 MK4i modules on our 114 lb 2024 robot.
      */
     public SwerveModuleSim createSim() {

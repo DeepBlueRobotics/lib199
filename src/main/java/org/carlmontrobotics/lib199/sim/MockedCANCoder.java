@@ -4,13 +4,11 @@ import java.util.HashMap;
 
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.sim.CANcoderSimState;
-
 import edu.wpi.first.hal.HALValue;
-import edu.wpi.first.hal.SimBoolean;
 import edu.wpi.first.hal.SimDevice;
 import edu.wpi.first.hal.SimDevice.Direction;
-import edu.wpi.first.hal.simulation.SimValueCallback;
 import edu.wpi.first.hal.SimDouble;
+import edu.wpi.first.hal.simulation.SimValueCallback;
 import edu.wpi.first.wpilibj.simulation.SimDeviceSim;
 
 public class MockedCANCoder {

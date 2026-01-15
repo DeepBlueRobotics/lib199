@@ -3,21 +3,15 @@ package org.carlmontrobotics.lib199;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeNoException;
-
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.ctre.phoenix.ErrorCode;
 import com.revrobotics.REVLibError;
 import com.revrobotics.sim.SparkSimFaultManager;
 import com.revrobotics.spark.SparkBase.Faults;
 import com.revrobotics.spark.SparkMax;
-
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import org.carlmontrobotics.lib199.testUtils.ErrStreamTest;
 import org.junit.Test;
-
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class MotorErrorsTest extends ErrStreamTest {
         public static interface TemperatureSparkMax {
