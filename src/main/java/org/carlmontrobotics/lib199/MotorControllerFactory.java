@@ -14,6 +14,8 @@ import org.carlmontrobotics.lib199.sim.MockTalonSRX;
 
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
+import com.revrobotics.PersistMode;
+import com.revrobotics.ResetMode;
 import com.revrobotics.spark.SparkBase;
 import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkLowLevel;
@@ -78,8 +80,8 @@ public class MotorControllerFactory {
     }
     MotorErrors.reportError(spark.configure(
       config, 
-      SparkBase.ResetMode.kResetSafeParameters,
-      SparkBase.PersistMode.kPersistParameters
+      ResetMode.kResetSafeParameters,
+      PersistMode.kPersistParameters
     ));
     MotorErrors.reportSparkTemp(spark, motorConfig.temperatureLimitCelsius);
     MotorErrors.checkSparkErrors(spark);
@@ -109,8 +111,8 @@ public class MotorControllerFactory {
     }
     MotorErrors.reportError(spark.configure(
       config, 
-      SparkBase.ResetMode.kResetSafeParameters,
-      SparkBase.PersistMode.kPersistParameters
+      ResetMode.kResetSafeParameters,
+      PersistMode.kPersistParameters
     ));
 
     MotorErrors.reportSparkTemp(spark, motorConfig.temperatureLimitCelsius);
