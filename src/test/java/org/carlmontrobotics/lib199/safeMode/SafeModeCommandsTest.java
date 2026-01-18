@@ -43,7 +43,7 @@ public class SafeModeCommandsTest {
         loggingCommand.reset();
 
         SafeMode.enable();
-        command.schedule();
+        CommandScheduler.getInstance().schedule(command);
         CommandScheduler.getInstance().run();
         if (isSafe || staysEnabled)
             assertTrue(command.isScheduled());
@@ -56,7 +56,7 @@ public class SafeModeCommandsTest {
         assertEquals(isSafe ? 1 : 0, loggingCommand.getExecuteCount());
 
         SafeMode.disable();
-        command.schedule();
+        CommandScheduler.getInstance().schedule(command);
         CommandScheduler.getInstance().run();
         if (!isSafe || staysEnabled)
             assertTrue(command.isScheduled());

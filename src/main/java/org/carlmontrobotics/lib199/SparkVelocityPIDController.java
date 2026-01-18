@@ -4,8 +4,8 @@ import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.ClosedLoopSlot;
 import com.revrobotics.spark.SparkBase;
 import com.revrobotics.spark.SparkBase.ControlType;
-import com.revrobotics.spark.SparkBase.PersistMode;
-import com.revrobotics.spark.SparkBase.ResetMode;
+import com.revrobotics.PersistMode;
+import com.revrobotics.ResetMode;
 import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.config.ClosedLoopConfig;
 import edu.wpi.first.util.sendable.Sendable;
@@ -36,12 +36,12 @@ public class SparkVelocityPIDController implements Sendable {
                 this.currentI = defaultI,
                 this.currentD = defaultD
             )),
-            SparkBase.ResetMode.kNoResetSafeParameters,//we only want to change pid params
-            SparkBase.PersistMode.kNoPersistParameters);
+            ResetMode.kNoResetSafeParameters,//we only want to change pid params
+            PersistMode.kNoPersistParameters);
         this.kS = kS;
         this.kV = kV;
 
-        pidController.setReference(targetSpeed, ControlType.kVelocity, ClosedLoopSlot.kSlot0, calculateFF(targetSpeed));
+        pidController.setSetpoint(targetSpeed, ControlType.kVelocity, ClosedLoopSlot.kSlot0, calculateFF(targetSpeed));
 
         SendableRegistry.addLW(this, "SparkVelocityPIDController", spark.getDeviceId());
     }
@@ -65,7 +65,7 @@ public class SparkVelocityPIDController implements Sendable {
     public void setTargetSpeed(double targetSpeed) {
         if(targetSpeed == this.targetSpeed) return;
         this.targetSpeed = targetSpeed;
-        pidController.setReference(targetSpeed, ControlType.kVelocity, ClosedLoopSlot.kSlot0, calculateFF(targetSpeed));
+        pidController.setSetpoint(targetSpeed, ControlType.kVelocity, ClosedLoopSlot.kSlot0, calculateFF(targetSpeed));
     }
 
     public double getTolerance() {
@@ -99,7 +99,7 @@ public class SparkVelocityPIDController implements Sendable {
         });
         builder.addDoubleProperty("Target Speed", () -> targetSpeed, newSpeed -> {
             if(newSpeed == targetSpeed) return;
-            pidController.setReference(newSpeed, ControlType.kVelocity, ClosedLoopSlot.kSlot0, calculateFF(newSpeed));
+            pidController.setSetpoint(newSpeed, ControlType.kVelocity, ClosedLoopSlot.kSlot0, calculateFF(newSpeed));
             targetSpeed = newSpeed;
         });
         builder.addDoubleProperty("Tolerance", () -> tolerance, newTolerance -> tolerance = newTolerance);

@@ -6,7 +6,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 
 import com.ctre.phoenix.ErrorCode;
+import com.revrobotics.PersistMode;
 import com.revrobotics.REVLibError;
+import com.revrobotics.ResetMode;
 import com.revrobotics.spark.SparkBase;
 import com.revrobotics.spark.SparkBase.Faults;
 import com.revrobotics.spark.SparkFlex;
@@ -187,14 +189,14 @@ public final class MotorErrors {
                 case SPARK_MAX:
                     spark.configure(
                         OVERHEAT_MAX_CONFIG,
-                        SparkBase.ResetMode.kNoResetSafeParameters,
-                        SparkBase.PersistMode.kNoPersistParameters);
+                        ResetMode.kNoResetSafeParameters,
+                        PersistMode.kNoPersistParameters);
                     break;
                 case SPARK_FLEX:
                     spark.configure(
                         OVERHEAT_FLEX_CONFIG,
-                        SparkBase.ResetMode.kNoResetSafeParameters,
-                        SparkBase.PersistMode.kNoPersistParameters);
+                        ResetMode.kNoResetSafeParameters,
+                        PersistMode.kNoPersistParameters);
                     break;
                 default:
                     System.err.println("Unknown spark :(");

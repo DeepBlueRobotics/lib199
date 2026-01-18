@@ -108,10 +108,6 @@ public class MockedSparkClosedLoopController {
     */
     @Deprecated
     public REVLibError setReference(double value, SparkMax.ControlType ctrl, ClosedLoopSlot pidSlot, double arbFeedforward, SparkClosedLoopController.ArbFFUnits arbFFUnits) {
-        if(ctrl == SparkMax.ControlType.kSmartVelocity) {
-            System.err.println("(MockedSparkMaxPIDController): setReference() with ControlType.kSmartVelocity is not currently implemented");
-            return REVLibError.kNotImplemented;
-        }
 
         setpoint = value;
         controlType = ctrl;
@@ -124,14 +120,11 @@ public class MockedSparkClosedLoopController {
                 break;
             case kPosition:
             case kVelocity:
-            case kSmartMotion:
             case kMAXMotionPositionControl:
             case kMAXMotionVelocityControl:
             case kCurrent:
                 motor.setClosedLoopControl(true);
                 break;
-            case kSmartVelocity:
-                break; // This should never happen
         }
 
         activeSlot = getSlot(pidSlot.value);
