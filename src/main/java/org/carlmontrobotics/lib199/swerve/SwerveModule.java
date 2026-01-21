@@ -199,25 +199,25 @@ public class SwerveModule implements Sendable {
         drivePeriodic();
         // updateSmartDashboard();
         turnPeriodic();
-        if(config.tunning){
-            //drive
-            drivePIDController.setP(SmartDashboard.getNumber("kP", config.drivekP[arrIndex]));
-            drivePIDController.setI(SmartDashboard.getNumber("kI", config.drivekI[arrIndex]));
-            drivePIDController.setD(SmartDashboard.getNumber("kD", config.drivekD[arrIndex]));
-            //turn
-            turnPIDController.setP(SmartDashboard.getNumber("kP", config.turnkP[arrIndex]));
-            turnPIDController.setI(SmartDashboard.getNumber("kI", config.turnkI[arrIndex]));
-            turnPIDController.setD(SmartDashboard.getNumber("kD", config.turnkD[arrIndex]));
-            turnSimpleMotorFeedforward.setKs(SmartDashboard.getNumber("kS", config.turnkS[arrIndex]));
-            turnSimpleMotorFeedforward.setKv(SmartDashboard.getNumber("kV", config.turnkV[arrIndex]));
-            turnSimpleMotorFeedforward.setKa(SmartDashboard.getNumber("kA", config.turnkA[arrIndex]));
-            forwardSimpleMotorFF.setKs(SmartDashboard.getNumber("kForwardVolts", config.kForwardVolts[arrIndex]));
-            forwardSimpleMotorFF.setKv(SmartDashboard.getNumber("kForwardVels", config.kForwardVels[arrIndex]));
-            forwardSimpleMotorFF.setKa(SmartDashboard.getNumber("kForwardAccels", config.kForwardAccels[arrIndex]));
-            backwardSimpleMotorFF.setKs(SmartDashboard.getNumber("kBackwardVolts", config.kBackwardVolts[arrIndex]));
-            backwardSimpleMotorFF.setKv(SmartDashboard.getNumber("kBackwardVels", config.kBackwardVels[arrIndex]));
-            backwardSimpleMotorFF.setKa(SmartDashboard.getNumber("kBackwardAccels", config.kBackwardAccels[arrIndex]));
-        }
+        // if(config.tunning){
+        //     //drive
+        //     drivePIDController.setP(SmartDashboard.getNumber("kP", config.drivekP[arrIndex]));
+        //     drivePIDController.setI(SmartDashboard.getNumber("kI", config.drivekI[arrIndex]));
+        //     drivePIDController.setD(SmartDashboard.getNumber("kD", config.drivekD[arrIndex]));
+        //     //turn
+        //     turnPIDController.setP(SmartDashboard.getNumber("kP", config.turnkP[arrIndex]));
+        //     turnPIDController.setI(SmartDashboard.getNumber("kI", config.turnkI[arrIndex]));
+        //     turnPIDController.setD(SmartDashboard.getNumber("kD", config.turnkD[arrIndex]));
+        //     turnSimpleMotorFeedforward.setKs(SmartDashboard.getNumber("kS", config.turnkS[arrIndex]));
+        //     turnSimpleMotorFeedforward.setKv(SmartDashboard.getNumber("kV", config.turnkV[arrIndex]));
+        //     turnSimpleMotorFeedforward.setKa(SmartDashboard.getNumber("kA", config.turnkA[arrIndex]));
+        //     forwardSimpleMotorFF.setKs(SmartDashboard.getNumber("kForwardVolts", config.kForwardVolts[arrIndex]));
+        //     forwardSimpleMotorFF.setKv(SmartDashboard.getNumber("kForwardVels", config.kForwardVels[arrIndex]));
+        //     forwardSimpleMotorFF.setKa(SmartDashboard.getNumber("kForwardAccels", config.kForwardAccels[arrIndex]));
+        //     backwardSimpleMotorFF.setKs(SmartDashboard.getNumber("kBackwardVolts", config.kBackwardVolts[arrIndex]));
+        //     backwardSimpleMotorFF.setKv(SmartDashboard.getNumber("kBackwardVels", config.kBackwardVels[arrIndex]));
+        //     backwardSimpleMotorFF.setKa(SmartDashboard.getNumber("kBackwardAccels", config.kBackwardAccels[arrIndex]));
+        // }
     }
 
     public void drivePeriodic() {
