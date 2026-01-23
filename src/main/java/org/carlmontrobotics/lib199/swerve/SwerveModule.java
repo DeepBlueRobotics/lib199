@@ -106,7 +106,7 @@ public class SwerveModule implements Sendable {
         final double vortexFreeCurrentAmps = 3.6; //theoretical?
         final double vortexStallCurrentAmps = 211; //theoretical?
 
-        double currentLimitAmps = MotorControllerType.getMotorControllerType(drive) == MotorControllerType.SPARK_FLEX ? //Assumes that drive motor is either a NEO or NEO Vortex, will need a code struture change when we start using NEO 2.0 potentially for drive
+        double currentLimitAmps = driveMotorType == MotorControllerType.SPARK_FLEX ? //Assumes that drive motor is either a NEO or NEO Vortex, will need a code struture change when we start using NEO 2.0 potentially for drive
         vortexFreeCurrentAmps + 2*motorTorqueLimitNewtonMeters / vortexStallTorqueNewtonMeters * (vortexStallCurrentAmps-vortexFreeCurrentAmps) : 
         neoFreeCurrentAmps + 2*motorTorqueLimitNewtonMeters / neoStallTorqueNewtonMeters * (neoStallCurrentAmps-neoFreeCurrentAmps);
 
