@@ -97,11 +97,19 @@ public class SwerveModule implements Sendable {
         final double normalForceNewtons = 83.2 /* lbf */ * 4.4482 /* N/lbf */ / 4 /* numModules */;
         double wheelTorqueLimitNewtonMeters = normalForceNewtons * config.mu * config.wheelDiameterMeters / 2;
         double motorTorqueLimitNewtonMeters = wheelTorqueLimitNewtonMeters / config.driveGearing;
-        final double neoStallTorqueNewtonMeters = 3.36;
-        final double neoFreeCurrentAmps = 1.3;
-        final double neoStallCurrentAmps = 166;
-        double currentLimitAmps = neoFreeCurrentAmps + 2*motorTorqueLimitNewtonMeters / neoStallTorqueNewtonMeters * (neoStallCurrentAmps-neoFreeCurrentAmps);
-        // SmartDashboard.putNumber(type.toString() + " current limit (amps)", currentLimitAmps);
+
+        final double neoStallTorqueNewtonMeters = 2.6; //Empirical
+        final double neoFreeCurrentAmps = 1.8; //Empirical
+        final double neoStallCurrentAmps = 105; //Empirical
+
+        final double vortexStallTorqueNewtonMeters = 3.6; //theoretical?
+        final double vortexFreeCurrentAmps = 3.6; //theoretical?
+        final double vortexStallCurrentAmps = 211; //theoretical?
+
+        double currentLimitAmps = driveMotorType == MotorControllerType.SPARK_FLEX ? //Assumes that drive motor is either a NEO or NEO Vortex, will need a code struture change when we start using NEO 2.0 potentially for drive
+        vortexFreeCurrentAmps + 2*motorTorqueLimitNewtonMeters / vortexStallTorqueNewtonMeters * (vortexStallCurrentAmps-vortexFreeCurrentAmps) : 
+        neoFreeCurrentAmps + 2*motorTorqueLimitNewtonMeters / neoStallTorqueNewtonMeters * (neoStallCurrentAmps-neoFreeCurrentAmps);
+
         driveConfig.smartCurrentLimit(Math.min(50, (int)currentLimitAmps));
 
         this.forwardSimpleMotorFF = new SimpleMotorFeedforward(config.kForwardVolts[arrIndex],
