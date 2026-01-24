@@ -66,6 +66,8 @@ public class SwerveModule implements Sendable {
     SparkBaseConfigAccessor driveConfigAccessor;
     SparkBaseConfigAccessor turnConfigAccessor;
 
+    private int arrIndex;
+
     public SwerveModule(SwerveConfig config, ModuleType type, SparkBase drive, SparkBase turn, CANcoder turnEncoder,
                         int arrIndex, Supplier<Float> pitchDegSupplier, Supplier<Float> rollDegSupplier) {
         driveMotorType = MotorControllerType.getMotorControllerType(drive);
@@ -205,6 +207,25 @@ public class SwerveModule implements Sendable {
         drivePeriodic();
         // updateSmartDashboard();
         turnPeriodic();
+        // if(config.tunning){
+        //     //drive
+        //     drivePIDController.setP(SmartDashboard.getNumber("kP", config.drivekP[arrIndex]));
+        //     drivePIDController.setI(SmartDashboard.getNumber("kI", config.drivekI[arrIndex]));
+        //     drivePIDController.setD(SmartDashboard.getNumber("kD", config.drivekD[arrIndex]));
+        //     //turn
+        //     turnPIDController.setP(SmartDashboard.getNumber("kP", config.turnkP[arrIndex]));
+        //     turnPIDController.setI(SmartDashboard.getNumber("kI", config.turnkI[arrIndex]));
+        //     turnPIDController.setD(SmartDashboard.getNumber("kD", config.turnkD[arrIndex]));
+        //     turnSimpleMotorFeedforward.setKs(SmartDashboard.getNumber("kS", config.turnkS[arrIndex]));
+        //     turnSimpleMotorFeedforward.setKv(SmartDashboard.getNumber("kV", config.turnkV[arrIndex]));
+        //     turnSimpleMotorFeedforward.setKa(SmartDashboard.getNumber("kA", config.turnkA[arrIndex]));
+        //     forwardSimpleMotorFF.setKs(SmartDashboard.getNumber("kForwardVolts", config.kForwardVolts[arrIndex]));
+        //     forwardSimpleMotorFF.setKv(SmartDashboard.getNumber("kForwardVels", config.kForwardVels[arrIndex]));
+        //     forwardSimpleMotorFF.setKa(SmartDashboard.getNumber("kForwardAccels", config.kForwardAccels[arrIndex]));
+        //     backwardSimpleMotorFF.setKs(SmartDashboard.getNumber("kBackwardVolts", config.kBackwardVolts[arrIndex]));
+        //     backwardSimpleMotorFF.setKv(SmartDashboard.getNumber("kBackwardVels", config.kBackwardVels[arrIndex]));
+        //     backwardSimpleMotorFF.setKa(SmartDashboard.getNumber("kBackwardAccels", config.kBackwardAccels[arrIndex]));
+        // }
     }
 
     public void drivePeriodic() {
@@ -493,6 +514,24 @@ public class SwerveModule implements Sendable {
         builder.addDoubleProperty("Turn PID Output", () -> turnSpeedCorrectionVolts, null);
         builder.addDoubleProperty("Turn FF Output", () -> turnFFVolts, null);
         builder.addDoubleProperty("Turn Total Output", () -> turnVolts, null);
+
+        if(config.tunning) {
+            builder.addDoubleProperty("drivekP", () -> drivePIDController.getP(), x -> drivePIDController.setP(x));
+            builder.addDoubleProperty("drivekI", () -> drivePIDController.getI(), x -> drivePIDController.setI(x));
+            builder.addDoubleProperty("drivekD", () -> drivePIDController.getD(), x -> drivePIDController.setD(x));
+            builder.addDoubleProperty("turnkP", () -> turnPIDController.getP(), x -> turnPIDController.setP(x));
+            builder.addDoubleProperty("turnkI", () -> turnPIDController.getI(), x -> turnPIDController.setI(x));
+            builder.addDoubleProperty("turnkD", () -> turnPIDController.getD(), x -> turnPIDController.setD(x));
+            builder.addDoubleProperty("turnkS", () -> turnSimpleMotorFeedforward.getKs(), x -> turnSimpleMotorFeedforward.setKs(x));
+            builder.addDoubleProperty("turnkV", () -> turnSimpleMotorFeedforward.getKv(), x -> turnSimpleMotorFeedforward.setKv(x));
+            builder.addDoubleProperty("turnkA", () -> turnSimpleMotorFeedforward.getKa(), x -> turnSimpleMotorFeedforward.setKa(x));
+            builder.addDoubleProperty("kForwardVolts", () -> forwardSimpleMotorFF.getKs(), x -> forwardSimpleMotorFF.setKs(x));
+            builder.addDoubleProperty("kForwardVels", () -> forwardSimpleMotorFF.getKv(), x -> forwardSimpleMotorFF.setKv(x));
+            builder.addDoubleProperty("kForwardAccels", () -> forwardSimpleMotorFF.getKa(), x -> forwardSimpleMotorFF.setKa(x));
+            builder.addDoubleProperty("kBackwardVolts", () -> backwardSimpleMotorFF.getKs(), x -> backwardSimpleMotorFF.setKs(x));
+            builder.addDoubleProperty("kBackwardVels", () -> backwardSimpleMotorFF.getKv(), x -> backwardSimpleMotorFF.setKv(x));
+            builder.addDoubleProperty("kBackwardAccels", () -> backwardSimpleMotorFF.getKa(), x -> backwardSimpleMotorFF.setKa(x));
+        }
     }
 
     /**
