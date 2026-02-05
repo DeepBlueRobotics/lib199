@@ -57,6 +57,32 @@ public class MotorControllerFactory {
     return talon;
   }
   /**
+   * To use the configAccessor, use {@link MotorControllerFactory#getConfigAccessor(SparkBase...)}
+   * 
+   * @param id the port of the motor controller
+   * @param motorConfig the motor configuration to use
+   */
+  public static SparkBase createSpark(int id, MotorConfig motorConfig) {
+    return createSpark(id, motorConfig, sparkConfig(motorConfig));
+  }
+  /**
+   * To use the configAccessor, use {@link MotorControllerFactory#getConfigAccessor(SparkBase...)}
+   * 
+   * @param id the port of the motor controller
+   * @param motorConfig the motor configuration to use
+   */
+  public static SparkBase createSpark(int id, MotorConfig motorConfig, SparkBaseConfig config) {
+    switch(motorConfig.controllerType){
+      case SPARK_MAX:
+        return createSparkMax(id, motorConfig, config);
+      case SPARK_FLEX:
+        return createSparkFlex(id, motorConfig, config);
+      default:
+        return null;
+    }
+  }
+  
+  /**
    * Create a default sparkMax controller (NEO or 550).
    * 
    * @param id the port of the motor controller
@@ -88,6 +114,7 @@ public class MotorControllerFactory {
 
     return spark;
   }
+
   /**
    * Create a default SparkFlex-Vortex controller.  
    * 
