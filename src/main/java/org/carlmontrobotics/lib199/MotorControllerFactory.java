@@ -57,7 +57,7 @@ public class MotorControllerFactory {
     return talon;
   }
   /**
-   * To use the configAccessor, use {@link MotorControllerFactory#getConfigAccessor(SparkBase...)}
+   * To use the configAccessor, use {@link MotorControllerFactory#getConfigAccessor(SparkBase)}
    * 
    * @param id the port of the motor controller
    * @param motorConfig the motor configuration to use
@@ -66,7 +66,7 @@ public class MotorControllerFactory {
     return createSpark(id, motorConfig, sparkConfig(motorConfig));
   }
   /**
-   * To use the configAccessor, use {@link MotorControllerFactory#getConfigAccessor(SparkBase...)}
+   * To use the configAccessor, use {@link MotorControllerFactory#getConfigAccessor(SparkBase)}
    * 
    * @param id the port of the motor controller
    * @param motorConfig the motor configuration to use
