@@ -70,6 +70,7 @@ public class MotorControllerFactory {
    * 
    * @param id the port of the motor controller
    * @param motorConfig the motor configuration to use
+   * @param config the custom SparkBase configuration to apply instead of the default for the motorConfig
    */
   public static SparkBase createSpark(int id, MotorConfig motorConfig, SparkBaseConfig config) {
     switch(motorConfig.controllerType){
