@@ -57,6 +57,8 @@ public class MotorControllerFactory {
     return talon;
   }
   /**
+   * This class returns a SparkBase, initialized to either a SparkMax or SparkFlex depending on the {@link MotorConfig#controllerType}.
+   * Note that SparkBase lacks some of the functionality of SparkMax and SparkFlex, use {@link MotorControllerFactory#createSparkMax(int, MotorConfig...)} or {@link MotorControllerFactory#createSparkFlex(int...)} to get a SparkMax or SparkFlex object.
    * To use the configAccessor, use {@link MotorControllerFactory#getConfigAccessor(SparkBase)}
    * 
    * @param id the port of the motor controller
@@ -66,6 +68,8 @@ public class MotorControllerFactory {
     return createSpark(id, motorConfig, sparkConfig(motorConfig));
   }
   /**
+   * This class returns a SparkBase, initialized to either a SparkMax or SparkFlex depending on the {@link MotorConfig#controllerType}.
+   * Note that SparkBase lacks some of the functionality of SparkMax and SparkFlex, use {@link MotorControllerFactory#createSparkMax(int, MotorConfig...)} or {@link MotorControllerFactory#createSparkFlex(int, MotorConfig...)} to get a SparkMax or SparkFlex object.
    * To use the configAccessor, use {@link MotorControllerFactory#getConfigAccessor(SparkBase)}
    * 
    * @param id the port of the motor controller
