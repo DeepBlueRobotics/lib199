@@ -184,7 +184,13 @@ public class MotorControllerFactory {
     }
     return null;
   }
-
+  
+  /**
+   * Creates a motor config object for the given motor type. 
+   * 
+   * @param motorConfig the config for the specific type of motor (ex: MotorConfig.NEO, MotorConfig.NEO_VORTEX, etc) 
+    *
+   */
   public static SparkBaseConfig sparkConfig(MotorConfig motorConfig){
     SparkBaseConfig config = motorConfig.controllerType.createConfig();
     //configs that apply to all motors
