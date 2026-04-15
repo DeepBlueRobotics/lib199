@@ -1,9 +1,12 @@
-// Copyright (c) 2023-2025 Gold87 and other Elastic contributors
+/*
+docs: https://frc-elastic.gitbook.io/docs/additional-features-and-references/robot-notifications-with-elasticlib
+code: https://github.com/Gold872/elastic_dashboard/blob/main/elasticlib/Elastic.java
+*/
+
+// Copyright (c) 2023-2026 Gold87 and other Elastic contributors
 // This software can be modified and/or shared under the terms
 // defined by the Elastic license:
-// https://github.com/Gold872/elastic-dashboard/blob/main/LICENSE
-
-// From: https://frc-elastic.gitbook.io/docs/additional-features-and-references/robot-notifications-with-elasticlib and https://github.com/Gold872/elastic-dashboard/blob/main/elasticlib/Elastic.java 
+// https://github.com/Gold872/elastic_dashboard/blob/main/LICENSE
 
 package org.carlmontrobotics.lib199.vendorLibs;
 
