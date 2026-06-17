@@ -16,6 +16,13 @@ import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkBaseConfig;
 import com.revrobotics.spark.config.SparkFlexConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
+
+import edu.wpi.first.util.datalog.BooleanLogEntry;
+import edu.wpi.first.util.datalog.DataLog;
+import edu.wpi.first.util.datalog.StringLogEntry;
+import edu.wpi.first.wpilibj.Alert;
+import edu.wpi.first.wpilibj.Alert.AlertType;
+import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public final class MotorErrors {
@@ -26,6 +33,10 @@ public final class MotorErrors {
     private static final Map<SparkBase, Faults> flags = new ConcurrentSkipListMap<>(
             (spark1, spark2) -> (spark1.getDeviceId() - spark2.getDeviceId()));
     private static final Map<SparkBase, Faults> stickyFlags = new ConcurrentSkipListMap<>(
+            (spark1, spark2) -> (spark1.getDeviceId() - spark2.getDeviceId()));
+    private static final Map<SparkBase, Alert[]> alerts = new ConcurrentSkipListMap<>(
+            (spark1, spark2) -> (spark1.getDeviceId() - spark2.getDeviceId()));
+    private static final Map<SparkBase, Alert[]> stickyAlerts = new ConcurrentSkipListMap<>(
             (spark1, spark2) -> (spark1.getDeviceId() - spark2.getDeviceId()));
 
     private static final SparkBaseConfig OVERHEAT_MAX_CONFIG = new SparkMaxConfig().smartCurrentLimit(1);
@@ -67,10 +78,14 @@ public final class MotorErrors {
         if(error == null || error == ok) {
             return;
         }
-        System.err.println("Error: " + error.name() + " occurred while configuring " + vendor + " motor");
-        System.err.println("Full stack trace:");
+        new Alert(vendor + " motor error: " + error.name() + ", see log for full stack trace", AlertType.kError).set(true);
+
+        DataLog log = DataLogManager.getLog();
+        StringLogEntry motorErrorLog = new StringLogEntry(log, "MotorErrors/" + error.name());
+        motorErrorLog.append("Error: " + error.name() + " occurred while configuring " + vendor + " motor");
+        motorErrorLog.append("Full stack trace:");
         StackTraceElement[] stack = Thread.currentThread().getStackTrace();
-        System.err.println(Arrays.toString(stack));
+        motorErrorLog.append(Arrays.toString(stack));
     }
 
     public static void checkSparkErrors(SparkBase spark) {
@@ -82,10 +97,12 @@ public final class MotorErrors {
         Faults prevStickyFaults = stickyFlags.getOrDefault(spark, null);
 
         if (spark.hasActiveFault() && prevFaults!=null && prevFaults.rawBits != faults.rawBits) {
-        System.err.println("Fault Errors! (spark id " + spark.getDeviceId() + "): [" + formatFaults(spark) + "], ooF!");
+            //System.err.println("Fault Errors! (spark id " + spark.getDeviceId() + "): [" + formatFaults(spark) + "], ooF!");
+            postAlerts(spark, AlertType.kError);
         }
         if (spark.hasStickyFault() && prevStickyFaults!=null && prevStickyFaults.rawBits != stickyFaults.rawBits) {
-        System.err.println("Sticky Faults! (spark id " + spark.getDeviceId() + "): [" + formatStickyFaults(spark) + "], Ouch!");
+            //System.err.println("Sticky Faults! (spark id " + spark.getDeviceId() + "): [" + formatStickyFaults(spark) + "], Ouch!");
+            postStickyAlerts(spark, AlertType.kError);
         }
         spark.clearFaults();
         flags.put(spark, faults);
@@ -103,6 +120,71 @@ public final class MotorErrors {
             + (f.sensor         ? "Sensor " : "")
             + (f.temperature    ? "Temperature " : "")
         ;
+    }
+
+    private static void postAlerts(SparkBase spark, AlertType alertType) {
+        int id = spark.getDeviceId();
+        if (!alerts.containsKey(spark)) {
+            alerts.put(spark, new Alert[] {
+                new Alert("Spark " + id + " has an active CAN Fault", alertType),
+                new Alert("Spark " + id + " has an active Flash ROM Fault", alertType),
+                new Alert("Spark " + id + " has an active Firmware Fault", alertType),
+                new Alert("Spark " + id + " has an active Gate Driver Fault", alertType),
+                new Alert("Spark " + id + " has an active Motor Type Fault", alertType),
+                new Alert("Spark " + id + " has an active Other Fault", alertType),
+                new Alert("Spark " + id + " has an active Sensor Fault", alertType),
+                new Alert("Spark " + id + " has an active Temperature Fault", alertType)
+            });
+            clearAlerts(spark);
+        }
+        Alert[] alertList = alerts.get(spark);
+        for (int i = 0; i < alertList.length; i++) {
+            if ((spark.getFaults().rawBits & (1 << i)) != 0) {
+                alertList[i].set(true);
+            } else {
+                alertList[i].set(false);
+            }
+        }
+    }
+
+    private static void postStickyAlerts(SparkBase spark, AlertType alertType) {
+        int id = spark.getDeviceId();
+        if (!stickyAlerts.containsKey(spark)) {
+            stickyAlerts.put(spark, new Alert[] {
+                new Alert("Spark " + id + " has a sticky CAN Fault", alertType),
+                new Alert("Spark " + id + " has a sticky Flash ROM Fault", alertType),
+                new Alert("Spark " + id + " has a sticky Firmware Fault", alertType),
+                new Alert("Spark " + id + " has a sticky Gate Driver Fault", alertType),
+                new Alert("Spark " + id + " has a sticky Motor Type Fault", alertType),
+                new Alert("Spark " + id + " has a sticky Other Fault", alertType),
+                new Alert("Spark " + id + " has a sticky Sensor Fault", alertType),
+                new Alert("Spark " + id + " has a sticky Temperature Fault", alertType)
+            });
+            clearStickyAlerts(spark);
+        }
+        Alert[] stickyAlertList = stickyAlerts.get(spark);
+        for (int i = 0; i < stickyAlertList.length; i++) {
+            if ((spark.getStickyFaults().rawBits & (1 << i)) != 0) {
+                stickyAlertList[i].set(true);
+            } else {
+                stickyAlertList[i].set(false);
+            }
+        }
+    }
+
+    private static void clearAlerts(SparkBase spark) {
+        if (alerts.containsKey(spark)) {
+            for (Alert alert : alerts.get(spark)) {
+                alert.set(false);
+            }
+        }
+    }
+    private static void clearStickyAlerts(SparkBase spark) {
+        if (stickyAlerts.containsKey(spark)) {
+            for (Alert alert : stickyAlerts.get(spark)) {
+                alert.set(false);
+            }
+        }
     }
 
     private static String formatFaults(SparkBase spark) {
@@ -182,8 +264,11 @@ public final class MotorErrors {
                 // This prevents the error message from being re-printed every time the periodic
                 // method is run
                 overheatedSparks.put(port, kOverheatTripCount + 1);
-                System.err.println("Port " + port + " spark is operating at " + temp
-                        + " degrees Celsius! It will be disabled until the robot code is restarted.");
+                // System.err.println("Port " + port + " spark is operating at " + temp
+                //        + " degrees Celsius! It will be disabled until the robot code is restarted.");
+                Alert alert = new Alert("Spark " + port + " is operating at " + temp
+                        + " degrees Celsius! It will be disabled until the robot code is restarted.", AlertType.kError);
+                alert.set(true);
             }
             switch(MotorControllerFactory.getControllerType(spark)){
                 case SPARK_MAX:
