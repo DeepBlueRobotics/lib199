@@ -11,8 +11,6 @@ which ships with WPILib itself) are reported and left alone.
 
 Writes a markdown summary of what changed to the path given by
 --summary (used as the pull request body), and prints it to stdout.
-Exits 0 whether or not anything changed; the workflow decides what to do
-based on whether the git tree is dirty.
 """
 
 import argparse
