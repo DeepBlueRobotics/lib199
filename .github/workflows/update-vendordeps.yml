@@ -6,6 +6,10 @@ on:
     - cron: '0 12 * * 1'
   workflow_dispatch:
 
+concurrency:
+  group: update-vendordeps
+  cancel-in-progress: true
+
 permissions:
   contents: write
   pull-requests: write
