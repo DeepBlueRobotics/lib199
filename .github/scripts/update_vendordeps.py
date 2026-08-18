@@ -63,11 +63,17 @@ def main() -> int:
         if year not in manifests:
             try:
                 manifests[year] = json.loads(fetch(f"{MARKETPLACE_ROOT}/{year}.json"))
-            except Exception as e:  # noqa: BLE001 to make Ruff stop complaining about such futile things as "bad code"
-                manifests[year] = []
+            except Exception as e:  # noqa: BLE001 (network/remote errors; handled and reported below)
+                manifests[year] = None
                 errors.append(f"Failed to fetch the {year} marketplace manifest ({e})")
 
-        candidates = [e for e in manifests[year] if e.get("uuid") == uuid] # list and not var bc wpilib repo keeps mutliple versions
+        if manifests.get(year) is None:
+            skipped.append(
+                f"**{name}** (`{path.name}`): skipped because the {year} marketplace manifest could not be fetched"
+            )
+            continue
+
+        candidates = [e for e in manifests[year] if e.get("uuid") == uuid]  # WPILib repo keeps multiple versions
         if not candidates:
             skipped.append(f"**{name}** (`{path.name}`): not in the {year} marketplace")
             continue
