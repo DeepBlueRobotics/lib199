@@ -16,6 +16,12 @@ import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkBaseConfig;
 import com.revrobotics.spark.config.SparkFlexConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
+
+import edu.wpi.first.util.datalog.DataLog;
+import edu.wpi.first.util.datalog.StringLogEntry;
+import edu.wpi.first.wpilibj.Alert;
+import edu.wpi.first.wpilibj.Alert.AlertType;
+import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public final class MotorErrors {
@@ -23,6 +29,14 @@ public final class MotorErrors {
     private static final Map<Integer, SparkBase> temperatureSparks = new ConcurrentSkipListMap<>();
     private static final Map<Integer, Integer> sparkTemperatureLimits = new ConcurrentHashMap<>();
     private static final Map<Integer, Integer> overheatedSparks = new ConcurrentHashMap<>();
+
+    private static final Map<String, Alert> configAlerts = new ConcurrentHashMap<>();
+    private static final Map<Integer, Alert> activeAlerts = new ConcurrentHashMap<>();
+    private static final Map<Integer, Alert> stickyAlerts = new ConcurrentHashMap<>();
+    private static final Map<Integer, Alert> overheatAlerts = new ConcurrentHashMap<>();
+    
+    private static final Alert unknownSparkAlert = new Alert("Unknown spark :(", AlertType.kWarning);
+
     private static final Map<SparkBase, Faults> flags = new ConcurrentSkipListMap<>(
             (spark1, spark2) -> (spark1.getDeviceId() - spark2.getDeviceId()));
     private static final Map<SparkBase, Faults> stickyFlags = new ConcurrentSkipListMap<>(
@@ -67,29 +81,76 @@ public final class MotorErrors {
         if(error == null || error == ok) {
             return;
         }
-        System.err.println("Error: " + error.name() + " occurred while configuring " + vendor + " motor");
-        System.err.println("Full stack trace:");
+        displayConfigAlert(vendor, error, true);
+        DataLog log = DataLogManager.getLog();
+        StringLogEntry motorErrorLog = new StringLogEntry(log, "MotorErrors/" + error.name());
+        motorErrorLog.append("Error: " + error.name() + " occurred while configuring " + vendor + " motor");
+        motorErrorLog.append("Full stack trace:");
         StackTraceElement[] stack = Thread.currentThread().getStackTrace();
-        System.err.println(Arrays.toString(stack));
+        motorErrorLog.append(Arrays.toString(stack));
     }
 
     public static void checkSparkErrors(SparkBase spark) {
         //Purposely obviously impersonal to differentiate from actual computer generated errors
         // short faults = spark.getFaults();
+        int id = spark.getDeviceId();
         Faults faults = spark.getFaults();
         Faults stickyFaults = spark.getStickyFaults();
         Faults prevFaults = flags.getOrDefault(spark, null);
         Faults prevStickyFaults = stickyFlags.getOrDefault(spark, null);
 
-        if (spark.hasActiveFault() && prevFaults!=null && prevFaults.rawBits != faults.rawBits) {
-        System.err.println("Fault Errors! (spark id " + spark.getDeviceId() + "): [" + formatFaults(spark) + "], ooF!");
+        if (prevFaults == null || prevFaults.rawBits != faults.rawBits) {
+            displayActiveFaults(id, faults);
         }
-        if (spark.hasStickyFault() && prevStickyFaults!=null && prevStickyFaults.rawBits != stickyFaults.rawBits) {
-        System.err.println("Sticky Faults! (spark id " + spark.getDeviceId() + "): [" + formatStickyFaults(spark) + "], Ouch!");
+        if (prevStickyFaults == null || prevStickyFaults.rawBits != stickyFaults.rawBits) {
+            displayStickyFaults(id, stickyFaults);
         }
-        spark.clearFaults();
         flags.put(spark, faults);
         stickyFlags.put(spark, stickyFaults);
+    }
+
+    private static <T extends Enum<T>> void displayConfigAlert(String vendor, T error, boolean hasError) {
+        String key = error.name();
+        String message = "Error: " + error.name() + " occurred while configuring " + vendor + " motor, see log for full stack trace";
+        if (!configAlerts.containsKey(key)) {
+            configAlerts.put(key, new Alert(message, AlertType.kError));
+        }
+        configAlerts.get(key).set(hasError);
+    }
+
+    private static void displayActiveFaults(int id, Faults faults) {
+        boolean hasActiveFault = faults.rawBits != 0;
+        String message = "Fault Errors! (spark id " + id + "): [" + formatFaults(faults) + "], ooF!";
+        if (!activeAlerts.containsKey(id)) {
+            activeAlerts.put(id, new Alert(message, AlertType.kError));
+        }
+        if (hasActiveFault) {
+            activeAlerts.get(id).setText(message);
+        }
+        activeAlerts.get(id).set(hasActiveFault);
+    }
+
+    private static void displayStickyFaults(int id, Faults stickyFaults) {
+        boolean hasStickyFault = stickyFaults.rawBits != 0;
+        String message = "Sticky Faults! (spark id " + id + "): [" + formatFaults(stickyFaults) + "], Ouch!";
+        if (!stickyAlerts.containsKey(id)) {
+            stickyAlerts.put(id, new Alert(message, AlertType.kWarning));
+        }
+        if (hasStickyFault) {
+            stickyAlerts.get(id).setText(message);
+        }
+        stickyAlerts.get(id).set(hasStickyFault);
+    }   
+
+    private static void displayOverheatAlert(int id, double temp, boolean isOverheated) {
+        String message = "Spark id " + id + " is operating at " + temp + " degrees Celsius! It will be disabled until the robot code is restarted.";
+        if (!overheatAlerts.containsKey(id)) {
+            overheatAlerts.put(id, new Alert(message, AlertType.kError));
+        }
+        if (isOverheated) {
+            overheatAlerts.get(id).setText(message);
+        }
+        overheatAlerts.get(id).set(isOverheated);
     }
 
     private static String formatFaults(Faults f) {
@@ -103,16 +164,6 @@ public final class MotorErrors {
             + (f.sensor         ? "Sensor " : "")
             + (f.temperature    ? "Temperature " : "")
         ;
-    }
-
-    private static String formatFaults(SparkBase spark) {
-        Faults f = spark.getFaults();
-        return formatFaults(f);
-    }
-
-    private static String formatStickyFaults(SparkBase spark) {
-        Faults f = spark.getStickyFaults();
-        return formatFaults(f);
     }
 
     public static void printSparkErrorMessages() {
@@ -152,23 +203,23 @@ public final class MotorErrors {
         lastSparkTempIndexReported = (lastSparkTempIndexReported + n) % temperatureSparks.size();
     }
 
-    private static void reportSparkTemp(int port, SparkBase spark) {
+    private static void reportSparkTemp(int id, SparkBase spark) {
         double temp = spark.getMotorTemperature();
-        double limit = sparkTemperatureLimits.get(port);
-        int numTrips = overheatedSparks.get(port);
+        double limit = sparkTemperatureLimits.get(id);
+        int numTrips = overheatedSparks.get(id);
         String sparkType = "of unknown type";
         if (spark instanceof SparkMax) {
             sparkType = "Max";
         } else if (spark instanceof SparkFlex) {
             sparkType = "Flex";
         }
-        SmartDashboard.putNumber(String.format("Port %d Spark %s Temp", port, sparkType), temp);
+        SmartDashboard.putNumber(String.format("Port %d Spark %s Temp", id, sparkType), temp);
 
         if (numTrips < kOverheatTripCount) {
             if (temp > limit) {
-                overheatedSparks.put(port, ++numTrips);
+                overheatedSparks.put(id, ++numTrips);
             } else {
-                overheatedSparks.put(port, 0);
+                overheatedSparks.put(id, 0);
             }
         }
 
@@ -181,9 +232,8 @@ public final class MotorErrors {
                 // already been printed
                 // This prevents the error message from being re-printed every time the periodic
                 // method is run
-                overheatedSparks.put(port, kOverheatTripCount + 1);
-                System.err.println("Port " + port + " spark is operating at " + temp
-                        + " degrees Celsius! It will be disabled until the robot code is restarted.");
+                overheatedSparks.put(id, kOverheatTripCount + 1);
+                displayOverheatAlert(id, temp, true);
             }
             switch(MotorControllerFactory.getControllerType(spark)){
                 case SPARK_MAX:
@@ -199,7 +249,7 @@ public final class MotorErrors {
                         PersistMode.kNoPersistParameters);
                     break;
                 default:
-                    System.err.println("Unknown spark :(");
+                    unknownSparkAlert.set(true);
             }
         }
     }
